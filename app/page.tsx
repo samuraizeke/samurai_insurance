@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import localFont from "next/font/local";
+import { Work_Sans } from "next/font/google";
 import type { ChangeEvent, FormEvent } from "react";
 import {
   useCallback,
@@ -38,17 +39,6 @@ declare global {
   }
 }
 
-const createInitialFormValues = () => ({
-  firstName: "",
-  lastName: "",
-  email: "",
-  marketingConsent: false,
-});
-type FormValues = ReturnType<typeof createInitialFormValues>;
-type FieldErrors = Partial<Record<keyof WaitlistPayload, string[]>>;
-const WAITLIST_SOURCE = "Lander" as const;
-const INITIAL_FORM_VALUES: FormValues = createInitialFormValues();
-
 const alteHaasGrotesk = localFont({
   src: [
     {
@@ -65,6 +55,22 @@ const alteHaasGrotesk = localFont({
   display: "swap",
   fallback: [],
 });
+
+const workSans = Work_Sans({
+  weight: "400",
+  subsets: ["latin"],
+});
+
+const createInitialFormValues = () => ({
+  firstName: "",
+  lastName: "",
+  email: "",
+  marketingConsent: false,
+});
+type FormValues = ReturnType<typeof createInitialFormValues>;
+type FieldErrors = Partial<Record<keyof WaitlistPayload, string[]>>;
+const WAITLIST_SOURCE = "Lander" as const;
+const INITIAL_FORM_VALUES: FormValues = createInitialFormValues();
 
 export default function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -531,7 +537,7 @@ export default function Home() {
               height={32}
               priority
             />
-            <span className="whitespace-nowrap text-lg font-bold uppercase text-[#d1d3d4] sm:text-2xl">
+            <span className="whitespace-nowrap text-lg font-bold uppercase text-[#f7f6f3] sm:text-2xl">
               Samurai Insurance
             </span>
           </div>
@@ -549,10 +555,12 @@ export default function Home() {
         <section className="w-full px-12 pb-24 pt-12 sm:px-16 sm:pb-32 sm:pt-16">
           <div className="flex flex-col gap-12 lg:flex-row lg:items-center">
             <div className="max-w-2xl lg:flex-1 lg:max-w-none">
-              <h1 className="font-bold leading-tight text-[#d1d3d4] text-4xl sm:text-5xl md:text-6xl lg:text-[64px] lg:leading-[1.05]">
+              <h1 className="font-bold leading-tight text-[#f7f6f3] text-4xl sm:text-5xl md:text-6xl lg:text-[64px] lg:leading-[1.05]">
                 Never Worry About Your Home & Auto Insurance Again.
               </h1>
-              <p className="mt-6 text-lg leading-relaxed text-[#d1d3d4] sm:text-xl">
+              <p
+                className={`${workSans.className} mt-6 text-lg leading-relaxed text-[#f7f6f3] sm:text-xl`}
+              >
                 Get clarity on your personal home and auto coverage, review your policies, and save money on renewals with
                 your always available AI insurance brokerage.
               </p>
@@ -569,10 +577,10 @@ export default function Home() {
                 <video
                   className="h-full w-full object-cover"
                   autoPlay
-                  loop
                   muted
                   playsInline
-                  src="https://samuraiinsurancestorage.blob.core.windows.net/videos/out-2.mp4?sp=r&st=2025-10-17T12:58:17Z&se=2028-10-31T21:13:17Z&spr=https&sv=2024-11-04&sr=b&sig=Ml2b8cU0sG47nhApljxTBDIdgipfuo%2B%2FPOw7MQA67xE%3D"
+                  onEnded={(event) => event.currentTarget.pause()}
+                  src="https://samuraiinsurancestorage.blob.core.windows.net/videos/out.mp4?sp=r&st=2025-10-17T20:30:19Z&se=2028-12-31T05:45:19Z&spr=https&sv=2024-11-04&sr=b&sig=PHRlMyRp0HKt09E62qHJ5fbNsrk2vQ0ZJeinMaIeE6o%3D"
                 >
                   Your browser does not support the video tag.
                 </video>
@@ -607,12 +615,12 @@ export default function Home() {
 
           <div className="relative flex h-full w-full items-center justify-center p-4 sm:p-8">
             <div
-              className={`${alteHaasGrotesk.className} relative w-full max-w-xl rounded-[48px] bg-[#3a3c43] px-8 py-10 text-[#f5f6f7] shadow-[0_20px_60px_rgba(0,0,0,0.35)] sm:px-10`}
+              className={`${alteHaasGrotesk.className} relative w-full max-w-xl rounded-[48px] bg-[#3a3c43] px-8 py-10 text-[#f7f6f3] shadow-[0_20px_60px_rgba(0,0,0,0.35)] sm:px-10`}
             >
               <button
                 type="button"
                 onClick={handleCloseModal}
-                className="focus-outline-modal absolute right-6 top-6 inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#2d2f36] text-[#7d8087] transition hover:text-[#f5f6f7]"
+                className="focus-outline-modal absolute right-6 top-6 inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#2d2f36] text-[#f7f6f3] transition hover:text-[#f7f6f3]"
                 aria-label="Close waitlist modal"
               >
                 <svg
@@ -631,18 +639,18 @@ export default function Home() {
 
               <h2
                 id="waitlist-modal-title"
-                className="text-3xl font-bold text-[#f5f6f7] sm:text-4xl"
+                className="text-3xl font-bold text-[#f7f6f3] sm:text-4xl"
               >
                 Join the Waitlist
               </h2>
 
               <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-6">
-                <label className="flex flex-col gap-2 text-sm font-semibold uppercase tracking-[0.12em] text-[#c7c9cc]">
+                <label className="flex flex-col gap-2 text-sm font-semibold uppercase tracking-[0.12em] text-[#f7f6f3]">
                   First Name
                   <input
                     type="text"
                     name="firstName"
-                    className="h-12 rounded-full border border-transparent bg-[#4a4c53] px-5 text-base font-normal text-[#f7f6f3] placeholder:text-[#93959a] focus:border-[#de5e48] focus:outline-none focus:ring-2 focus:ring-[#de5e48]"
+                    className="h-12 rounded-full border border-transparent bg-[#4a4c53] px-5 text-base font-normal text-[#f7f6f3] placeholder:text-[#f7f6f3] focus:border-[#de5e48] focus:outline-none focus:ring-2 focus:ring-[#de5e48]"
                     placeholder="Enter your first name"
                     value={formValues.firstName}
                     onChange={handleFirstNameChange}
@@ -650,18 +658,18 @@ export default function Home() {
                     aria-invalid={firstNameErrors.length > 0}
                   />
                   {firstNameErrors.length > 0 ? (
-                    <span className="text-xs font-normal uppercase tracking-[0.1em] text-[#f8c0b4]">
+                    <span className="text-xs font-normal uppercase tracking-[0.1em] text-[#f7f6f3]">
                       {firstNameErrors[0]}
                     </span>
                   ) : null}
                 </label>
 
-                <label className="flex flex-col gap-2 text-sm font-semibold uppercase tracking-[0.12em] text-[#c7c9cc]">
+                <label className="flex flex-col gap-2 text-sm font-semibold uppercase tracking-[0.12em] text-[#f7f6f3]">
                   Last Name
                   <input
                     type="text"
                     name="lastName"
-                    className="h-12 rounded-full border border-transparent bg-[#4a4c53] px-5 text-base font-normal text-[#f7f6f3] placeholder:text-[#93959a] focus:border-[#de5e48] focus:outline-none focus:ring-2 focus:ring-[#de5e48]"
+                    className="h-12 rounded-full border border-transparent bg-[#4a4c53] px-5 text-base font-normal text-[#f7f6f3] placeholder:text-[#f7f6f3] focus:border-[#de5e48] focus:outline-none focus:ring-2 focus:ring-[#de5e48]"
                     placeholder="Enter your last name"
                     value={formValues.lastName}
                     onChange={handleLastNameChange}
@@ -669,18 +677,18 @@ export default function Home() {
                     aria-invalid={lastNameErrors.length > 0}
                   />
                   {lastNameErrors.length > 0 ? (
-                    <span className="text-xs font-normal uppercase tracking-[0.1em] text-[#f8c0b4]">
+                    <span className="text-xs font-normal uppercase tracking-[0.1em] text-[#f7f6f3]">
                       {lastNameErrors[0]}
                     </span>
                   ) : null}
                 </label>
 
-                <label className="flex flex-col gap-2 text-sm font-semibold uppercase tracking-[0.12em] text-[#c7c9cc]">
+                <label className="flex flex-col gap-2 text-sm font-semibold uppercase tracking-[0.12em] text-[#f7f6f3]">
                   Email
                   <input
                     type="email"
                     name="email"
-                    className="h-12 rounded-full border border-transparent bg-[#4a4c53] px-5 text-base font-normal text-[#f7f6f3] placeholder:text-[#93959a] focus:border-[#de5e48] focus:outline-none focus:ring-2 focus:ring-[#de5e48]"
+                    className="h-12 rounded-full border border-transparent bg-[#4a4c53] px-5 text-base font-normal text-[#f7f6f3] placeholder:text-[#f7f6f3] focus:border-[#de5e48] focus:outline-none focus:ring-2 focus:ring-[#de5e48]"
                     placeholder="Enter your email"
                     value={formValues.email}
                     onChange={handleEmailChange}
@@ -689,17 +697,17 @@ export default function Home() {
                     required
                   />
                   {emailErrorMessage ? (
-                    <span className="text-xs font-normal uppercase tracking-[0.1em] text-[#f8c0b4]">
+                    <span className="text-xs font-normal uppercase tracking-[0.1em] text-[#f7f6f3]">
                       {emailErrorMessage}
                     </span>
                   ) : null}
                 </label>
 
-                <label className="flex items-start gap-3 text-sm text-[#d1d3d4]">
+                <label className="flex items-start gap-3 text-sm text-[#f7f6f3]">
                   <input
                     type="checkbox"
                     name="marketingConsent"
-                    className="mt-[2px] h-5 w-5 rounded border border-[#63656b] bg-[#2c2d33] text-[#de5e48] focus:ring-[#de5e48]"
+                    className="mt-[2px] h-5 w-5 rounded border border-[#63656b] bg-[#2c2d33] text-[#f7f6f3] focus:ring-[#de5e48]"
                     checked={formValues.marketingConsent}
                     onChange={handleConsentChange}
                     required
@@ -709,7 +717,7 @@ export default function Home() {
                   Insurance.
                 </label>
                 {marketingConsentErrors.length > 0 ? (
-                  <span className="text-xs font-normal uppercase tracking-[0.1em] text-[#f8c0b4]">
+                  <span className="text-xs font-normal uppercase tracking-[0.1em] text-[#f7f6f3]">
                     {marketingConsentErrors[0]}
                   </span>
                 ) : null}
@@ -720,14 +728,14 @@ export default function Home() {
                   </div>
                 ) : null}
                 {resolvedCaptchaError ? (
-                  <span className="text-xs font-normal uppercase tracking-[0.1em] text-[#f8c0b4]">
+                  <span className="text-xs font-normal uppercase tracking-[0.1em] text-[#f7f6f3]">
                     {resolvedCaptchaError}
                   </span>
                 ) : null}
-                <p className="mt-1 text-center text-xs text-[#a1a3aa]">
+                <p className="mt-1 text-center text-xs text-[#f7f6f3]">
                   This site is protected by reCAPTCHA and the Google{" "}
                   <a
-                    className="underline transition hover:text-[#f5f6f7]"
+                    className="underline transition hover:text-[#f7f6f3]"
                     href="https://policies.google.com/privacy"
                     rel="noreferrer"
                     target="_blank"
@@ -736,7 +744,7 @@ export default function Home() {
                   </a>{" "}
                   and{" "}
                   <a
-                    className="underline transition hover:text-[#f5f6f7]"
+                    className="underline transition hover:text-[#f7f6f3]"
                     href="https://policies.google.com/terms"
                     rel="noreferrer"
                     target="_blank"
@@ -759,7 +767,7 @@ export default function Home() {
                   {isPending ? "Submitting..." : "Submit"}
                 </button>
                 {formMessage ? (
-                  <p className="text-sm font-medium text-[#f8c0b4]">
+                  <p className="text-sm font-medium text-[#f7f6f3]">
                     {formMessage}
                   </p>
                 ) : null}
