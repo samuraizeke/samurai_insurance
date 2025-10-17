@@ -522,8 +522,8 @@ export default function Home() {
   return (
     <div className={`${alteHaasGrotesk.className} min-h-screen flex flex-col`}>
       <header className="w-full">
-        <div className="flex w-full items-center justify-between px-12 pt-10 sm:px-16">
-          <div className="flex items-center gap-4">
+        <div className="flex w-full flex-col items-center gap-4 px-6 pt-8 text-center sm:flex-row sm:items-center sm:justify-between sm:gap-0 sm:px-16 sm:pt-10 sm:text-left">
+          <div className="flex items-center justify-center gap-4 sm:justify-start">
             <Image
               src="/SamuraiLogoOrange.png"
               alt="Samurai Insurance logo"
@@ -531,12 +531,12 @@ export default function Home() {
               height={32}
               priority
             />
-            <span className="text-base font-bold uppercase text-[#d1d3d4] sm:text-2xl">
+            <span className="whitespace-nowrap text-lg font-bold uppercase text-[#d1d3d4] sm:text-2xl">
               Samurai Insurance
             </span>
           </div>
           <button
-            className="focus-outline-brand-sm rounded-full bg-[#de5e48] px-6 py-2 text-med font-bold text-[#f7f6f3] shadow-[0_3px_8px_rgba(222,94,72,0.18)] transition hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(222,94,72,0.24)]"
+            className="hidden sm:inline-flex focus-outline-brand-sm rounded-full bg-[#de5e48] px-6 py-2 text-med font-bold text-[#f7f6f3] shadow-[0_3px_8px_rgba(222,94,72,0.18)] transition hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(222,94,72,0.24)]"
             onClick={handleOpenModal}
             type="button"
           >
@@ -557,7 +557,7 @@ export default function Home() {
                 your always available AI insurance brokerage.
               </p>
               <button
-                className="focus-outline-brand-lg mt-10 inline-flex items-center justify-center rounded-full bg-[#de5e48] px-8 py-3 text-lg font-bold text-[#f7f6f3] shadow-[0_4px_12px_rgba(222,94,72,0.22)] transition hover:-translate-y-0.5 hover:shadow-[0_6px_16px_rgba(222,94,72,0.27)]"
+                className="focus-outline-brand-lg mt-10 flex items-center justify-center rounded-full bg-[#de5e48] px-8 py-3 text-lg font-bold text-[#f7f6f3] shadow-[0_4px_12px_rgba(222,94,72,0.22)] transition hover:-translate-y-0.5 hover:shadow-[0_6px_16px_rgba(222,94,72,0.27)] mx-auto lg:mx-0"
                 onClick={handleOpenModal}
                 type="button"
               >
