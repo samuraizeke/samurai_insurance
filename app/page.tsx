@@ -713,6 +713,27 @@ export default function Home() {
                     {resolvedCaptchaError}
                   </span>
                 ) : null}
+                <p className="mt-1 text-center text-xs text-[#a1a3aa]">
+                  This site is protected by reCAPTCHA and the Google{" "}
+                  <a
+                    className="underline transition hover:text-[#f5f6f7]"
+                    href="https://policies.google.com/privacy"
+                    rel="noreferrer"
+                    target="_blank"
+                  >
+                    Privacy Policy
+                  </a>{" "}
+                  and{" "}
+                  <a
+                    className="underline transition hover:text-[#f5f6f7]"
+                    href="https://policies.google.com/terms"
+                    rel="noreferrer"
+                    target="_blank"
+                  >
+                    Terms of Service
+                  </a>{" "}
+                  apply.
+                </p>
 
                 <button
                   type="submit"

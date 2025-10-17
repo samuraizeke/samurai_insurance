@@ -69,3 +69,7 @@ button:disabled {
     transform: translateY(0) scale(1);
   }
 }
+
+.grecaptcha-badge {
+  visibility: hidden;
+}
