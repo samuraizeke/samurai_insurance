@@ -29,8 +29,8 @@ export const metadata: Metadata = {
   title: "Samurai Insurance",
   description: "Never Worry About Your P&C Insurance Again.",
   icons: {
-    icon: "/public/SamuraiLogoOrange.png",
-  },
+    icon: [{ url: '/icon.png', type: 'image/png' }], // ensure this exists
+  }
 };
 
 export default function RootLayout({
