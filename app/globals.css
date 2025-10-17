@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #333333;
+  --foreground: #d1d3d4;
 }
 
 @theme inline {
@@ -12,15 +12,60 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+@layer utilities {
+  .focus-outline-brand-sm {
+    outline: none;
+  }
+
+  .focus-outline-brand-sm:focus-visible {
+    outline: 2px solid #f7f6f3;
+    outline-offset: 2px;
+  }
+
+  .focus-outline-brand-lg {
+    outline: none;
+  }
+
+  .focus-outline-brand-lg:focus-visible {
+    outline: 2px solid #f7f6f3;
+    outline-offset: 3px;
+  }
+
+  .focus-outline-modal {
+    outline: none;
+  }
+
+  .focus-outline-modal:focus-visible {
+    outline: 2px solid #f5f6f7;
+    outline-offset: 2px;
+  }
+}
+
+@keyframes fade-in-up {
+  0% {
+    opacity: 0;
+    transform: translateY(16px) scale(0.96);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(-2px) scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
