@@ -612,10 +612,21 @@ export default function Home() {
               <button
                 type="button"
                 onClick={handleCloseModal}
-                className="focus-outline-modal absolute right-6 top-6 inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#2d2f36] text-2xl font-bold text-[#7d8087] transition hover:text-[#f5f6f7]"
+                className="focus-outline-modal absolute right-6 top-6 inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#2d2f36] text-[#7d8087] transition hover:text-[#f5f6f7]"
                 aria-label="Close waitlist modal"
               >
-                ×
+                <svg
+                  className="h-4 w-4"
+                  viewBox="0 0 12 12"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.75"
+                  strokeLinecap="round"
+                  aria-hidden="true"
+                >
+                  <path d="M2 2l8 8" />
+                  <path d="M10 2L2 10" />
+                </svg>
               </button>
 
               <h2
