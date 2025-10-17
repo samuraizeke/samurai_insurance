@@ -572,7 +572,7 @@ export default function Home() {
                   loop
                   muted
                   playsInline
-                  src="https://samuraiinsurancestorage.blob.core.windows.net/videos/out-2.mp4?sp=r&st=2025-10-16T22:43:20Z&se=2025-10-17T06:58:20Z&spr=https&sv=2024-11-04&sr=b&sig=zpBQWNy1HxDrtFnma0EX35v9rf2iiqi4ZjUQjHJl0S0%3D"
+                  src="https://samuraiinsurancestorage.blob.core.windows.net/videos/out-2.mp4?sp=r&st=2025-10-17T12:58:17Z&se=2028-10-31T21:13:17Z&spr=https&sv=2024-11-04&sr=b&sig=Ml2b8cU0sG47nhApljxTBDIdgipfuo%2B%2FPOw7MQA67xE%3D"
                 >
                   Your browser does not support the video tag.
                 </video>
