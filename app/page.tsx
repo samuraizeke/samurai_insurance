@@ -556,13 +556,12 @@ export default function Home() {
           <div className="flex flex-col gap-12 lg:flex-row lg:items-center">
             <div className="max-w-2xl lg:flex-1 lg:max-w-none">
               <h1 className="font-bold leading-tight text-[#f7f6f3] text-4xl sm:text-5xl md:text-6xl lg:text-[64px] lg:leading-[1.05]">
-                Never Worry About Your Home & Auto Insurance Again.
+                Never Worry About Your Insurance Again.
               </h1>
               <p
                 className={`${workSans.className} mt-6 text-lg leading-relaxed text-[#f7f6f3] sm:text-xl`}
               >
-                Get clarity on your personal home and auto coverage, review your policies, and save money on renewals with
-                your always available AI insurance brokerage.
+                We handle everything on your car and home insurance so you can relax. AI that shops for better rates, guides you through claims, and makes updates when you need it.
               </p>
               <button
                 className="focus-outline-brand-lg mt-10 flex items-center justify-center rounded-full bg-[#de5e48] px-8 py-3 text-lg font-bold text-[#f7f6f3] shadow-[0_4px_12px_rgba(222,94,72,0.22)] transition hover:-translate-y-0.5 hover:shadow-[0_6px_16px_rgba(222,94,72,0.27)] mx-auto lg:mx-0"
