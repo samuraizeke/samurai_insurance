@@ -62,6 +62,7 @@ export default function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const toastTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const heroVideoRef = useRef<HTMLVideoElement | null>(null);
   const processVideoRef = useRef<HTMLVideoElement | null>(null);
   const [openFaqs, setOpenFaqs] = useState<Set<number>>(() => new Set());
 
@@ -71,6 +72,57 @@ export default function Home() {
         clearTimeout(toastTimeoutRef.current);
         toastTimeoutRef.current = null;
       }
+    };
+  }, []);
+  useEffect(() => {
+    const videos = [heroVideoRef.current, processVideoRef.current].filter(
+      (video): video is HTMLVideoElement => Boolean(video)
+    );
+    const cleanups: Array<() => void> = [];
+
+    videos.forEach((video) => {
+      video.defaultMuted = true;
+      video.muted = true;
+
+      const attemptPlay = () => {
+        const playPromise = video.play();
+        if (playPromise && typeof playPromise.catch === "function") {
+          playPromise.catch(() => {
+            window.setTimeout(() => {
+              video.play().catch(() => {
+                // If autoplay is still blocked, the user will tap to play.
+              });
+            }, 150);
+          });
+        }
+      };
+
+      if (
+        video.readyState >= HTMLMediaElement.HAVE_ENOUGH_DATA ||
+        video.readyState === HTMLMediaElement.HAVE_FUTURE_DATA
+      ) {
+        attemptPlay();
+        return;
+      }
+
+      const handleLoaded = () => {
+        video.removeEventListener("loadeddata", handleLoaded);
+        video.removeEventListener("loadedmetadata", handleLoaded);
+        attemptPlay();
+      };
+
+      video.addEventListener("loadeddata", handleLoaded);
+      video.addEventListener("loadedmetadata", handleLoaded);
+      cleanups.push(() => {
+        video.removeEventListener("loadeddata", handleLoaded);
+        video.removeEventListener("loadedmetadata", handleLoaded);
+      });
+    });
+
+    return () => {
+      cleanups.forEach((cleanup) => {
+        cleanup();
+      });
     };
   }, []);
   useEffect(() => {
@@ -172,6 +224,7 @@ export default function Home() {
             <div className="w-full lg:flex-[2]">
               <div className="relative aspect-video w-full overflow-hidden rounded-3xl">
                 <video
+                  ref={heroVideoRef}
                   className="h-full w-full object-cover"
                   autoPlay
                   muted
