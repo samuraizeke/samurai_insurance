@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import Script from "next/script";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import CustomCursor from "./components/CustomCursor";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -12,18 +12,6 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
-
-const recaptchaSiteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ?? "";
-const recaptchaVersion =
-  process.env.NEXT_PUBLIC_RECAPTCHA_VERSION?.toLowerCase() ?? "v2";
-const recaptchaScriptSrc =
-  recaptchaVersion === "v3"
-    ? recaptchaSiteKey
-      ? `https://www.google.com/recaptcha/api.js?render=${encodeURIComponent(
-          recaptchaSiteKey
-        )}`
-      : null
-    : "https://www.google.com/recaptcha/api.js?render=explicit";
 
 export const metadata: Metadata = {
   title: "Samurai Insurance",
@@ -43,9 +31,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {recaptchaScriptSrc ? (
-          <Script src={recaptchaScriptSrc} strategy="afterInteractive" />
-        ) : null}
+        <CustomCursor />
         {children}
       </body>
     </html>

@@ -1,65 +1,9 @@
 'use client';
 
 import Image from "next/image";
-import localFont from "next/font/local";
-import { Work_Sans } from "next/font/google";
-import type { ChangeEvent, FormEvent } from "react";
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  useTransition,
-} from "react";
-import { submitWaitlist } from "@/app/actions/submitWaitlist";
-import type { WaitlistActionResult } from "@/app/actions/submitWaitlist";
-import {
-  waitlistSchema,
-  waitlistSubmissionSchema,
-  type WaitlistPayload,
-} from "@/lib/schemas";
-
-declare global {
-  interface Window {
-    grecaptcha?: {
-      render: (
-        container: HTMLElement,
-        parameters: {
-          sitekey: string;
-          callback?: (token: string) => void;
-          "expired-callback"?: () => void;
-          "error-callback"?: () => void;
-        }
-      ) => number;
-      reset: (widgetId: number) => void;
-      getResponse: (widgetId: number) => string;
-      ready?: (callback: () => void) => void;
-    };
-  }
-}
-
-const alteHaasGrotesk = localFont({
-  src: [
-    {
-      path: "../public/fonts/AlteHaasGroteskRegular.ttf",
-      weight: "400",
-      style: "normal",
-    },
-    {
-      path: "../public/fonts/AlteHaasGroteskBold.ttf",
-      weight: "700",
-      style: "normal",
-    },
-  ],
-  display: "swap",
-  fallback: [],
-});
-
-const workSans = Work_Sans({
-  weight: "400",
-  subsets: ["latin"],
-});
+import dynamic from "next/dynamic";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { alteHaasGrotesk, workSans } from "@/lib/fonts";
 
 const faqItems = [
   {
@@ -85,34 +29,40 @@ const faqItems = [
   },
 ] as const;
 
-const createInitialFormValues = () => ({
-  firstName: "",
-  lastName: "",
-  email: "",
-  marketingConsent: false,
-});
-type FormValues = ReturnType<typeof createInitialFormValues>;
-type FieldErrors = Partial<Record<keyof WaitlistPayload, string[]>>;
-const WAITLIST_SOURCE = "Lander" as const;
-const INITIAL_FORM_VALUES: FormValues = createInitialFormValues();
+const processSteps = [
+  {
+    number: "01",
+    title: "UNDERSTAND",
+    description:
+      "When we invite you, answer a few simple questions. We learn what you need.",
+  },
+  {
+    number: "02",
+    title: "RECOMMEND",
+    description:
+      "We compare options and set up the policy that fits you best. You approve with one click.",
+  },
+  {
+    number: "03",
+    title: "CHECK",
+    description:
+      "Each year we shop again. If a better option appears, we tell you and handle the switch.",
+  },
+] as const;
+
+const WaitlistModal = dynamic(
+  () => import("@/app/components/WaitlistModal"),
+  {
+    loading: () => null,
+    ssr: false,
+  }
+);
 
 export default function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [formValues, setFormValues] = useState<FormValues>(INITIAL_FORM_VALUES);
-  const [emailTouched, setEmailTouched] = useState(false);
-  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
-  const [formMessage, setFormMessage] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const toastTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const captchaContainerRef = useRef<HTMLDivElement | null>(null);
-  const [captchaWidgetId, setCaptchaWidgetId] = useState<number | null>(null);
-  const [captchaToken, setCaptchaToken] = useState("");
-  const [captchaError, setCaptchaError] = useState<string | null>(null);
-  const recaptchaSiteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ?? "";
-  const recaptchaVersion =
-    process.env.NEXT_PUBLIC_RECAPTCHA_VERSION?.toLowerCase() ?? "v2";
-  const isRecaptchaV3 = recaptchaVersion === "v3";
+  const processVideoRef = useRef<HTMLVideoElement | null>(null);
   const [openFaqs, setOpenFaqs] = useState<Set<number>>(() => new Set());
 
   useEffect(() => {
@@ -123,6 +73,25 @@ export default function Home() {
       }
     };
   }, []);
+  useEffect(() => {
+    const video = processVideoRef.current;
+    if (!video) {
+      return;
+    }
+
+    const applyPlaybackRate = () => {
+      video.playbackRate = 0.6;
+    };
+
+    applyPlaybackRate();
+    video.addEventListener("loadedmetadata", applyPlaybackRate);
+    video.addEventListener("loadeddata", applyPlaybackRate);
+
+    return () => {
+      video.removeEventListener("loadedmetadata", applyPlaybackRate);
+      video.removeEventListener("loadeddata", applyPlaybackRate);
+    };
+  }, []);
 
   const handleOpenModal = useCallback(() => {
     setIsModalOpen(true);
@@ -131,296 +100,16 @@ export default function Home() {
   const handleCloseModal = useCallback(() => {
     setIsModalOpen(false);
   }, []);
-
-  const clearFieldError = useCallback(
-    (field: keyof WaitlistPayload) => {
-      setFieldErrors((prev) => {
-        if (!prev[field] || prev[field]!.length === 0) {
-          return prev;
-        }
-
-        const { [field]: _removed, ...rest } = prev;
-        return rest as FieldErrors;
-      });
-    },
-    []
-  );
-
-  const resetCaptcha = useCallback(
-    (options?: { preserveError?: boolean }) => {
-      if (
-        !isRecaptchaV3 &&
-        typeof window !== "undefined" &&
-        captchaWidgetId !== null
-      ) {
-        try {
-          window.grecaptcha?.reset(captchaWidgetId);
-        } catch (error) {
-          console.warn("Failed to reset reCAPTCHA widget", error);
-        }
-      }
-      setCaptchaToken("");
-      if (!options?.preserveError) {
-        setCaptchaError(null);
-        clearFieldError("captchaToken");
-      }
-    },
-    [captchaWidgetId, clearFieldError, isRecaptchaV3]
-  );
-
-  useEffect(() => {
-    if (!isModalOpen) {
-      resetCaptcha();
-      setCaptchaWidgetId(null);
+  const handleWaitlistSuccess = useCallback(() => {
+    if (toastTimeoutRef.current) {
+      clearTimeout(toastTimeoutRef.current);
     }
-  }, [isModalOpen, resetCaptcha]);
-
-  useEffect(() => {
-    if (isRecaptchaV3) {
-      return;
-    }
-
-    if (!isModalOpen || captchaWidgetId !== null) {
-      return;
-    }
-
-    if (!recaptchaSiteKey) {
-      setCaptchaError("Captcha is unavailable. Please try again later.");
-      return;
-    }
-
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    let cancelled = false;
-    let retryHandle: NodeJS.Timeout | null = null;
-
-    const renderCaptcha = () => {
-      if (
-        cancelled ||
-        !captchaContainerRef.current ||
-        !window.grecaptcha ||
-        typeof window.grecaptcha.render !== "function"
-      ) {
-        return;
-      }
-
-      const widgetId = window.grecaptcha.render(
-        captchaContainerRef.current,
-        {
-          sitekey: recaptchaSiteKey,
-          callback: (token: string) => {
-            setCaptchaToken(token);
-            setCaptchaError(null);
-            clearFieldError("captchaToken");
-          },
-          "expired-callback": () => {
-            setCaptchaToken("");
-            setCaptchaError("Captcha expired. Please verify again.");
-          },
-          "error-callback": () => {
-            setCaptchaToken("");
-            setCaptchaError(
-              "Captcha failed to load. Please refresh the page and try again."
-            );
-          },
-        }
-      );
-
-      if (!cancelled) {
-        setCaptchaWidgetId(widgetId);
-      }
-    };
-
-    const attemptRender = () => {
-      if (cancelled) {
-        return;
-      }
-
-      const grecaptcha = window.grecaptcha;
-
-      if (!grecaptcha) {
-        retryHandle = setTimeout(attemptRender, 300);
-        return;
-      }
-
-      if (typeof grecaptcha.ready === "function") {
-        grecaptcha.ready(() => {
-          if (!cancelled) {
-            renderCaptcha();
-          }
-        });
-        return;
-      }
-
-      renderCaptcha();
-    };
-
-    attemptRender();
-
-    return () => {
-      cancelled = true;
-      if (retryHandle) {
-        clearTimeout(retryHandle);
-      }
-    };
-  }, [
-    captchaWidgetId,
-    clearFieldError,
-    isModalOpen,
-    recaptchaSiteKey,
-    captchaContainerRef,
-    isRecaptchaV3,
-  ]);
-
-  const executeRecaptchaV3 = useCallback(async () => {
-    if (!isRecaptchaV3) {
-      return null;
-    }
-
-    if (!recaptchaSiteKey) {
-      setCaptchaError("Captcha is unavailable. Please try again later.");
-      return null;
-    }
-
-    if (typeof window === "undefined") {
-      return null;
-    }
-
-    type Grecaptcha = NonNullable<Window["grecaptcha"]> & {
-      execute: (
-        sitekey: string,
-        parameters?: {
-          action?: string;
-        }
-      ) => Promise<string>;
-    };
-
-    const waitForGreCaptcha = () =>
-      new Promise<Grecaptcha>((resolve, reject) => {
-        let attempts = 0;
-        const maxAttempts = 20;
-
-        const check = () => {
-          if (typeof window === "undefined") {
-            reject(new Error("Window is undefined"));
-            return;
-          }
-
-          const grecaptcha = window.grecaptcha as Grecaptcha | null;
-
-          if (grecaptcha && typeof grecaptcha.execute === "function") {
-            resolve(grecaptcha);
-            return;
-          }
-
-          attempts += 1;
-          if (attempts > maxAttempts) {
-            reject(new Error("grecaptcha is unavailable"));
-            return;
-          }
-
-          setTimeout(check, 150);
-        };
-
-        check();
-      });
-
-    let grecaptchaInstance: Grecaptcha;
-
-    try {
-      grecaptchaInstance = await waitForGreCaptcha();
-    } catch (error) {
-      console.error("Failed to load reCAPTCHA v3", error);
-      setCaptchaError(
-        "Captcha failed to load. Please refresh the page and try again."
-      );
-      return null;
-    }
-
-    const getToken = () =>
-      grecaptchaInstance.execute(recaptchaSiteKey, {
-        action: "waitlist_submit",
-      });
-
-    try {
-      const readyFn = grecaptchaInstance.ready;
-      const token =
-        typeof readyFn === "function"
-          ? await new Promise<string>((resolve, reject) => {
-              readyFn.call(grecaptchaInstance, () => {
-                getToken().then(resolve).catch(reject);
-              });
-            })
-          : await getToken();
-
-      setCaptchaToken(token);
-      setCaptchaError(null);
-      clearFieldError("captchaToken");
-      return token;
-    } catch (error) {
-      console.error("Failed to execute reCAPTCHA v3", error);
-      setCaptchaError(
-        "Captcha verification failed. Please refresh the page and try again."
-      );
-      setCaptchaToken("");
-      return null;
-    }
-  }, [clearFieldError, isRecaptchaV3, recaptchaSiteKey]);
-
-  useEffect(() => {
-    if (!isRecaptchaV3 || !isModalOpen) {
-      return;
-    }
-
-    void executeRecaptchaV3();
-  }, [executeRecaptchaV3, isModalOpen, isRecaptchaV3]);
-
-  const handleFirstNameChange = useCallback(
-    (event: ChangeEvent<HTMLInputElement>) => {
-      setFormValues((prev) => ({
-        ...prev,
-        firstName: event.target.value,
-      }));
-      clearFieldError("firstName");
-    },
-    [clearFieldError]
-  );
-
-  const handleLastNameChange = useCallback(
-    (event: ChangeEvent<HTMLInputElement>) => {
-      setFormValues((prev) => ({
-        ...prev,
-        lastName: event.target.value,
-      }));
-      clearFieldError("lastName");
-    },
-    [clearFieldError]
-  );
-
-  const handleEmailChange = useCallback(
-    (event: ChangeEvent<HTMLInputElement>) => {
-      setFormValues((prev) => ({
-        ...prev,
-        email: event.target.value,
-      }));
-      clearFieldError("email");
-      setFormMessage(null);
-    },
-    [clearFieldError]
-  );
-
-  const handleConsentChange = useCallback(
-    (event: ChangeEvent<HTMLInputElement>) => {
-      setFormValues((prev) => ({
-        ...prev,
-        marketingConsent: event.target.checked,
-      }));
-      clearFieldError("marketingConsent");
-    },
-    [clearFieldError]
-  );
+    setShowSuccessToast(true);
+    toastTimeoutRef.current = setTimeout(() => {
+      setShowSuccessToast(false);
+      toastTimeoutRef.current = null;
+    }, 2000);
+  }, []);
 
   const handleToggleFaq = useCallback((index: number) => {
     setOpenFaqs((prev) => {
@@ -434,138 +123,10 @@ export default function Home() {
     });
   }, []);
 
-  const emailFormatIsValid = useMemo(() => {
-    return waitlistSchema.shape.email.safeParse(formValues.email.trim()).success;
-  }, [formValues.email]);
-
-  const isFormValid = useMemo(() => {
-    return waitlistSchema.safeParse({
-      ...formValues,
-      source: WAITLIST_SOURCE,
-    }).success;
-  }, [formValues]);
-
-  const emailErrorMessage =
-    (fieldErrors.email && fieldErrors.email[0]) ||
-    (emailTouched && !emailFormatIsValid ? "Enter a valid email address" : null);
-  const firstNameErrors = fieldErrors.firstName ?? [];
-  const lastNameErrors = fieldErrors.lastName ?? [];
-  const marketingConsentErrors = fieldErrors.marketingConsent ?? [];
-  const captchaFieldErrors = fieldErrors.captchaToken ?? [];
-  const resolvedCaptchaError =
-    captchaError ?? (captchaFieldErrors.length > 0 ? captchaFieldErrors[0] : null);
-
-  const handleSubmit = useCallback(
-    async (event: FormEvent<HTMLFormElement>) => {
-      event.preventDefault();
-
-      setEmailTouched(true);
-
-      const captchaMessage = isRecaptchaV3
-        ? "Captcha verification failed. Please try again."
-        : "Please verify that you are not a robot.";
-
-      let token = captchaToken;
-
-      if (isRecaptchaV3) {
-        const generatedToken = await executeRecaptchaV3();
-        if (!generatedToken) {
-          setFieldErrors((prev) => ({
-            ...prev,
-            captchaToken: [captchaMessage],
-          }));
-          return;
-        }
-        token = generatedToken;
-      } else if (!captchaToken) {
-        setCaptchaError(captchaMessage);
-        setFieldErrors((prev) => ({
-          ...prev,
-          captchaToken: [captchaMessage],
-        }));
-        return;
-      }
-
-      const candidate: WaitlistPayload = {
-        ...formValues,
-        email: formValues.email.trim().toLowerCase(),
-        source: WAITLIST_SOURCE,
-        captchaToken: token,
-      };
-
-      const parsed = waitlistSubmissionSchema.safeParse(candidate);
-
-      if (!parsed.success) {
-        setFieldErrors(
-          parsed.error.flatten().fieldErrors as FieldErrors
-        );
-        setFormMessage(null);
-        return;
-      }
-
-      setFieldErrors({});
-      setFormMessage(null);
-      setCaptchaError(null);
-
-      startTransition(() => {
-        void (async () => {
-          try {
-            const result: WaitlistActionResult = await submitWaitlist(parsed.data);
-
-            if (!result.success) {
-              const errors = result.errors as FieldErrors;
-              setFieldErrors(errors);
-              const captchaErrors = errors.captchaToken;
-              if (captchaErrors && captchaErrors.length > 0) {
-                setCaptchaError(captchaErrors[0]);
-                resetCaptcha({ preserveError: true });
-                if (isRecaptchaV3) {
-                  void executeRecaptchaV3();
-                }
-              }
-              if (Object.keys(result.errors).length === 0) {
-                setFormMessage("We couldn't submit the form. Please try again.");
-              }
-              return;
-            }
-
-          setFormValues(createInitialFormValues());
-            setEmailTouched(false);
-            setFieldErrors({});
-            setFormMessage(null);
-            resetCaptcha();
-            if (toastTimeoutRef.current) {
-              clearTimeout(toastTimeoutRef.current);
-              toastTimeoutRef.current = null;
-            }
-            setShowSuccessToast(true);
-            toastTimeoutRef.current = setTimeout(() => {
-              setShowSuccessToast(false);
-              toastTimeoutRef.current = null;
-            }, 2000);
-            handleCloseModal();
-          } catch (error) {
-            console.error("Unexpected error submitting waitlist form", error);
-            setFormMessage("Something went wrong. Please try again.");
-          }
-        })();
-      });
-    },
-    [
-      captchaToken,
-      executeRecaptchaV3,
-      formValues,
-      handleCloseModal,
-      isRecaptchaV3,
-      resetCaptcha,
-      startTransition,
-    ]
-  );
-
   return (
     <div className={`${alteHaasGrotesk.className} min-h-screen flex flex-col`}>
-      <header className="w-full">
-        <div className="flex w-full flex-col items-center gap-4 px-6 pt-8 text-center sm:flex-row sm:items-center sm:justify-between sm:gap-0 sm:px-16 sm:pt-10 sm:text-left">
+      <header className="sticky top-0 z-40 w-full bg-[#333333]">
+        <div className="flex w-full flex-col items-center gap-4 px-6 py-8 text-center sm:flex-row sm:items-center sm:justify-between sm:gap-0 sm:px-16 sm:py-10 sm:text-left">
           <div className="flex items-center justify-center gap-4 sm:justify-start">
             <Image
               src="/SamuraiLogoOrange.png"
@@ -588,8 +149,8 @@ export default function Home() {
         </div>
       </header>
 
-      <main className="flex flex-1 flex-col">
-        <section className="w-full px-12 pb-24 pt-12 sm:px-16 sm:pb-32 sm:pt-16">
+      <main className="flex flex-1 flex-col pb-24 sm:pb-0">
+        <section className="w-full px-12 pt-12 pb-32 sm:px-16 sm:pt-16 sm:pb-44">
           <div className="flex flex-col gap-12 lg:flex-row lg:items-center">
             <div className="max-w-2xl lg:flex-1 lg:max-w-none">
               <h1 className="font-bold leading-tight text-[#f7f6f3] text-4xl sm:text-5xl md:text-6xl lg:text-[64px] lg:leading-[1.05]">
@@ -601,7 +162,7 @@ export default function Home() {
                 We handle everything on your car and home insurance so you can relax. AI that shops for better rates, guides you through claims, and makes updates when you need it.
               </p>
               <button
-                className="focus-outline-brand-lg mt-10 flex items-center justify-center rounded-full bg-[#de5e48] px-8 py-3 text-lg font-bold text-[#f7f6f3] shadow-[0_4px_12px_rgba(222,94,72,0.22)] transition hover:-translate-y-0.5 hover:shadow-[0_6px_16px_rgba(222,94,72,0.27)] mx-auto lg:mx-0"
+                className="focus-outline-brand-lg mt-10 hidden items-center justify-center rounded-full bg-[#de5e48] px-8 py-3 text-lg font-bold text-[#f7f6f3] shadow-[0_4px_12px_rgba(222,94,72,0.22)] transition hover:-translate-y-0.5 hover:shadow-[0_6px_16px_rgba(222,94,72,0.27)] sm:flex mx-auto lg:mx-0"
                 onClick={handleOpenModal}
                 type="button"
               >
@@ -615,6 +176,7 @@ export default function Home() {
                   autoPlay
                   muted
                   playsInline
+                  preload="metadata"
                   onEnded={(event) => event.currentTarget.pause()}
                   src="https://samuraiinsurancestorage.blob.core.windows.net/videos/out.mp4?sp=r&st=2025-10-17T20:30:19Z&se=2028-12-31T05:45:19Z&spr=https&sv=2024-11-04&sr=b&sig=PHRlMyRp0HKt09E62qHJ5fbNsrk2vQ0ZJeinMaIeE6o%3D"
                 >
@@ -624,7 +186,57 @@ export default function Home() {
             </div>
           </div>
         </section>
-        <section className="w-full px-12 pb-24 sm:px-16 sm:pb-32">
+        <section className="relative isolate min-h-[calc(100vh-160px)] overflow-hidden">
+          <video
+            ref={processVideoRef}
+            className="absolute inset-0 h-full w-full object-cover"
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="metadata"
+            src="https://samuraiinsurancestorage.blob.core.windows.net/videos/traffic%20background.mp4?sp=r&st=2025-10-20T23:36:36Z&se=2027-12-31T08:51:36Z&spr=https&sv=2024-11-04&sr=b&sig=%2FI%2FI4hmtypmJof3J%2FP%2B0UNgVvpa%2B0HMKyiJg%2FrV3lPk%3D"
+          >
+            Your browser does not support the video tag.
+          </video>
+          <div
+            className="absolute inset-0 bg-[#0f0f10]/70 mix-blend-multiply"
+            aria-hidden="true"
+          />
+          <div className="relative mx-auto flex w-full max-w-6xl flex-col gap-12 px-12 py-24 sm:px-16 sm:py-32 lg:flex-row lg:items-center lg:gap-24">
+            <div className="order-first w-full text-center lg:order-2 lg:flex-1 lg:flex lg:flex-col lg:items-end lg:text-right">
+              <p className="text-4xl font-bold leading-tight text-[#f7f6f3] sm:text-[56px] lg:max-w-sm lg:text-[64px] lg:leading-[1.08]">
+                <span className="block">Go from Worried</span>
+                <span className="block">to Relieved</span>
+              </p>
+            </div>
+            <ul className="flex flex-1 flex-col gap-8 lg:order-1">
+              {processSteps.map((step) => (
+                <li key={step.title}>
+                  <div
+                    tabIndex={0}
+                    className="group relative overflow-hidden rounded-[32px] border border-white/10 bg-[#0f0f10]/40 px-7 py-8 transition duration-300 ease-out hover:border-[#f7f6f3]/40 hover:bg-[#0f0f10]/55 focus:outline-none focus-visible:border-[#f7f6f3]/40 focus-visible:ring-2 focus-visible:ring-[#f7f6f3]/40 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
+                  >
+                    <div className="flex flex-wrap items-baseline gap-4 sm:flex-nowrap sm:items-center sm:gap-7">
+                      <span className="text-4xl font-bold text-[#de5e48] sm:text-6xl lg:text-7xl">
+                        {step.number}
+                      </span>
+                      <span className="text-2xl font-bold uppercase tracking-wide text-[#f7f6f3] sm:text-4xl lg:text-5xl">
+                        {step.title}
+                      </span>
+                    </div>
+                    <div
+                      className={`${workSans.className} max-h-0 overflow-hidden pt-0 text-lg leading-relaxed text-[#f7f6f3]/90 opacity-0 transition-all duration-300 ease-in-out group-hover:max-h-48 group-hover:pt-6 group-hover:opacity-100 group-focus-within:max-h-48 group-focus-within:pt-6 group-focus-within:opacity-100 sm:text-xl`}
+                    >
+                      <p>{step.description}</p>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+        <section className="w-full px-12 pb-28 pt-16 sm:px-16 sm:pb-36 sm:pt-20">
           <div className="flex flex-col gap-10 lg:flex-row lg:items-start lg:gap-20">
             <div className="lg:w-1/3">
               <h2 className="text-[56px] font-bold tracking-tight text-[#f7f6f3] sm:text-[64px]">
@@ -673,6 +285,109 @@ export default function Home() {
         </section>
       </main>
 
+      <button
+        className="focus-outline-brand-lg fixed bottom-16 left-1/2 z-40 flex w-[calc(100%-3rem)] max-w-xs -translate-x-1/2 items-center justify-center rounded-full bg-[#de5e48] px-6 py-3 text-base font-bold text-[#f7f6f3] shadow-[0_8px_20px_rgba(222,94,72,0.28)] transition hover:-translate-y-0.5 hover:shadow-[0_10px_24px_rgba(222,94,72,0.32)] sm:hidden"
+        onClick={handleOpenModal}
+        type="button"
+      >
+        Join the Waitlist
+      </button>
+
+      <footer className="pt-8 pb-28 sm:pb-8">
+        <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-4 px-8 text-center sm:flex-row sm:justify-between sm:text-left">
+          <p className={`${workSans.className} text-sm text-[#f7f6f3]/80`}>
+            © 2025 Samurai Insurance. All Rights Reserved.
+          </p>
+          <nav aria-label="Social media">
+            <ul className="flex flex-wrap items-center justify-center gap-3">
+              <li>
+                <a
+                  href="https://www.facebook.com/profile.php?id=61579597801044"
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  aria-label="Facebook"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full text-[#de5e48] transition hover:text-[#ffb8a9] hover:bg-[#de5e48]/15"
+                >
+                  <span className="sr-only">Facebook</span>
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 24 24"
+                    className="h-5 w-5"
+                    fill="currentColor"
+                  >
+                    <path d="M22 12.07C22 6.476 17.523 2 11.93 2S1.86 6.476 1.86 12.07c0 4.97 3.657 9.09 8.438 9.87v-6.99H7.898v-2.88h2.4V9.845c0-2.37 1.422-3.677 3.6-3.677 1.043 0 2.134.186 2.134.186v2.35h-1.202c-1.185 0-1.556.738-1.556 1.49v1.79h2.65l-.423 2.88h-2.227v6.99c4.78-.78 8.437-4.9 8.437-9.87Z" />
+                  </svg>
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.instagram.com/samuraicodeai?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw=="
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  aria-label="Instagram"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full text-[#de5e48] transition hover:text-[#ffb8a9] hover:bg-[#de5e48]/15"
+                >
+                  <span className="sr-only">Instagram</span>
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 24 24"
+                    className="h-5 w-5"
+                    fill="currentColor"
+                  >
+                    <path d="M7.5 2h9A5.5 5.5 0 0 1 22 7.5v9A5.5 5.5 0 0 1 16.5 22h-9A5.5 5.5 0 0 1 2 16.5v-9A5.5 5.5 0 0 1 7.5 2Zm0 2A3.5 3.5 0 0 0 4 7.5v9A3.5 3.5 0 0 0 7.5 20h9a3.5 3.5 0 0 0 3.5-3.5v-9A3.5 3.5 0 0 0 16.5 4h-9Z" />
+                    <path d="M12 7.5a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9Zm0 2a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5Z" />
+                    <circle cx="17.5" cy="6.5" r="1.25" />
+                  </svg>
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://x.com/SamuraiCodeAi"
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  aria-label="X"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full text-[#de5e48] transition hover:text-[#ffb8a9] hover:bg-[#de5e48]/15"
+                >
+                  <span className="sr-only">X</span>
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 24 24"
+                    className="h-5 w-5"
+                    fill="currentColor"
+                  >
+                    <path d="M3.5 3h4.2l4.1 6.1L16.6 3H21l-6.7 8 7 10h-4.2l-4.4-6.5L7.4 21H3l7.1-8.4L3.5 3Z" />
+                  </svg>
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.youtube.com/@SamuraiCodeAi"
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  aria-label="YouTube"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full text-[#de5e48] transition hover:text-[#ffb8a9] hover:bg-[#de5e48]/15"
+                >
+                  <span className="sr-only">YouTube</span>
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 24 24"
+                    className="h-[22px] w-[22px]"
+                    fill="none"
+                  >
+                    <path
+                      fill="currentColor"
+                      fillRule="evenodd"
+                      clipRule="evenodd"
+                      d="M21.8 7.8c-.1-.8-.3-1.5-.8-2-.6-.7-1.4-.9-1.8-.9-2.9-.2-7.2-.2-7.2-.2s-4.3 0-7.2.2c-.4 0-1.2.2-1.8.9-.5.5-.7 1.2-.8 2-.2 1.5-.2 3.2-.2 3.2s0 1.7.2 3.2c.1.8.3 1.5.8 2 .6.7 1.4.9 1.8.9 2.9.2 7.2.2 7.2.2s4.3 0 7.2-.2c.4 0 1.2-.2 1.8-.9.5-.5.7-1.2.8-2 .2-1.5.2-3.2.2-3.2s0-1.7-.2-3.2ZM10 9.75v4.5l3.75-2.25L10 9.75Z"
+                    />
+                  </svg>
+                </a>
+              </li>
+            </ul>
+          </nav>
+        </div>
+      </footer>
+
       {showSuccessToast ? (
         <div
           className={`${alteHaasGrotesk.className} pointer-events-none fixed inset-0 z-50 flex items-center justify-center`}
@@ -683,182 +398,11 @@ export default function Home() {
         </div>
       ) : null}
 
-      {isModalOpen ? (
-        <div
-          className="fixed inset-0 z-50"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="waitlist-modal-title"
-        >
-          <div
-            className="absolute inset-0 bg-[#0f0f10]/60 backdrop-blur-sm"
-            onClick={handleCloseModal}
-            aria-hidden="true"
-          />
-
-          <div className="relative flex h-full w-full items-center justify-center p-4 sm:p-8">
-            <div
-              className={`${alteHaasGrotesk.className} relative w-full max-w-xl rounded-[48px] bg-[#3a3c43] px-8 py-10 text-[#f7f6f3] shadow-[0_20px_60px_rgba(0,0,0,0.35)] sm:px-10`}
-            >
-              <button
-                type="button"
-                onClick={handleCloseModal}
-                className="focus-outline-modal absolute right-6 top-6 inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#2d2f36] text-[#f7f6f3] transition hover:text-[#f7f6f3]"
-                aria-label="Close waitlist modal"
-              >
-                <svg
-                  className="h-4 w-4"
-                  viewBox="0 0 12 12"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.75"
-                  strokeLinecap="round"
-                  aria-hidden="true"
-                >
-                  <path d="M2 2l8 8" />
-                  <path d="M10 2L2 10" />
-                </svg>
-              </button>
-
-              <h2
-                id="waitlist-modal-title"
-                className="text-3xl font-bold text-[#f7f6f3] sm:text-4xl"
-              >
-                Join the Waitlist
-              </h2>
-
-              <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-6">
-                <label className="flex flex-col gap-2 text-sm font-semibold uppercase tracking-[0.12em] text-[#f7f6f3]">
-                  First Name
-                  <input
-                    type="text"
-                    name="firstName"
-                    className="h-12 rounded-full border border-transparent bg-[#4a4c53] px-5 text-base font-normal text-[#f7f6f3] placeholder:text-[#f7f6f3] focus:border-[#de5e48] focus:outline-none focus:ring-2 focus:ring-[#de5e48]"
-                    placeholder="Enter your first name"
-                    value={formValues.firstName}
-                    onChange={handleFirstNameChange}
-                    required
-                    aria-invalid={firstNameErrors.length > 0}
-                  />
-                  {firstNameErrors.length > 0 ? (
-                    <span className="text-xs font-normal uppercase tracking-[0.1em] text-[#f7f6f3]">
-                      {firstNameErrors[0]}
-                    </span>
-                  ) : null}
-                </label>
-
-                <label className="flex flex-col gap-2 text-sm font-semibold uppercase tracking-[0.12em] text-[#f7f6f3]">
-                  Last Name
-                  <input
-                    type="text"
-                    name="lastName"
-                    className="h-12 rounded-full border border-transparent bg-[#4a4c53] px-5 text-base font-normal text-[#f7f6f3] placeholder:text-[#f7f6f3] focus:border-[#de5e48] focus:outline-none focus:ring-2 focus:ring-[#de5e48]"
-                    placeholder="Enter your last name"
-                    value={formValues.lastName}
-                    onChange={handleLastNameChange}
-                    required
-                    aria-invalid={lastNameErrors.length > 0}
-                  />
-                  {lastNameErrors.length > 0 ? (
-                    <span className="text-xs font-normal uppercase tracking-[0.1em] text-[#f7f6f3]">
-                      {lastNameErrors[0]}
-                    </span>
-                  ) : null}
-                </label>
-
-                <label className="flex flex-col gap-2 text-sm font-semibold uppercase tracking-[0.12em] text-[#f7f6f3]">
-                  Email
-                  <input
-                    type="email"
-                    name="email"
-                    className="h-12 rounded-full border border-transparent bg-[#4a4c53] px-5 text-base font-normal text-[#f7f6f3] placeholder:text-[#f7f6f3] focus:border-[#de5e48] focus:outline-none focus:ring-2 focus:ring-[#de5e48]"
-                    placeholder="Enter your email"
-                    value={formValues.email}
-                    onChange={handleEmailChange}
-                    onBlur={() => setEmailTouched(true)}
-                    aria-invalid={Boolean(emailErrorMessage)}
-                    required
-                  />
-                  {emailErrorMessage ? (
-                    <span className="text-xs font-normal uppercase tracking-[0.1em] text-[#f7f6f3]">
-                      {emailErrorMessage}
-                    </span>
-                  ) : null}
-                </label>
-
-                <label className="flex items-start gap-3 text-sm text-[#f7f6f3]">
-                  <input
-                    type="checkbox"
-                    name="marketingConsent"
-                    className="mt-[2px] h-5 w-5 rounded border border-[#63656b] bg-[#2c2d33] text-[#f7f6f3] focus:ring-[#de5e48]"
-                    checked={formValues.marketingConsent}
-                    onChange={handleConsentChange}
-                    required
-                    aria-invalid={marketingConsentErrors.length > 0}
-                  />
-                  I agree to receive future marketing emails from Samurai
-                  Insurance.
-                </label>
-                {marketingConsentErrors.length > 0 ? (
-                  <span className="text-xs font-normal uppercase tracking-[0.1em] text-[#f7f6f3]">
-                    {marketingConsentErrors[0]}
-                  </span>
-                ) : null}
-
-                {!isRecaptchaV3 ? (
-                  <div className="flex justify-center">
-                    <div ref={captchaContainerRef} />
-                  </div>
-                ) : null}
-                {resolvedCaptchaError ? (
-                  <span className="text-xs font-normal uppercase tracking-[0.1em] text-[#f7f6f3]">
-                    {resolvedCaptchaError}
-                  </span>
-                ) : null}
-                <p className="mt-1 text-center text-xs text-[#f7f6f3]">
-                  This site is protected by reCAPTCHA and the Google{" "}
-                  <a
-                    className="underline transition hover:text-[#f7f6f3]"
-                    href="https://policies.google.com/privacy"
-                    rel="noreferrer"
-                    target="_blank"
-                  >
-                    Privacy Policy
-                  </a>{" "}
-                  and{" "}
-                  <a
-                    className="underline transition hover:text-[#f7f6f3]"
-                    href="https://policies.google.com/terms"
-                    rel="noreferrer"
-                    target="_blank"
-                  >
-                    Terms of Service
-                  </a>{" "}
-                  apply.
-                </p>
-
-                <button
-                  type="submit"
-                  className="focus-outline-brand-lg mt-2 inline-flex items-center justify-center rounded-full bg-[#de5e48] px-8 py-3 text-lg font-bold text-[#f7f6f3] shadow-[0_4px_12px_rgba(222,94,72,0.22)] transition hover:-translate-y-0.5 hover:shadow-[0_6px_16px_rgba(222,94,72,0.27)] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:shadow-none"
-                  disabled={
-                    !isFormValid || isPending || (!isRecaptchaV3 && !captchaToken)
-                  }
-                  aria-disabled={
-                    !isFormValid || isPending || (!isRecaptchaV3 && !captchaToken)
-                  }
-                >
-                  {isPending ? "Submitting..." : "Submit"}
-                </button>
-                {formMessage ? (
-                  <p className="text-sm font-medium text-[#f7f6f3]">
-                    {formMessage}
-                  </p>
-                ) : null}
-              </form>
-            </div>
-          </div>
-        </div>
-      ) : null}
+      <WaitlistModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onSuccess={handleWaitlistSuccess}
+      />
     </div>
   );
 }
