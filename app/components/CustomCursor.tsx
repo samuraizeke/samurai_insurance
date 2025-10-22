@@ -14,6 +14,10 @@ type CursorPosition = {
   y: number;
 };
 
+type CursorInlineStyle = CSSProperties & {
+  "--cursor-scale"?: string;
+};
+
 const defaultPosition: CursorPosition = { x: 0, y: 0 };
 const LERP_FACTOR = 0.24;
 const INTERACTIVE_SELECTOR =
@@ -208,7 +212,7 @@ export function CustomCursor() {
       : "rgba(15, 15, 15, 0.3)";
     const backgroundRepeat = isHoveringInteractive ? "no-repeat, repeat" : undefined;
 
-    const style: CSSProperties = {
+    const style: CursorInlineStyle = {
       "--cursor-scale": scale.toFixed(3),
       background: interactiveBackground,
       backgroundBlendMode: isHoveringInteractive ? "screen" : undefined,
