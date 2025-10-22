@@ -30,6 +30,15 @@ button:disabled {
   cursor: not-allowed;
 }
 
+.custom-cursor {
+  --cursor-x: 0px;
+  --cursor-y: 0px;
+  --cursor-scale: 1;
+  transform: translate3d(var(--cursor-x), var(--cursor-y), 0)
+    translate(-50%, -50%) scale(var(--cursor-scale));
+  transform-origin: center;
+}
+
 @layer utilities {
   .focus-outline-brand-sm {
     outline: none;

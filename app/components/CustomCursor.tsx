@@ -1,6 +1,13 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  type CSSProperties,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 type CursorPosition = {
   x: number;
@@ -19,10 +26,11 @@ export function CustomCursor() {
   const [isHidden, setIsHidden] = useState(true);
   const [isPressed, setIsPressed] = useState(false);
   const [isHoveringInteractive, setIsHoveringInteractive] = useState(false);
-  const [renderPosition, setRenderPosition] =
-    useState<CursorPosition>(defaultPosition);
+  const [isSafari, setIsSafari] = useState(false);
 
+  const cursorRef = useRef<HTMLDivElement | null>(null);
   const targetPositionRef = useRef<CursorPosition>(defaultPosition);
+  const renderPositionRef = useRef<CursorPosition>(defaultPosition);
   const animationFrameRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -32,6 +40,11 @@ export function CustomCursor() {
     }
 
     setIsActive(true);
+    const userAgent = navigator.userAgent;
+    if (/^((?!chrome|android).)*safari/i.test(userAgent)) {
+      setIsSafari(true);
+    }
+
     const handleChange = (event: MediaQueryListEvent) => {
       if (event.matches) {
         setIsActive(false);
@@ -51,29 +64,47 @@ export function CustomCursor() {
     };
   }, []);
 
-  const animate = useCallback(() => {
-    setRenderPosition((previous) => {
-      const { x, y } = targetPositionRef.current;
-      const nextX = previous.x + (x - previous.x) * LERP_FACTOR;
-      const nextY = previous.y + (y - previous.y) * LERP_FACTOR;
-      const deltaX = Math.abs(nextX - x);
-      const deltaY = Math.abs(nextY - y);
+  const applyCursorTransform = useCallback((position: CursorPosition) => {
+    const element = cursorRef.current;
+    if (!element) {
+      return;
+    }
 
-      if (deltaX + deltaY < 0.15) {
-        animationFrameRef.current = null;
-        return targetPositionRef.current;
-      }
-
-      animationFrameRef.current = requestAnimationFrame(animate);
-      return { x: nextX, y: nextY };
-    });
+    element.style.setProperty("--cursor-x", `${position.x}px`);
+    element.style.setProperty("--cursor-y", `${position.y}px`);
   }, []);
+
+  const animate = useCallback(() => {
+    const target = targetPositionRef.current;
+    const previous = renderPositionRef.current;
+    const nextX = previous.x + (target.x - previous.x) * LERP_FACTOR;
+    const nextY = previous.y + (target.y - previous.y) * LERP_FACTOR;
+    const deltaX = Math.abs(nextX - target.x);
+    const deltaY = Math.abs(nextY - target.y);
+    const nextPosition = { x: nextX, y: nextY };
+
+    renderPositionRef.current = nextPosition;
+    applyCursorTransform(nextPosition);
+
+    if (deltaX + deltaY < 0.15) {
+      renderPositionRef.current = target;
+      applyCursorTransform(target);
+      animationFrameRef.current = null;
+      return;
+    }
+
+    animationFrameRef.current = requestAnimationFrame(animate);
+  }, [applyCursorTransform]);
 
   const ensureAnimationRunning = useCallback(() => {
     if (animationFrameRef.current === null) {
       animationFrameRef.current = requestAnimationFrame(animate);
     }
   }, [animate]);
+
+  useEffect(() => {
+    applyCursorTransform(renderPositionRef.current);
+  }, [applyCursorTransform]);
 
   const updateInteractiveHoverState = useCallback((target: EventTarget | null) => {
     if (!(target instanceof Element)) {
@@ -107,7 +138,8 @@ export function CustomCursor() {
 
       if (isHidden) {
         setIsHidden(false);
-        setRenderPosition(nextPosition);
+        renderPositionRef.current = nextPosition;
+        applyCursorTransform(nextPosition);
         return;
       }
 
@@ -148,7 +180,13 @@ export function CustomCursor() {
         animationFrameRef.current = null;
       }
     };
-  }, [ensureAnimationRunning, isActive, isHidden, updateInteractiveHoverState]);
+  }, [
+    applyCursorTransform,
+    ensureAnimationRunning,
+    isActive,
+    isHidden,
+    updateInteractiveHoverState,
+  ]);
 
   const cursorStyle = useMemo(() => {
     const baseScale = isHoveringInteractive ? 0.85 : 1;
@@ -157,7 +195,11 @@ export function CustomCursor() {
     const interactiveBackground = isHoveringInteractive
       ? `radial-gradient(circle at center, rgba(247, 246, 243, 0.92) 0%, rgba(247, 246, 243, 0.6) 40%, rgba(247, 246, 243, 0.25) 70%, rgba(247, 246, 243, 0) 100%), url(${NOISE_TEXTURE})`
       : "#f7f6f3";
-    const filterValue = isHoveringInteractive ? "blur(6px) contrast(115%)" : "none";
+    const filterValue = isHoveringInteractive
+      ? isSafari
+        ? "blur(3px) contrast(110%)"
+        : "blur(5px) contrast(115%)"
+      : "none";
     const boxShadowValue = isHoveringInteractive
       ? "0 0 25px rgba(247, 246, 243, 0.45)"
       : "0 0 0 rgba(0, 0, 0, 0)";
@@ -166,8 +208,8 @@ export function CustomCursor() {
       : "rgba(15, 15, 15, 0.3)";
     const backgroundRepeat = isHoveringInteractive ? "no-repeat, repeat" : undefined;
 
-    return {
-      transform: `translate3d(${renderPosition.x}px, ${renderPosition.y}px, 0) translate(-50%, -50%) scale(${scale})`,
+    const style: CSSProperties = {
+      "--cursor-scale": scale.toFixed(3),
       background: interactiveBackground,
       backgroundBlendMode: isHoveringInteractive ? "screen" : undefined,
       backgroundSize: isHoveringInteractive ? "125% 125%, 60px 60px" : undefined,
@@ -178,7 +220,8 @@ export function CustomCursor() {
       borderColor,
       willChange: "transform, filter",
     };
-  }, [isHoveringInteractive, isPressed, renderPosition]);
+    return style;
+  }, [isHoveringInteractive, isPressed, isSafari]);
 
   if (!isActive) {
     return null;
@@ -186,11 +229,13 @@ export function CustomCursor() {
 
   return (
     <div
+      ref={cursorRef}
       aria-hidden="true"
       className={[
-        "pointer-events-none fixed left-0 top-0 z-[9999] h-10 w-10 rounded-full",
+        "custom-cursor pointer-events-none fixed left-0 top-0 z-[9999] h-10 w-10 rounded-full",
         "border border-[#0f0f0f]/30 bg-[#f7f6f3] opacity-90 mix-blend-difference transition duration-150 ease-out",
         isHidden ? "opacity-0" : "opacity-90",
+        isHoveringInteractive ? "custom-cursor--interactive" : "",
       ].join(" ")}
       style={cursorStyle}
     />
