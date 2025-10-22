@@ -16,9 +16,12 @@ export const alteHaasGrotesk = localFont({
   ],
   display: "swap",
   fallback: [],
+  variable: "--font-alte-haas",
 });
 
 export const workSans = Work_Sans({
-  weight: "400",
+  weight: ["400"],
   subsets: ["latin"],
+  display: "swap",
+  variable: "--font-work-sans",
 });

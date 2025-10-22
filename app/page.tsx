@@ -211,7 +211,7 @@ export default function Home() {
               <p
                 className={`${workSans.className} mt-6 text-lg leading-relaxed text-[#f7f6f3] sm:text-xl`}
               >
-                We handle everything on your car and home insurance so you can relax. AI that shops for better rates, guides you through claims, and makes updates when you need it.
+                We handle everything on your car and home insurance so you can relax and save money. AI that shops for better rates, guides you through claims, and makes updates when you need it.
               </p>
               <button
                 className="focus-outline-brand-lg mt-10 hidden items-center justify-center rounded-full bg-[#de5e48] px-8 py-3 text-lg font-bold text-[#f7f6f3] shadow-[0_4px_12px_rgba(222,94,72,0.22)] transition hover:-translate-y-0.5 hover:shadow-[0_6px_16px_rgba(222,94,72,0.27)] sm:flex mx-auto lg:mx-0"
@@ -239,7 +239,7 @@ export default function Home() {
             </div>
           </div>
         </section>
-        <section className="relative isolate min-h-[calc(100vh-160px)] overflow-hidden">
+        <section className="relative isolate min-h-[calc(100vh-160px)] overflow-hidden lg:h-[min(900px,calc(100vh-80px))] lg:overflow-y-auto">
           <video
             ref={processVideoRef}
             className="absolute inset-0 h-full w-full object-cover"
@@ -256,14 +256,14 @@ export default function Home() {
             className="absolute inset-0 bg-[#0f0f10]/70 mix-blend-multiply"
             aria-hidden="true"
           />
-          <div className="relative mx-auto flex w-full max-w-6xl flex-col gap-12 px-12 py-24 sm:px-16 sm:py-32 lg:flex-row lg:items-center lg:gap-24">
-            <div className="order-first w-full text-center lg:order-2 lg:flex-1 lg:flex lg:flex-col lg:items-end lg:text-right">
-              <p className="text-4xl font-bold leading-tight text-[#f7f6f3] sm:text-[56px] lg:max-w-sm lg:text-[64px] lg:leading-[1.08]">
-                <span className="block">Go from Worried</span>
+          <div className="relative mx-auto grid w-full max-w-7xl grid-cols-1 gap-12 px-4 py-24 sm:px-10 sm:py-32 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1.25fr)] lg:items-start lg:gap-24">
+            <div className="w-full text-center lg:col-start-2 lg:row-start-1 lg:flex lg:h-full lg:flex-col lg:items-end lg:justify-center lg:pl-6 lg:text-right">
+              <p className="text-4xl font-bold leading-tight text-[#f7f6f3] sm:text-[56px] lg:max-w-lg lg:text-[64px] lg:leading-[1.08]">
+                <span className="block whitespace-nowrap">Go from Worried</span>
                 <span className="block">to Relieved</span>
               </p>
             </div>
-            <ul className="flex flex-1 flex-col gap-8 lg:order-1">
+            <ul className="flex flex-col gap-8 lg:col-start-1 lg:row-start-1">
               {processSteps.map((step) => (
                 <li key={step.title}>
                   <div
