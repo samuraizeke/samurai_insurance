@@ -13,7 +13,7 @@ export function SmartShoppingFeature({
       className={`w-full px-6 py-16 sm:px-16 sm:py-24 md:py-[150px] ${className}`}
     >
       <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-12 text-center md:grid md:grid-cols-[minmax(0,0.95fr)_minmax(0,1.1fr)] md:items-center md:gap-24">
-        <div className="flex flex-col items-center gap-6 md:order-2 md:items-end md:gap-7 md:text-right">
+        <div className="order-2 mt-12 flex flex-col items-center gap-6 md:order-2 md:mt-0 md:items-end md:gap-7 md:text-right">
           <h2 className="text-4xl font-bold leading-tight text-[#de5e48] sm:text-[48px] md:text-right">
             Smart Shopping
           </h2>
@@ -47,7 +47,7 @@ export function SmartShoppingFeature({
             </li>
           </ul>
         </div>
-        <div className="flex items-center justify-center mt-12 md:order-1 md:mt-0 md:justify-start">
+        <div className="order-1 flex items-center justify-center md:order-1 md:justify-start">
           <SmartShoppingBag className="max-w-[360px] sm:max-w-[420px]" />
         </div>
       </div>

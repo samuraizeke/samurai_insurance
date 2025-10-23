@@ -13,7 +13,7 @@ export function OnDemandSupportFeature({
       className={`w-full px-6 py-16 sm:px-16 sm:py-24 md:py-[150px] ${className}`}
     >
       <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-12 text-center md:grid md:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] md:items-center md:gap-24 md:text-left">
-        <div className="flex flex-col items-center gap-6 md:items-start md:gap-7">
+        <div className="order-2 mt-12 flex flex-col items-center gap-6 md:order-1 md:mt-0 md:items-start md:gap-7">
           <h2 className="text-4xl font-bold leading-tight text-[#de5e48] sm:text-[48px] md:text-left">
             On Demand Support
           </h2>
@@ -49,7 +49,7 @@ export function OnDemandSupportFeature({
             </li>
           </ul>
         </div>
-        <div className="flex items-center justify-center mt-12 md:mt-0 md:justify-end">
+        <div className="order-1 flex items-center justify-center md:order-2 md:justify-end">
           <OnDemandSupportClock className="max-w-[360px] sm:max-w-[420px]" />
         </div>
       </div>
