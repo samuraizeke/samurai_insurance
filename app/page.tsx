@@ -4,6 +4,9 @@ import Image from "next/image";
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { alteHaasGrotesk, workSans } from "@/lib/fonts";
+import { RenewalGuardFeature } from "@/app/components/RenewalGuardFeature";
+import { SmartShoppingFeature } from "@/app/components/SmartShoppingFeature";
+import { OnDemandSupportFeature } from "@/app/components/OnDemandSupportFeature";
 
 const faqItems = [
   {
@@ -201,10 +204,10 @@ export default function Home() {
         </div>
       </header>
 
-      <main className="flex flex-1 flex-col pb-24 sm:pb-0">
-        <section className="w-full px-12 pt-12 pb-32 sm:px-16 sm:pt-16 sm:pb-44">
+      <main className="flex flex-1 flex-col">
+        <section className="w-full px-12 pt-6 pb-16 sm:px-16 sm:pt-16 sm:pb-44">
           <div className="flex flex-col gap-12 lg:flex-row lg:items-center">
-            <div className="max-w-2xl lg:flex-1 lg:max-w-none">
+            <div className="max-w-2xl text-center lg:flex-1 lg:max-w-none lg:text-left">
               <h1 className="font-bold leading-tight text-[#f7f6f3] text-4xl sm:text-5xl md:text-6xl lg:text-[64px] lg:leading-[1.05]">
                 Never Worry About Your Insurance Again.
               </h1>
@@ -256,7 +259,7 @@ export default function Home() {
             className="absolute inset-0 bg-[#0f0f10]/70 mix-blend-multiply"
             aria-hidden="true"
           />
-          <div className="relative mx-auto grid w-full max-w-7xl grid-cols-1 gap-12 px-4 py-24 sm:px-10 sm:py-32 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1.25fr)] lg:items-start lg:gap-24">
+          <div className="relative mx-auto grid w-full max-w-7xl grid-cols-1 gap-12 px-4 pt-24 pb-16 sm:px-10 sm:py-32 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1.25fr)] lg:items-start lg:gap-24">
             <div className="w-full text-center lg:col-start-2 lg:row-start-1 lg:flex lg:h-full lg:flex-col lg:items-end lg:justify-center lg:pl-6 lg:text-right">
               <p className="text-4xl font-bold leading-tight text-[#f7f6f3] sm:text-[56px] lg:max-w-lg lg:text-[64px] lg:leading-[1.08]">
                 <span className="block whitespace-nowrap">Go from Worried</span>
@@ -279,7 +282,7 @@ export default function Home() {
                       </span>
                     </div>
                     <div
-                      className={`${workSans.className} max-h-0 overflow-hidden pt-0 text-lg leading-relaxed text-[#f7f6f3]/90 opacity-0 transition-all duration-300 ease-in-out group-hover:max-h-48 group-hover:pt-6 group-hover:opacity-100 group-focus-within:max-h-48 group-focus-within:pt-6 group-focus-within:opacity-100 sm:text-xl`}
+                      className={`${workSans.className} max-h-none overflow-visible pt-6 text-lg leading-relaxed text-[#f7f6f3]/90 opacity-100 transition-all duration-300 ease-in-out sm:max-h-0 sm:overflow-hidden sm:pt-0 sm:opacity-0 sm:group-hover:max-h-48 sm:group-hover:pt-6 sm:group-hover:opacity-100 sm:group-focus-within:max-h-48 sm:group-focus-within:pt-6 sm:group-focus-within:opacity-100 sm:text-xl`}
                     >
                       <p>{step.description}</p>
                     </div>
@@ -289,10 +292,13 @@ export default function Home() {
             </ul>
           </div>
         </section>
-        <section className="w-full px-12 pb-28 pt-16 sm:px-16 sm:pb-36 sm:pt-20">
+        <RenewalGuardFeature />
+        <SmartShoppingFeature />
+        <OnDemandSupportFeature />
+        <section className="w-full px-12 pb-16 pt-16 sm:px-16 sm:pb-36 sm:pt-20">
           <div className="flex flex-col gap-10 lg:flex-row lg:items-start lg:gap-20">
             <div className="lg:w-1/3">
-              <h2 className="text-[56px] font-bold tracking-tight text-[#f7f6f3] sm:text-[64px]">
+              <h2 className="text-center text-[56px] font-bold tracking-tight text-[#f7f6f3] sm:text-[64px] lg:text-left">
                 FAQ<span className="lowercase">s</span>
               </h2>
             </div>
