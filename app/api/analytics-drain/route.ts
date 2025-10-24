@@ -29,15 +29,40 @@ type DrainPayload = {
 
 const TABLE_NAME = "vercel_analytics_events";
 
-function safeCompare(expected: string, received: string) {
-  const expectedBuffer = Buffer.from(expected, "hex");
-  const receivedBuffer = Buffer.from(received, "hex");
+function decodeSignature(value: string): Buffer | null {
+  const trimmed = value.trim();
 
-  if (expectedBuffer.length !== receivedBuffer.length) {
+  if (!trimmed) {
+    return null;
+  }
+
+  const encodings: BufferEncoding[] = ["base64url", "base64", "hex"];
+
+  for (const encoding of encodings) {
+    try {
+      const buffer = Buffer.from(trimmed, encoding);
+
+      if (buffer.length > 0) {
+        return buffer;
+      }
+    } catch {
+      // try next encoding
+    }
+  }
+
+  return null;
+}
+
+function safeCompare(expected: Buffer, received: Buffer | null) {
+  if (!received) {
     return false;
   }
 
-  return timingSafeEqual(expectedBuffer, receivedBuffer);
+  if (expected.length !== received.length) {
+    return false;
+  }
+
+  return timingSafeEqual(expected, received);
 }
 
 function normaliseEvent(event: DrainEvent) {
@@ -119,9 +144,11 @@ export async function POST(request: NextRequest) {
 
   const expectedSignature = createHmac("sha256", secret)
     .update(rawBody)
-    .digest("hex");
+    .digest();
 
-  if (!safeCompare(expectedSignature, signature)) {
+  const signatureBuffer = decodeSignature(signature);
+
+  if (!safeCompare(expectedSignature, signatureBuffer)) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
   }
 
