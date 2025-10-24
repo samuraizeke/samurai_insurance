@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { alteHaasGrotesk, workSans } from "@/lib/fonts";
+import Script from "next/script";
 import "./globals.css";
 import CustomCursor from "./components/CustomCursor";
 
@@ -23,6 +24,13 @@ export default function RootLayout({
       >
         <CustomCursor />
         {children}
+        {process.env.NEXT_PUBLIC_VERCEL_ANALYTICS_ID ? (
+          <Script
+            src="https://va.vercel-scripts.com/v1/script.js"
+            strategy="afterInteractive"
+            data-analytics-id={process.env.NEXT_PUBLIC_VERCEL_ANALYTICS_ID}
+          />
+        ) : null}
       </body>
     </html>
   );
