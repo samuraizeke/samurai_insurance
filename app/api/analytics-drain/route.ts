@@ -150,11 +150,29 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error("Failed to upsert analytics events", error);
-      return NextResponse.json({ error: "Failed to store events" }, { status: 500 });
+      return NextResponse.json(
+        {
+          error: "Failed to store events",
+          details: error.message ?? error.code ?? null,
+        },
+        { status: 500 }
+      );
     }
   } catch (error) {
     console.error("Unexpected error storing analytics events", error);
-    return NextResponse.json({ error: "Failed to store events" }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: "Failed to store events",
+        details:
+          error &&
+          typeof error === "object" &&
+          "message" in error &&
+          typeof (error as { message?: unknown }).message === "string"
+            ? (error as { message: string }).message
+            : null,
+      },
+      { status: 500 }
+    );
   }
 
   return NextResponse.json({ processed: events.length });
