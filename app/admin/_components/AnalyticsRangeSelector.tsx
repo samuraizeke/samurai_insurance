@@ -3,11 +3,12 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
 import type { AnalyticsRange } from "@/lib/analytics";
+import { alteHaasGrotesk } from "@/lib/fonts";
 
 const OPTIONS: Array<{ value: AnalyticsRange; label: string }> = [
-  { value: "24h", label: "24H" },
-  { value: "7d", label: "7D" },
-  { value: "30d", label: "30D" },
+  { value: "24h", label: "24h" },
+  { value: "7d", label: "7d" },
+  { value: "30d", label: "30d" },
 ];
 
 type AnalyticsRangeSelectorProps = {
@@ -44,7 +45,9 @@ export function AnalyticsRangeSelector({
   };
 
   return (
-    <div className="inline-flex rounded-full border border-[#f7f6f3]/10 bg-[#2a2a2a]/80 p-1 text-[0.65rem] font-medium uppercase tracking-[0.35em] text-[#f7f6f3]/70">
+    <div
+      className={`${alteHaasGrotesk.className} inline-flex rounded-full border border-[#f7f6f3]/10 bg-[#2a2a2a]/80 p-1 text-[0.65rem] font-medium text-[#f7f6f3]/70`}
+    >
       {OPTIONS.map((option) => {
         const isActive = option.value === value;
 

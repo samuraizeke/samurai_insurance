@@ -138,7 +138,7 @@ const RANGE_DESCRIPTION: Record<AnalyticsRange, string> = {
 export default async function AdminPage({
   searchParams,
 }: {
-  searchParams?: { range?: string };
+  searchParams?: Promise<{ range?: string }>;
 }) {
   const adminContext = await resolveAdminContext();
 
@@ -150,8 +150,11 @@ export default async function AdminPage({
     );
   }
 
+  const resolvedSearchParams = await searchParams;
   const requestedRange =
-    typeof searchParams?.range === "string" ? searchParams.range : undefined;
+    typeof resolvedSearchParams?.range === "string"
+      ? resolvedSearchParams.range
+      : undefined;
   const analyticsRange: AnalyticsRange =
     requestedRange === "7d" || requestedRange === "30d" ? requestedRange : "24h";
 
@@ -215,7 +218,9 @@ export default async function AdminPage({
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
-              <span className="rounded-full border border-[#de5e48]/40 bg-[#de5e48]/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.25em] text-[#de5e48]">
+              <span
+                className={`${alteHaasGrotesk.className} rounded-full border border-[#de5e48]/40 bg-[#de5e48]/10 px-3 py-1 text-xs font-medium text-[#de5e48]`}
+              >
                 {formatNumber(analyticsDashboard.summary.activeVisitors)} online
               </span>
               <AnalyticsRangeSelector value={analyticsRange} />
