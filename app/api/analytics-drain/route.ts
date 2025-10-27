@@ -26,12 +26,20 @@ type DrainEvent = {
     city?: string;
     region?: string;
   };
+  geo?: {
+    country?: string;
+    city?: string;
+    region?: string;
+  };
   referrer?: string;
   client?: {
     ua?: string;
     ip?: string;
     userAgent?: string;
   };
+  userAgent?: string;
+  ip?: string;
+  clientIp?: string;
   properties?: {
     url?: string;
     path?: string;
@@ -216,9 +224,18 @@ function normaliseEvent(event: DrainEvent) {
     visit_id: visitId,
     url,
     path,
-    country: event.location?.country ?? null,
-    city: event.location?.city ?? null,
-    region: event.location?.region ?? null,
+    country:
+      event.location?.country ??
+      event.geo?.country ??
+      null,
+    city:
+      event.location?.city ??
+      event.geo?.city ??
+      null,
+    region:
+      event.location?.region ??
+      event.geo?.region ??
+      null,
     referrer:
       event.referrer ??
       (typeof event.properties?.referrer === "string"
@@ -228,8 +245,13 @@ function normaliseEvent(event: DrainEvent) {
     user_agent:
       event.client?.ua ??
       event.client?.userAgent ??
+      (typeof event.userAgent === "string" ? event.userAgent : null) ??
       null,
-    client_ip: event.client?.ip ?? null,
+    client_ip:
+      event.client?.ip ??
+      (typeof event.ip === "string" ? event.ip : null) ??
+      (typeof event.clientIp === "string" ? event.clientIp : null) ??
+      null,
   };
 }
 
