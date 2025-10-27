@@ -1,4 +1,3 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabaseServerClient";
@@ -28,42 +27,6 @@ type DrainPayload = {
 };
 
 const TABLE_NAME = "vercel_analytics_events";
-
-function decodeSignature(value: string): Buffer | null {
-  const trimmed = value.trim();
-
-  if (!trimmed) {
-    return null;
-  }
-
-  const encodings: BufferEncoding[] = ["base64url", "base64", "hex"];
-
-  for (const encoding of encodings) {
-    try {
-      const buffer = Buffer.from(trimmed, encoding);
-
-      if (buffer.length > 0) {
-        return buffer;
-      }
-    } catch {
-      // try next encoding
-    }
-  }
-
-  return null;
-}
-
-function safeCompare(expected: Buffer, received: Buffer | null) {
-  if (!received) {
-    return false;
-  }
-
-  if (expected.length !== received.length) {
-    return false;
-  }
-
-  return timingSafeEqual(expected, received);
-}
 
 function normaliseEvent(event: DrainEvent) {
   if (!event.id || typeof event.id !== "string") {
@@ -115,47 +78,9 @@ function normaliseEvent(event: DrainEvent) {
 }
 
 export async function POST(request: NextRequest) {
-  const secret = process.env.VERCEL_ANALYTICS_DRAIN_SECRET;
-
-  if (!secret) {
-    console.error("Missing VERCEL_ANALYTICS_DRAIN_SECRET");
-    return NextResponse.json(
-      { error: "Server configuration error" },
-      { status: 500 }
-    );
-  }
-
-  const signature = request.headers.get("x-vercel-signature");
-
-  if (!signature) {
-    return NextResponse.json(
-      { error: "Missing signature header" },
-      { status: 401 }
-    );
-  }
-
-  let rawBody: Buffer;
-  try {
-    rawBody = Buffer.from(await request.arrayBuffer());
-  } catch (error) {
-    console.error("Failed to read request body", error);
-    return NextResponse.json({ error: "Invalid body" }, { status: 400 });
-  }
-
-  const expectedSignature = createHmac("sha256", secret)
-    .update(rawBody)
-    .digest();
-
-  const signatureBuffer = decodeSignature(signature);
-
-  if (!safeCompare(expectedSignature, signatureBuffer)) {
-    return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
-  }
-
   let payload: DrainPayload;
-
   try {
-    payload = JSON.parse(rawBody.toString("utf8"));
+    payload = (await request.json()) as DrainPayload;
   } catch (error) {
     console.error("Failed to parse analytics drain payload", error);
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
