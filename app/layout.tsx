@@ -3,6 +3,7 @@ import { alteHaasGrotesk, workSans } from "@/lib/fonts";
 import Script from "next/script";
 import "./globals.css";
 import CustomCursor from "./components/CustomCursor";
+import { Analytics } from '@vercel/analytics/next';
 
 export const metadata: Metadata = {
   title: "Samurai Insurance",
@@ -31,6 +32,7 @@ export default function RootLayout({
             data-analytics-id={process.env.NEXT_PUBLIC_VERCEL_ANALYTICS_ID}
           />
         ) : null}
+        <Analytics />
       </body>
     </html>
   );
