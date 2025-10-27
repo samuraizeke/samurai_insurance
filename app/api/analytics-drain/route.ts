@@ -1,3 +1,4 @@
+import { createHmac, timingSafeEqual } from "node:crypto";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabaseServerClient";
@@ -78,9 +79,62 @@ function normaliseEvent(event: DrainEvent) {
 }
 
 export async function POST(request: NextRequest) {
+  const secret = process.env.VERCEL_ANALYTICS_DRAIN_SECRET;
+
+  if (!secret) {
+    console.error("Missing VERCEL_ANALYTICS_DRAIN_SECRET");
+    return NextResponse.json(
+      { error: "Server configuration error" },
+      { status: 500 }
+    );
+  }
+
+  const signature = request.headers.get("x-vercel-signature");
+
+  if (!signature) {
+    return NextResponse.json(
+      { error: "Missing signature header" },
+      { status: 401 }
+    );
+  }
+
+  let rawBodyText: string;
+  try {
+    rawBodyText = await request.text();
+  } catch (error) {
+    console.error("Failed to read request body", error);
+    return NextResponse.json({ error: "Invalid body" }, { status: 400 });
+  }
+
+  const rawBodyBuffer = Buffer.from(rawBodyText, "utf8");
+  const expectedSignatureBuffer = createHmac("sha1", secret)
+    .update(rawBodyBuffer)
+    .digest();
+
+  let receivedSignatureBuffer: Buffer | null = null;
+  try {
+    receivedSignatureBuffer = Buffer.from(signature.trim(), "hex");
+  } catch {
+    receivedSignatureBuffer = null;
+  }
+
+  if (
+    !receivedSignatureBuffer ||
+    receivedSignatureBuffer.length !== expectedSignatureBuffer.length ||
+    !timingSafeEqual(expectedSignatureBuffer, receivedSignatureBuffer)
+  ) {
+    return NextResponse.json(
+      {
+        error: "Invalid signature",
+        code: "invalid_signature",
+      },
+      { status: 403 }
+    );
+  }
+
   let payload: DrainPayload;
   try {
-    payload = (await request.json()) as DrainPayload;
+    payload = JSON.parse(rawBodyText) as DrainPayload;
   } catch (error) {
     console.error("Failed to parse analytics drain payload", error);
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
