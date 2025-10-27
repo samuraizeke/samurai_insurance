@@ -107,20 +107,20 @@ export async function POST(request: NextRequest) {
   }
 
   const rawBodyBuffer = Buffer.from(rawBodyText, "utf8");
-  const expectedSignatureBuffer = createHmac("sha1", secret)
+  const expectedSignature = `sha1=${createHmac("sha1", secret)
     .update(rawBodyBuffer)
-    .digest();
+    .digest("hex")}`;
 
-  let receivedSignatureBuffer: Buffer | null = null;
-  try {
-    receivedSignatureBuffer = Buffer.from(signature.trim(), "hex");
-  } catch {
-    receivedSignatureBuffer = null;
-  }
+  const trimmedSignature = signature.trim();
+  const providedSignature = trimmedSignature.startsWith("sha1=")
+    ? trimmedSignature
+    : `sha1=${trimmedSignature}`;
+
+  const expectedSignatureBuffer = Buffer.from(expectedSignature, "utf8");
+  const receivedSignatureBuffer = Buffer.from(providedSignature, "utf8");
 
   if (
-    !receivedSignatureBuffer ||
-    receivedSignatureBuffer.length !== expectedSignatureBuffer.length ||
+    expectedSignatureBuffer.length !== receivedSignatureBuffer.length ||
     !timingSafeEqual(expectedSignatureBuffer, receivedSignatureBuffer)
   ) {
     return NextResponse.json(
