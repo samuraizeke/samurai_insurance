@@ -1,4 +1,4 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabaseServerClient";
@@ -7,7 +7,10 @@ export const runtime = "nodejs";
 
 type DrainEvent = {
   id?: string;
+  eventId?: string;
   timestamp?: number;
+  occurredAt?: string | number;
+  occurred_at?: string | number;
   sessionId?: string;
   visitId?: string;
   url?: string;
@@ -30,25 +33,52 @@ type DrainPayload = {
 const TABLE_NAME = "vercel_analytics_events";
 
 function normaliseEvent(event: DrainEvent) {
-  if (!event.id || typeof event.id !== "string") {
+  const primaryId =
+    typeof event.id === "string"
+      ? event.id
+      : typeof event.eventId === "string"
+        ? event.eventId
+        : null;
+
+  const timestampValue =
+    event.timestamp ?? event.occurredAt ?? event.occurred_at;
+
+  let occurredAt: Date | null = null;
+
+  if (typeof timestampValue === "number") {
+    occurredAt =
+      timestampValue > 9_999_999_999
+        ? new Date(timestampValue)
+        : new Date(timestampValue * 1000);
+  } else if (typeof timestampValue === "string") {
+    occurredAt = new Date(timestampValue);
+  }
+
+  if (!occurredAt || Number.isNaN(occurredAt.getTime())) {
     return null;
   }
 
-  if (
-    event.timestamp === undefined ||
-    (typeof event.timestamp !== "number" && typeof event.timestamp !== "string")
-  ) {
+  let eventId = primaryId;
+
+  if (!eventId) {
+    const parts = [
+      String(occurredAt.getTime()),
+      typeof event.sessionId === "string" ? event.sessionId : "",
+      typeof event.visitId === "string" ? event.visitId : "",
+      typeof event.url === "string" ? event.url : "",
+    ]
+      .map((part) => (typeof part === "string" ? part.trim() : part))
+      .filter((part) => typeof part === "string" && part.length > 0) as string[];
+
+    if (parts.length > 0) {
+      eventId = createHash("sha1").update(parts.join("|")).digest("hex");
+    }
+  }
+
+  if (!eventId) {
     return null;
   }
 
-  const occurredAt =
-    typeof event.timestamp === "number"
-      ? new Date(event.timestamp)
-      : new Date(event.timestamp);
-
-  if (Number.isNaN(occurredAt.getTime())) {
-    return null;
-  }
 
   const url = event.url ?? null;
   let path: string | null = null;
@@ -63,7 +93,7 @@ function normaliseEvent(event: DrainEvent) {
   }
 
   return {
-    event_id: event.id,
+    event_id: eventId,
     occurred_at: occurredAt.toISOString(),
     session_id: event.sessionId ?? null,
     visit_id: event.visitId ?? null,
@@ -119,9 +149,10 @@ export async function POST(request: NextRequest) {
     `sha1=${expectedBase64}`,
   ];
 
+  const providedBuffer = Buffer.from(provided, "utf8");
+
   const isValidSignature = candidates.some((candidate) => {
     const candidateBuffer = Buffer.from(candidate, "utf8");
-    const providedBuffer = Buffer.from(provided, "utf8");
 
     return (
       candidateBuffer.length === providedBuffer.length &&
