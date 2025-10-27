@@ -273,6 +273,30 @@ function parseUtmLabel(url: string | null) {
   }
 }
 
+export async function getLatestAnalyticsEvent(
+  range: AnalyticsRange = "24h"
+): Promise<string | null> {
+  const hours = RANGE_TO_HOURS[range] ?? RANGE_TO_HOURS["24h"];
+  const since = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
+
+  const supabase = createSupabaseServerClient();
+
+  const { data, error } = await supabase
+    .from(ANALYTICS_TABLE)
+    .select("occurred_at")
+    .gte("occurred_at", since)
+    .order("occurred_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error && error.code !== "PGRST116") {
+    console.error("Failed to fetch latest analytics event", error);
+    return null;
+  }
+
+  return typeof data?.occurred_at === "string" ? data.occurred_at : null;
+}
+
 export async function getAnalyticsDashboard(
   range: AnalyticsRange = "24h"
 ): Promise<AnalyticsDashboard> {

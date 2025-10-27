@@ -1,5 +1,4 @@
 import Image from "next/image";
-import type { User } from "@supabase/supabase-js";
 import {
   AnalyticsBreakdownEntry,
   AnalyticsRange,
@@ -10,13 +9,9 @@ import { alteHaasGrotesk } from "@/lib/fonts";
 import { createSupabaseServerClient } from "@/lib/supabaseServerClient";
 import { AdminLoginForm } from "./_components/AdminLoginForm";
 import { AnalyticsRangeSelector } from "./_components/AnalyticsRangeSelector";
+import { AnalyticsLiveUpdater } from "./_components/AnalyticsLiveUpdater";
 import { signOutAdmin } from "./actions";
-import {
-  clearAdminSessionCookies,
-  getAllowedAdminEmails,
-  readAdminSessionTokens,
-  storeAdminSessionCookies,
-} from "./authServerUtils";
+import { resolveAdminContext } from "./adminContext";
 
 export const dynamic = "force-dynamic";
 
@@ -71,62 +66,6 @@ function formatPercent(value: number | null) {
     style: "percent",
     maximumFractionDigits: 0,
   }).format(value);
-}
-
-type AdminContext =
-  | { authorized: false; message?: string }
-  | { authorized: true; user: User };
-
-async function resolveAdminContext(): Promise<AdminContext> {
-  const { accessToken, refreshToken } = await readAdminSessionTokens();
-
-  if (!accessToken || !refreshToken) {
-    return { authorized: false };
-  }
-
-  const supabase = createSupabaseServerClient();
-  const { data, error } = await supabase.auth.setSession({
-    access_token: accessToken,
-    refresh_token: refreshToken,
-  });
-
-  if (error || !data.session || !data.user) {
-    console.error("Failed to restore admin session", error ?? data);
-    await clearAdminSessionCookies();
-    return {
-      authorized: false,
-      message: "Your session expired. Please sign in again.",
-    };
-  }
-
-  const allowedEmails = getAllowedAdminEmails();
-  if (
-    allowedEmails &&
-    (!data.user.email ||
-      !allowedEmails.includes(data.user.email.toLowerCase()))
-  ) {
-    console.warn(
-      "Admin access denied for unauthorized email",
-      data.user.email
-    );
-    await clearAdminSessionCookies();
-    return {
-      authorized: false,
-      message: "You do not have admin access.",
-    };
-  }
-
-  if (
-    data.session.access_token !== accessToken ||
-    data.session.refresh_token !== refreshToken
-  ) {
-    await storeAdminSessionCookies(data.session);
-  }
-
-  return {
-    authorized: true,
-    user: data.user,
-  };
 }
 
 const RANGE_DESCRIPTION: Record<AnalyticsRange, string> = {
@@ -201,6 +140,10 @@ export default async function AdminPage({
       </header>
 
       <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-12 px-6 py-12">
+        <AnalyticsLiveUpdater
+          range={analyticsRange}
+          initialLastEventAt={analyticsDashboard.summary.lastEventAt}
+        />
         <section className="space-y-10">
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
