@@ -107,22 +107,29 @@ export async function POST(request: NextRequest) {
   }
 
   const rawBodyBuffer = Buffer.from(rawBodyText, "utf8");
-  const expectedSignature = `sha1=${createHmac("sha1", secret)
-    .update(rawBodyBuffer)
-    .digest("hex")}`;
+  const hmac = createHmac("sha1", secret).update(rawBodyBuffer);
+  const expectedHex = hmac.digest("hex");
+  const expectedBase64 = Buffer.from(expectedHex, "hex").toString("base64");
+  const provided = signature.trim();
 
-  const trimmedSignature = signature.trim();
-  const providedSignature = trimmedSignature.startsWith("sha1=")
-    ? trimmedSignature
-    : `sha1=${trimmedSignature}`;
+  const candidates = [
+    expectedHex,
+    `sha1=${expectedHex}`,
+    expectedBase64,
+    `sha1=${expectedBase64}`,
+  ];
 
-  const expectedSignatureBuffer = Buffer.from(expectedSignature, "utf8");
-  const receivedSignatureBuffer = Buffer.from(providedSignature, "utf8");
+  const isValidSignature = candidates.some((candidate) => {
+    const candidateBuffer = Buffer.from(candidate, "utf8");
+    const providedBuffer = Buffer.from(provided, "utf8");
 
-  if (
-    expectedSignatureBuffer.length !== receivedSignatureBuffer.length ||
-    !timingSafeEqual(expectedSignatureBuffer, receivedSignatureBuffer)
-  ) {
+    return (
+      candidateBuffer.length === providedBuffer.length &&
+      timingSafeEqual(candidateBuffer, providedBuffer)
+    );
+  });
+
+  if (!isValidSignature) {
     return NextResponse.json(
       {
         error: "Invalid signature",
