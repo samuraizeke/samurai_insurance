@@ -5,6 +5,7 @@ import {
   waitlistSubmissionSchema,
   type WaitlistPayload,
 } from "@/lib/schemas";
+import { sendWaitlistWelcomeEmail } from "@/lib/emailjs";
 
 export type WaitlistActionResult =
   | { success: true }
@@ -143,6 +144,12 @@ export async function submitWaitlist(
       errors: {},
     };
   }
+
+  await sendWaitlistWelcomeEmail({
+    firstName,
+    lastName,
+    email: normalizedEmail,
+  });
 
   return { success: true };
 }

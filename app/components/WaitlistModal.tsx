@@ -623,7 +623,7 @@ export default function WaitlistModal({
                 required
               />
               {emailErrorMessage ? (
-                <span className="text-xs font-normal uppercase tracking-[0.1em] text-[#f7f6f3]">
+                <span className="text-xs font-normal uppercase tracking-[0.1em] text-[#de5e48]">
                   {emailErrorMessage}
                 </span>
               ) : null}

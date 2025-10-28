@@ -1,29 +1,86 @@
-import { useCallback, useState } from "react";
+import { ReactNode, useCallback, useState } from "react";
 import { workSans } from "@/lib/fonts";
 
-const faqItems = [
+type FaqItem = {
+  question: string;
+  answer: ReactNode;
+};
+
+const faqItems: FaqItem[] = [
   {
     question: "Are you a marketplace?",
-    answer: "No. We are your agent. We work for you from start to finish.",
+    answer: (
+      <p>No. We are your agent. We work for you from start to finish.</p>
+    ),
   },
   {
     question: "Do I have to manage anything?",
-    answer: "No. We handle the work and show you the choices. You approve.",
+    answer: (
+      <p>No. We handle the work and show you the choices. You approve.</p>
+    ),
   },
   {
     question: "Will you make me switch carriers?",
-    answer: "Only if it helps you. We explain why and you decide.",
+    answer: (
+      <p>Only if it helps you. We explain why and you decide.</p>
+    ),
   },
   {
     question: "Is my data sold?",
-    answer:
-      "No. We encrypt your documents in transit and at rest. We do not sell personal data.",
+    answer: (
+      <p>
+        No. We encrypt your documents in transit and at rest. We do not sell
+        personal data.
+      </p>
+    ),
   },
   {
     question: "My renewal already started. Can you help?",
-    answer: "Yes. We will flag what changed and give you a clear plan.",
+    answer: (
+      <p>Yes. We will flag what changed and give you a clear plan.</p>
+    ),
   },
-] as const;
+  {
+    question: "When will SamurAI be available?",
+    answer: (
+      <p>
+        We're in private beta and opening state by state. Join the waitlist and
+        we'll email you when we are live in your state. That way you are the
+        first to know!
+      </p>
+    ),
+  },
+  {
+    question: "What do I get for joining the waitlist?",
+    answer: (
+      <ul className="list-disc list-inside space-y-2">
+        <li>An early-access invite when your state opens.</li>
+        <li>Occasional rollout updates.</li>
+        <li>
+          Special access to suggest new features and influence the future of
+          insurance!
+        </li>
+      </ul>
+    ),
+  },
+  {
+    question: "Is Samurai Insurance right for me?",
+    answer: (
+      <>
+        <p>
+          If your premiums are creeping up, you're short on time, and you want
+          straight answers, you'll love Samurai Insurance. With Samurai, you'll
+          get:
+        </p>
+        <ul className="list-disc list-inside space-y-2">
+          <li>Annual price checks with clear explanations.</li>
+          <li>any quotes, changes, and paperwork handled for you.</li>
+          <li>Answers on demand to all of your insurance questions.</li>
+        </ul>
+      </>
+    ),
+  },
+];
 
 export function FaqSection() {
   const [openFaqs, setOpenFaqs] = useState<Set<number>>(() => new Set());
@@ -74,9 +131,9 @@ export function FaqSection() {
                     className={`${workSans.className} overflow-hidden transition-[max-height,opacity] duration-300 ease-in-out ${isOpen ? "max-h-48 opacity-100" : "max-h-0 opacity-0"}`}
                     aria-hidden={!isOpen}
                   >
-                    <p className="pb-6 pr-12 text-base text-[#f7f6f3]/90 sm:text-lg">
+                    <div className="space-y-4 pb-6 pr-12 text-base text-[#f7f6f3]/90 sm:text-lg">
                       {faq.answer}
-                    </p>
+                    </div>
                   </div>
                 </li>
               );

@@ -20,6 +20,17 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to load the custom Alte Haas Grotesk and Work Sans typefaces.
 
+## EmailJS Configuration
+
+Sending confirmation emails for new waitlist signups requires these environment variables:
+
+- `EMAILJS_SERVICE_ID`
+- `EMAILJS_TEMPLATE_ID`
+- `EMAILJS_PUBLIC_KEY`
+- `EMAILJS_PRIVATE_KEY`
+
+Provide the values generated in your EmailJS dashboard in `.env.local` (or your hosting provider's environment settings) before submitting the waitlist form.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
