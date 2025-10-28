@@ -4,9 +4,9 @@ import type { User } from "@supabase/supabase-js";
 import { createSupabaseServerClient } from "@/lib/supabaseServerClient";
 import {
   clearAdminSessionCookies,
-  getAllowedAdminEmails,
   readAdminSessionTokens,
   storeAdminSessionCookies,
+  userHasAdminAccess,
 } from "./authServerUtils";
 
 export type AdminContext =
@@ -35,12 +35,7 @@ export async function resolveAdminContext(): Promise<AdminContext> {
     };
   }
 
-  const allowedEmails = getAllowedAdminEmails();
-  if (
-    allowedEmails &&
-    (!data.user.email ||
-      !allowedEmails.includes(data.user.email.toLowerCase()))
-  ) {
+  if (!userHasAdminAccess(data.user)) {
     console.warn(
       "Admin access denied for unauthorized email",
       data.user.email

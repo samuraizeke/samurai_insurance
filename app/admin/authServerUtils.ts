@@ -1,22 +1,35 @@
 import { cookies } from "next/headers";
-import type { Session } from "@supabase/supabase-js";
+import type { Session, User } from "@supabase/supabase-js";
 
 export const SUPABASE_ACCESS_COOKIE = "sb-access-token";
 export const SUPABASE_REFRESH_COOKIE = "sb-refresh-token";
+export const ADMIN_ROLE = "admin";
+export const SUPERADMIN_ROLE = "superadmin";
 
-export function getAllowedAdminEmails(): string[] | null {
-  const raw = process.env.ADMIN_ALLOWED_EMAILS;
+function extractRoles(user: User): string[] {
+  const rawRoles = user.app_metadata?.roles;
 
-  if (!raw) {
-    return null;
+  if (Array.isArray(rawRoles)) {
+    return rawRoles
+      .filter((role): role is string => typeof role === "string")
+      .map((role) => role.toLowerCase());
   }
 
-  const emails = raw
-    .split(",")
-    .map((value) => value.trim().toLowerCase())
-    .filter(Boolean);
+  if (typeof rawRoles === "string") {
+    return [rawRoles.toLowerCase()];
+  }
 
-  return emails.length > 0 ? emails : null;
+  return [];
+}
+
+export function userHasAdminAccess(user: User): boolean {
+  const roles = extractRoles(user);
+  return roles.includes(ADMIN_ROLE) || roles.includes(SUPERADMIN_ROLE);
+}
+
+export function userHasSuperAdminAccess(user: User): boolean {
+  const roles = extractRoles(user);
+  return roles.includes(SUPERADMIN_ROLE);
 }
 
 export async function storeAdminSessionCookies(session: Session) {
