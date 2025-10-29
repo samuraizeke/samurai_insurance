@@ -323,6 +323,17 @@ export function SavingsChartSection() {
     : shouldAnimateChart
     ? "savings-chart savings-chart--animated"
     : "savings-chart";
+  const totalSavingsCardBaseClasses =
+    "rounded-2xl border border-white/10 bg-[#1d1e21]/90 px-5 py-4 text-center shadow-lg backdrop-blur sm:text-right";
+  const totalSavingsCardClassName = [
+    totalSavingsCardBaseClasses,
+    !prefersReducedMotion ? "total-savings-card" : "",
+    !prefersReducedMotion && shouldAnimateChart
+      ? "total-savings-card--visible"
+      : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
   const xAxisValueFormatter = useMemo(
     () => (value: string | number) => {
       const valueAsString = String(value);
@@ -386,7 +397,7 @@ export function SavingsChartSection() {
                     {toSentenceCase("national average")}
                   </span>
                 </div>
-                <div className="rounded-2xl border border-white/10 bg-[#1d1e21]/90 px-5 py-4 text-center shadow-lg backdrop-blur sm:text-right">
+                <div className={totalSavingsCardClassName}>
                   <p
                     className={`${workSans.className} text-sm text-[#f7f6f3]/60`}
                   >
@@ -506,6 +517,20 @@ export function SavingsChartSection() {
                       }
                     }
 
+                    @keyframes totalSavingsCardFade {
+                      0% {
+                        opacity: 0;
+                        transform: translateY(12px);
+                      }
+                      35% {
+                        opacity: 0;
+                      }
+                      100% {
+                        opacity: 1;
+                        transform: translateY(0);
+                      }
+                    }
+
                     .savings-chart {
                       overflow: visible;
                     }
@@ -558,6 +583,17 @@ export function SavingsChartSection() {
                       opacity: 0;
                       animation: markReveal 2200ms ease-in-out forwards;
                       animation-delay: 720ms;
+                    }
+
+                    .total-savings-card {
+                      opacity: 0;
+                      transform: translateY(12px);
+                    }
+
+                    .total-savings-card--visible {
+                      animation: totalSavingsCardFade 2200ms
+                        cubic-bezier(0.35, 0, 0.2, 1) forwards;
+                      animation-delay: 520ms;
                     }
                   `}</style>
                 )}
