@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useMemo, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import type { ComponentProps } from "react";
 import { LineChart } from "@mui/x-charts/LineChart";
 import { axisClasses } from "@mui/x-charts/ChartsAxis";
@@ -184,6 +184,9 @@ export function SavingsChartSection() {
     [rawGradientId]
   );
   const [shouldAnimateChart, setShouldAnimateChart] = useState(false);
+  const sectionRef = useRef<HTMLElement | null>(null);
+  const hasAnimatedRef = useRef(false);
+  const animationTimeoutRef = useRef<number | null>(null);
   const chartSx = useMemo(
     () => ({
       ...getChartStyles(isMobile),
@@ -219,6 +222,13 @@ export function SavingsChartSection() {
     };
   }, [prefersReducedMotion]);
 
+  const clearAnimationTimeout = useCallback(() => {
+    if (animationTimeoutRef.current != null) {
+      window.clearTimeout(animationTimeoutRef.current);
+      animationTimeoutRef.current = null;
+    }
+  }, []);
+
   const chartDimensions = useMemo(
     () =>
       isMobile
@@ -250,12 +260,51 @@ export function SavingsChartSection() {
   useEffect(() => {
     if (prefersReducedMotion) {
       setShouldAnimateChart(false);
+      hasAnimatedRef.current = false;
+      clearAnimationTimeout();
       return;
     }
 
-    const timeout = window.setTimeout(() => setShouldAnimateChart(true), 180);
-    return () => window.clearTimeout(timeout);
-  }, [prefersReducedMotion]);
+    if (hasAnimatedRef.current) {
+      return;
+    }
+
+    const target = sectionRef.current;
+    if (!target || !("IntersectionObserver" in window)) {
+      clearAnimationTimeout();
+      animationTimeoutRef.current = window.setTimeout(() => {
+        setShouldAnimateChart(true);
+        animationTimeoutRef.current = null;
+      }, 500);
+      hasAnimatedRef.current = true;
+      return () => {
+        clearAnimationTimeout();
+      };
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (entry.isIntersecting) {
+          hasAnimatedRef.current = true;
+          clearAnimationTimeout();
+          animationTimeoutRef.current = window.setTimeout(() => {
+            setShouldAnimateChart(true);
+            animationTimeoutRef.current = null;
+          }, 500);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.35 }
+    );
+
+    observer.observe(target);
+
+    return () => {
+      observer.disconnect();
+      clearAnimationTimeout();
+    };
+  }, [prefersReducedMotion, clearAnimationTimeout]);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia(MOBILE_MEDIA_QUERY);
@@ -269,7 +318,9 @@ export function SavingsChartSection() {
     return () => mediaQuery.removeEventListener("change", handleChange);
   }, []);
 
-  const chartClassName = shouldAnimateChart
+  const chartClassName = prefersReducedMotion
+    ? "savings-chart savings-chart--static"
+    : shouldAnimateChart
     ? "savings-chart savings-chart--animated"
     : "savings-chart";
   const xAxisValueFormatter = useMemo(
@@ -289,12 +340,15 @@ export function SavingsChartSection() {
   );
 
   return (
-    <section className="relative isolate flex flex-col overflow-hidden bg-gradient-to-b from-[#0f0f10] via-[#141517] to-[#0f0f10] pt-24 pb-0 sm:pt-32 sm:pb-0">
+    <section
+      ref={sectionRef}
+      className="relative isolate flex flex-col overflow-hidden bg-gradient-to-b from-[#0f0f10] via-[#141517] to-[#0f0f10] pt-24 pb-0 sm:pt-32 sm:pb-0"
+    >
       <div
         className="pointer-events-none absolute left-[-20%] top-[-30%] h-[75%] w-[65%] rounded-[999px] bg-[#de5e48]/25 blur-[140px]"
         aria-hidden="true"
       />
-      <div className="relative z-10 mx-auto flex w-full max-w-[110rem] flex-1 flex-col px-4 pb-16 sm:px-8 sm:pb-20 lg:px-14">
+      <div className="relative z-10 mx-auto flex w-full max-w-[110rem] flex-1 flex-col px-4 pb-28 sm:px-8 sm:pb-24 lg:px-14 lg:pb-20">
         <div className="flex flex-1 flex-col justify-center gap-16 lg:flex-row lg:items-center lg:justify-between lg:gap-20">
           <div className="lg:order-2 flex max-w-xl flex-col items-center space-y-8 text-center text-[#f7f6f3] lg:items-end lg:text-right">
             <h2 className="text-4xl font-bold leading-snug sm:text-5xl">
@@ -421,17 +475,11 @@ export function SavingsChartSection() {
                 {!prefersReducedMotion && (
                   <style jsx global>{`
                     @keyframes savingsLineDraw {
-                      0% {
+                      from {
                         stroke-dashoffset: 1;
                       }
-                      50% {
+                      to {
                         stroke-dashoffset: 0;
-                      }
-                      65% {
-                        stroke-dashoffset: 0;
-                      }
-                      100% {
-                        stroke-dashoffset: 1;
                       }
                     }
 
@@ -439,32 +487,22 @@ export function SavingsChartSection() {
                       0% {
                         opacity: 0;
                       }
-                      30% {
+                      45% {
                         opacity: 0;
-                      }
-                      55%,
-                      75% {
-                        opacity: 0.82;
                       }
                       100% {
-                        opacity: 0;
+                        opacity: 0.82;
                       }
                     }
 
                     @keyframes markReveal {
-                      0%,
-                      45% {
+                      0% {
                         opacity: 0;
                         transform: translateY(6px);
                       }
-                      60%,
-                      75% {
+                      100% {
                         opacity: 1;
                         transform: translateY(0);
-                      }
-                      100% {
-                        opacity: 0;
-                        transform: translateY(-4px);
                       }
                     }
 
@@ -472,29 +510,45 @@ export function SavingsChartSection() {
                       overflow: visible;
                     }
 
+                    .savings-chart:not(.savings-chart--animated):not(
+                        .savings-chart--static
+                      )
+                      .baseline-line,
+                    .savings-chart:not(.savings-chart--animated):not(
+                        .savings-chart--static
+                      )
+                      .savings-line,
+                    .savings-chart:not(.savings-chart--animated):not(
+                        .savings-chart--static
+                      )
+                      .savings-area,
+                    .savings-chart:not(.savings-chart--animated):not(
+                        .savings-chart--static
+                      )
+                      .MuiMarkElement-root {
+                      opacity: 0;
+                    }
+
                     .savings-chart--animated .baseline-line {
                       stroke-dasharray: 1;
                       stroke-dashoffset: 1;
-                      animation: savingsLineDraw 7s
-                        cubic-bezier(0.65, 0, 0.35, 1) infinite;
-                      animation-delay: 0.25s;
-                      animation-fill-mode: both;
+                      animation: savingsLineDraw 3400ms
+                        cubic-bezier(0.65, 0, 0.35, 1) forwards;
+                      animation-delay: 260ms;
                     }
 
                     .savings-chart--animated .savings-line {
                       stroke-dasharray: 1;
                       stroke-dashoffset: 1;
-                      animation: savingsLineDraw 7s cubic-bezier(0.65, 0, 0.35, 1)
-                        infinite;
-                      animation-delay: 0.35s;
-                      animation-fill-mode: both;
+                      animation: savingsLineDraw 3600ms cubic-bezier(0.65, 0, 0.35, 1)
+                        forwards;
+                      animation-delay: 380ms;
                     }
 
                     .savings-chart--animated .savings-area {
                       opacity: 0;
-                      animation: savingsAreaFade 7s ease-in-out infinite;
-                      animation-delay: 0.55s;
-                      animation-fill-mode: both;
+                      animation: savingsAreaFade 4200ms ease-in-out forwards;
+                      animation-delay: 520ms;
                     }
 
                     .savings-chart--animated
@@ -502,9 +556,8 @@ export function SavingsChartSection() {
                     .savings-chart--animated
                       .MuiMarkElement-root.MuiMarkElement-series-savings {
                       opacity: 0;
-                      animation: markReveal 6.6s ease-in-out infinite;
-                      animation-delay: 0.8s;
-                      animation-fill-mode: both;
+                      animation: markReveal 2200ms ease-in-out forwards;
+                      animation-delay: 720ms;
                     }
                   `}</style>
                 )}
@@ -514,7 +567,7 @@ export function SavingsChartSection() {
         </div>
       </div>
       <p
-        className={`${workSans.className} absolute inset-x-2 bottom-0 overflow-x-auto whitespace-nowrap text-left text-xs leading-relaxed text-[#f7f6f3]/60 sm:inset-x-6 lg:inset-x-12`}
+        className={`${workSans.className} absolute inset-x-2 bottom-6 z-20 whitespace-normal text-left text-[11px] leading-relaxed text-[#f7f6f3]/60 sm:inset-x-6 sm:bottom-8 sm:z-20 sm:whitespace-nowrap sm:overflow-x-auto sm:text-xs lg:inset-x-12 lg:bottom-10`}
       >
         Sources:{" "}
         {SOURCES.map((source, index) => (

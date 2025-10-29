@@ -19,7 +19,6 @@ type CursorInlineStyle = CSSProperties & {
 };
 
 const defaultPosition: CursorPosition = { x: 0, y: 0 };
-const LERP_FACTOR = 0.24;
 const INTERACTIVE_SELECTOR =
   "a, button, [role='button'], [data-cursor='interactive'], input:not([type='hidden']), textarea, select, summary";
 const NOISE_TEXTURE =
@@ -34,8 +33,7 @@ export function CustomCursor() {
 
   const cursorRef = useRef<HTMLDivElement | null>(null);
   const targetPositionRef = useRef<CursorPosition>(defaultPosition);
-  const renderPositionRef = useRef<CursorPosition>(defaultPosition);
-  const animationFrameRef = useRef<number | null>(null);
+  const isHiddenRef = useRef(true);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(pointer: coarse)");
@@ -78,36 +76,8 @@ export function CustomCursor() {
     element.style.setProperty("--cursor-y", `${position.y}px`);
   }, []);
 
-  const animate = useCallback(() => {
-    const target = targetPositionRef.current;
-    const previous = renderPositionRef.current;
-    const nextX = previous.x + (target.x - previous.x) * LERP_FACTOR;
-    const nextY = previous.y + (target.y - previous.y) * LERP_FACTOR;
-    const deltaX = Math.abs(nextX - target.x);
-    const deltaY = Math.abs(nextY - target.y);
-    const nextPosition = { x: nextX, y: nextY };
-
-    renderPositionRef.current = nextPosition;
-    applyCursorTransform(nextPosition);
-
-    if (deltaX + deltaY < 0.15) {
-      renderPositionRef.current = target;
-      applyCursorTransform(target);
-      animationFrameRef.current = null;
-      return;
-    }
-
-    animationFrameRef.current = requestAnimationFrame(animate);
-  }, [applyCursorTransform]);
-
-  const ensureAnimationRunning = useCallback(() => {
-    if (animationFrameRef.current === null) {
-      animationFrameRef.current = requestAnimationFrame(animate);
-    }
-  }, [animate]);
-
   useEffect(() => {
-    applyCursorTransform(renderPositionRef.current);
+    applyCursorTransform(targetPositionRef.current);
   }, [applyCursorTransform]);
 
   const updateInteractiveHoverState = useCallback((target: EventTarget | null) => {
@@ -140,14 +110,12 @@ export function CustomCursor() {
       targetPositionRef.current = nextPosition;
       updateInteractiveHoverState(event.target);
 
-      if (isHidden) {
+      if (isHiddenRef.current) {
+        isHiddenRef.current = false;
         setIsHidden(false);
-        renderPositionRef.current = nextPosition;
-        applyCursorTransform(nextPosition);
-        return;
       }
 
-      ensureAnimationRunning();
+      applyCursorTransform(nextPosition);
     };
 
     const handlePointerDown = (event: PointerEvent) => {
@@ -159,13 +127,12 @@ export function CustomCursor() {
       updateInteractiveHoverState(event.target);
     };
     const handlePointerLeave = () => {
-      setIsHidden(true);
+      if (!isHiddenRef.current) {
+        isHiddenRef.current = true;
+        setIsHidden(true);
+      }
       setIsPressed(false);
       setIsHoveringInteractive(false);
-      if (animationFrameRef.current !== null) {
-        cancelAnimationFrame(animationFrameRef.current);
-        animationFrameRef.current = null;
-      }
     };
 
     window.addEventListener("pointermove", handlePointerMove);
@@ -178,17 +145,10 @@ export function CustomCursor() {
       window.removeEventListener("pointerdown", handlePointerDown);
       window.removeEventListener("pointerup", handlePointerUp);
       window.removeEventListener("pointerleave", handlePointerLeave);
-
-      if (animationFrameRef.current !== null) {
-        cancelAnimationFrame(animationFrameRef.current);
-        animationFrameRef.current = null;
-      }
     };
   }, [
     applyCursorTransform,
-    ensureAnimationRunning,
     isActive,
-    isHidden,
     updateInteractiveHoverState,
   ]);
 
@@ -222,6 +182,8 @@ export function CustomCursor() {
       filter: filterValue,
       boxShadow: boxShadowValue,
       borderColor,
+      transition:
+        "opacity 150ms ease-out, filter 150ms ease-out, box-shadow 150ms ease-out, background-color 150ms ease-out, border-color 150ms ease-out",
       willChange: "transform, filter",
     };
     return style;
@@ -237,7 +199,7 @@ export function CustomCursor() {
       aria-hidden="true"
       className={[
         "custom-cursor pointer-events-none fixed left-0 top-0 z-[9999] h-10 w-10 rounded-full",
-        "border border-[#0f0f0f]/30 bg-[#f7f6f3] opacity-90 mix-blend-difference transition duration-150 ease-out",
+        "border border-[#0f0f0f]/30 bg-[#f7f6f3] opacity-90 mix-blend-difference",
         isHidden ? "opacity-0" : "opacity-90",
         isHoveringInteractive ? "custom-cursor--interactive" : "",
       ].join(" ")}
