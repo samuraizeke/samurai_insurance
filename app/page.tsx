@@ -15,6 +15,7 @@ import { SiteFooter } from "@/app/components/SiteFooter";
 import { SuccessToast } from "@/app/components/SuccessToast";
 import { useWaitlistSuccessToast } from "@/app/hooks/useWaitlistSuccessToast";
 import { SavingsChartSection } from "@/app/components/SavingsChartSection";
+import { StackedAgainstSection } from "@/app/components/StackedAgainstSection";
 
 const WaitlistModal = dynamic(
   () => import("@/app/components/WaitlistModal"),
@@ -47,6 +48,7 @@ export default function Home() {
       <main className="flex flex-1 flex-col">
         <HeroSection onJoinWaitlist={handleOpenModal} />
         <ProcessSection />
+        <StackedAgainstSection />
         <RenewalGuardFeature />
         <SmartShoppingFeature />
         <OnDemandSupportFeature />
