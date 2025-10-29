@@ -1,5 +1,7 @@
 'use client';
 
+import { axisClasses } from "@mui/x-charts/ChartsAxis";
+import { LineChart } from "@mui/x-charts/LineChart";
 import type {
   AnalyticsBreakdownEntry,
   AnalyticsDashboard,
@@ -19,6 +21,7 @@ type AdminAnalyticsPanelProps = {
   analyticsRange: AnalyticsRange;
   analyticsDashboard: AnalyticsDashboard;
   waitlistSummary: WaitlistSummary;
+  onShowWaitlist?: () => void;
 };
 
 const RANGE_DESCRIPTION: Record<AnalyticsRange, string> = {
@@ -27,10 +30,13 @@ const RANGE_DESCRIPTION: Record<AnalyticsRange, string> = {
   "30d": "Last 30 days",
 };
 
+const VISITORS_CHART_COLOR = "#de5e48";
+
 export function AdminAnalyticsPanel({
   analyticsRange,
   analyticsDashboard,
   waitlistSummary,
+  onShowWaitlist,
 }: AdminAnalyticsPanelProps) {
   return (
     <section className="space-y-10">
@@ -74,6 +80,7 @@ export function AdminAnalyticsPanel({
           label="Waitlist size"
           value={formatNumber(waitlistSummary.count)}
           error={waitlistSummary.error}
+          onClick={onShowWaitlist}
         />
         <MetricCard
           label="Visitors"
@@ -165,11 +172,22 @@ type MetricCardProps = {
   value: string;
   caption?: string;
   error?: string;
+  onClick?: () => void;
 };
 
-function MetricCard({ label, value, caption, error }: MetricCardProps) {
+function MetricCard({ label, value, caption, error, onClick }: MetricCardProps) {
+  const Component = onClick ? "button" : "div";
+
   return (
-    <div className="rounded-2xl border border-[#f7f6f3]/10 bg-[#2a2a2a]/80 p-6 shadow-[0_18px_40px_rgba(0,0,0,0.45)]">
+    <Component
+      type={onClick ? "button" : undefined}
+      onClick={onClick}
+      className={`rounded-2xl border border-[#f7f6f3]/10 bg-[#2a2a2a]/80 p-6 text-left shadow-[0_18px_40px_rgba(0,0,0,0.45)] ${
+        onClick
+          ? "transition hover:-translate-y-0.5 hover:border-[#de5e48]/60 hover:shadow-[0_22px_50px_rgba(222,94,72,0.22)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#de5e48] focus-visible:ring-offset-2 focus-visible:ring-offset-[#2a2a2a]"
+          : ""
+      }`}
+    >
       <p className="text-sm font-semibold text-[#f7f6f3]/70">{label}</p>
       <p className="mt-4 text-4xl font-semibold text-[#f7f6f3]">{value}</p>
 
@@ -178,7 +196,7 @@ function MetricCard({ label, value, caption, error }: MetricCardProps) {
       ) : caption ? (
         <p className="mt-3 text-xs text-[#f7f6f3]/60">{caption}</p>
       ) : null}
-    </div>
+    </Component>
   );
 }
 
@@ -230,86 +248,91 @@ function VisitorsLineChart({ data }: { data: AnalyticsTrendPoint[] }) {
     );
   }
 
-  const normalized = data.map((point, index) => {
-    const x = data.length === 1 ? 50 : (index / (data.length - 1)) * 100;
-    return { ...point, x };
-  });
+  const dataset = data.map((point) => ({
+    label: point.label,
+    value: point.value,
+    timestamp: point.timestamp,
+  }));
 
-  const maxValue = Math.max(1, ...normalized.map((point) => point.value));
-  const chartHeight = 45;
-  const baselineY = chartHeight;
-  const bottomY = 58;
+  const showMarks = dataset.length <= 24;
 
-  const positioned = normalized.map((point) => {
-    const y = baselineY - (point.value / maxValue) * (chartHeight - 6);
-    return { ...point, y };
-  });
-
-  const linePoints =
-    positioned.length === 1
-      ? `0,${positioned[0].y} 100,${positioned[0].y}`
-      : positioned.map((point) => `${point.x},${point.y}`).join(" ");
-
-  const areaPath = [
-    `M0 ${bottomY}`,
-    positioned.map((point) => `L${point.x} ${point.y}`).join(" "),
-    `L100 ${bottomY}`,
-    "Z",
-  ].join(" ");
-
-  const ticks: { label: string; x: number }[] = [];
-  if (normalized.length <= 4) {
-    positioned.forEach((point) => {
-      ticks.push({ label: point.label, x: point.x });
-    });
-  } else {
-    const tickIndexes = [
-      0,
-      Math.floor(positioned.length / 2),
-      positioned.length - 1,
-    ];
-    tickIndexes.forEach((index) => {
-      const point = positioned[index];
-      ticks.push({ label: point.label, x: point.x });
-    });
-  }
+  const chartStyles = {
+    [`& .${axisClasses.root}`]: {
+      [`& .${axisClasses.tick}`]: {
+        stroke: "rgba(247, 246, 243, 0.14)",
+      },
+      [`& .${axisClasses.line}`]: {
+        stroke: "rgba(247, 246, 243, 0.12)",
+      },
+      [`& .${axisClasses.tickLabel}`]: {
+        fill: "rgba(247, 246, 243, 0.86)",
+        fontSize: 12,
+        fontFamily: "var(--font-work-sans)",
+      },
+    },
+    [`& .${axisClasses.bottom} .${axisClasses.tickLabel}`]: {
+      transform: "translateY(6px)",
+    },
+    [`& .${axisClasses.left} .${axisClasses.tickLabel}`]: {
+      transform: "translateX(-8px)",
+    },
+    "& .MuiChartsGrid-line": {
+      stroke: "rgba(247, 246, 243, 0.12)",
+      strokeDasharray: "4 6",
+    },
+    "& .MuiLineElement-root": {
+      strokeWidth: 3,
+      filter: "drop-shadow(0px 0px 14px rgba(222, 94, 72, 0.35))",
+    },
+    "& .MuiAreaElement-root": {
+      fill: "rgba(222, 94, 72, 0.18)",
+    },
+    "& .MuiMarkElement-root": {
+      stroke: VISITORS_CHART_COLOR,
+      strokeWidth: 2.5,
+      fill: "#101010",
+    },
+  } as const;
 
   return (
-    <div>
-      <svg viewBox="0 0 100 60" preserveAspectRatio="none" className="h-52 w-full">
-        <defs>
-          <linearGradient id="analytics-line" x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0%" stopColor="rgba(222,94,72,0.75)" />
-            <stop offset="100%" stopColor="rgba(222,94,72,0)" />
-          </linearGradient>
-        </defs>
-        <path d={areaPath} fill="url(#analytics-line)" stroke="none" opacity={0.4} />
-        <polyline
-          points={linePoints}
-          fill="none"
-          stroke="rgb(222, 94, 72)"
-          strokeWidth={2}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <line
-          x1="0"
-          y1={baselineY + 8}
-          x2="100"
-          y2={baselineY + 8}
-          stroke="rgba(247,246,243,0.12)"
-          strokeWidth={0.6}
-        />
-      </svg>
-
-      <div className="mt-3 flex justify-between text-xs text-[#f7f6f3]/60">
-        {ticks.map((tick) => (
-          <span key={tick.x} className="truncate">
-            {tick.label}
-          </span>
-        ))}
-      </div>
-    </div>
+    <LineChart
+      height={220}
+      dataset={dataset}
+      xAxis={[
+        {
+          dataKey: "label",
+          scaleType: "point",
+          tickLabelStyle: { fontSize: 12 },
+        },
+      ]}
+      yAxis={[
+        {
+          min: 0,
+          tickLabelStyle: { fontSize: 12 },
+        },
+      ]}
+      series={[
+        {
+          id: "visitors",
+          dataKey: "value",
+          color: VISITORS_CHART_COLOR,
+          area: true,
+          showMark: showMarks,
+          curve: "monotoneX",
+        },
+      ]}
+      margin={{ top: 20, right: 16, bottom: 40, left: 44 }}
+      grid={{ vertical: false, horizontal: true }}
+      axisHighlight={{ x: "line", y: "none" }}
+      hideLegend
+      skipAnimation
+      slotProps={{
+        tooltip: {
+          trigger: "axis",
+        },
+      }}
+      sx={chartStyles}
+    />
   );
 }
 

@@ -1,12 +1,13 @@
-'use client';
+"use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { AnalyticsDashboard, AnalyticsRange } from "@/lib/analytics";
 import { AdminAnalyticsPanel } from "./AdminAnalyticsPanel";
 import {
   AdminUserManager,
   type AdminUserSummary,
 } from "./AdminUserManager";
+import { AdminWaitlistPanel, type WaitlistEntrySummary } from "./AdminWaitlistPanel";
 
 type WaitlistSummary = {
   count: number | null;
@@ -17,39 +18,67 @@ type AdminDashboardTabsProps = {
   analyticsRange: AnalyticsRange;
   analyticsDashboard: AnalyticsDashboard;
   waitlistSummary: WaitlistSummary;
+  waitlistEntries: WaitlistEntrySummary[];
+  waitlistEntriesError?: string;
   adminUsers: AdminUserSummary[];
   adminUsersError?: string;
   canManageAdmins: boolean;
   currentUserId: string;
+  initialTab?: "analytics" | "waitlist" | "admins";
 };
 
-const ALL_TABS: Array<{ id: "analytics" | "admins"; label: string }> = [
+type TabId = "analytics" | "waitlist" | "admins";
+type TabDefinition = { id: TabId; label: string };
+
+const BASE_TABS: TabDefinition[] = [
   { id: "analytics", label: "Web analytics" },
-  { id: "admins", label: "Admin access" },
+  { id: "waitlist", label: "Waitlist" },
 ];
+const ADMIN_TAB: TabDefinition = { id: "admins", label: "Admin access" };
 
 export function AdminDashboardTabs({
   analyticsRange,
   analyticsDashboard,
   waitlistSummary,
+  waitlistEntries,
+  waitlistEntriesError,
   adminUsers,
   adminUsersError,
   canManageAdmins,
   currentUserId,
+  initialTab,
 }: AdminDashboardTabsProps) {
-  const tabs = useMemo(
-    () => (canManageAdmins ? ALL_TABS : [ALL_TABS[0]]),
-    [canManageAdmins]
-  );
-  const [activeTab, setActiveTab] = useState<"analytics" | "admins">(
-    "analytics"
-  );
+  const tabs = useMemo<TabDefinition[]>(() => {
+    return canManageAdmins ? [...BASE_TABS, ADMIN_TAB] : [...BASE_TABS];
+  }, [canManageAdmins]);
+  const [activeTab, setActiveTab] = useState<TabId>(() => {
+    const fallback: TabId = "analytics";
+    if (!initialTab) {
+      return fallback;
+    }
+
+    return tabs.some((tab) => tab.id === initialTab) ? initialTab : fallback;
+  });
 
   useEffect(() => {
     if (!tabs.some((tab) => tab.id === activeTab)) {
       setActiveTab(tabs[0].id);
     }
   }, [tabs, activeTab]);
+
+  useEffect(() => {
+    if (!initialTab) {
+      return;
+    }
+
+    if (tabs.some((tab) => tab.id === initialTab) && initialTab !== activeTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab, tabs, activeTab]);
+
+  const handleShowWaitlist = useCallback(() => {
+    setActiveTab("waitlist");
+  }, []);
 
   return (
     <div className="space-y-8">
@@ -82,6 +111,12 @@ export function AdminDashboardTabs({
             analyticsRange={analyticsRange}
             analyticsDashboard={analyticsDashboard}
             waitlistSummary={waitlistSummary}
+            onShowWaitlist={handleShowWaitlist}
+          />
+        ) : activeTab === "waitlist" ? (
+          <AdminWaitlistPanel
+            entries={waitlistEntries}
+            loadError={waitlistEntriesError}
           />
         ) : canManageAdmins ? (
           <AdminUserManager

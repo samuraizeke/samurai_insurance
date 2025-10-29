@@ -22,6 +22,20 @@ type WaitlistSummary = {
   error?: string;
 };
 
+type WaitlistEntry = {
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  email: string | null;
+  source: string | null;
+  createdAt: string | null;
+};
+
+type WaitlistEntriesResult = {
+  entries: WaitlistEntry[];
+  error?: string;
+};
+
 type AdminUsersResult = {
   admins: AdminUserSummary[];
   error?: string;
@@ -123,6 +137,43 @@ async function getWaitlistSummary(): Promise<WaitlistSummary> {
   }
 }
 
+async function getWaitlistEntries(): Promise<WaitlistEntriesResult> {
+  try {
+    const supabase = createSupabaseServerClient();
+    const { data, error } = await supabase
+      .from("waitlist")
+      .select("id, first_name, last_name, email, source, created_at")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Failed to fetch waitlist entries", error);
+      return {
+        entries: [],
+        error: "Unable to load waitlist entries right now.",
+      };
+    }
+
+    const entries: WaitlistEntry[] = (data ?? []).map((entry) => ({
+      id: typeof entry.id === "string" ? entry.id : String(entry.id ?? ""),
+      firstName:
+        typeof entry.first_name === "string" ? entry.first_name : null,
+      lastName: typeof entry.last_name === "string" ? entry.last_name : null,
+      email: typeof entry.email === "string" ? entry.email : null,
+      source: typeof entry.source === "string" ? entry.source : null,
+      createdAt:
+        typeof entry.created_at === "string" ? entry.created_at : null,
+    }));
+
+    return { entries };
+  } catch (error) {
+    console.error("Unexpected error fetching waitlist entries", error);
+    return {
+      entries: [],
+      error: "Unable to load waitlist entries right now.",
+    };
+  }
+}
+
 function parseRoles(roles: unknown): string[] {
   if (Array.isArray(roles)) {
     return roles
@@ -141,7 +192,7 @@ function parseRoles(roles: unknown): string[] {
 export default async function AdminPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ range?: string }>;
+  searchParams?: Promise<{ range?: string; tab?: string }>;
 }) {
   const adminContext = await resolveAdminContext();
 
@@ -179,21 +230,39 @@ export default async function AdminPage({
     typeof resolvedSearchParams?.range === "string"
       ? resolvedSearchParams.range
       : undefined;
+  const requestedTab =
+    typeof resolvedSearchParams?.tab === "string"
+      ? resolvedSearchParams.tab
+      : undefined;
   const analyticsRange: AnalyticsRange =
     requestedRange === "7d" || requestedRange === "30d" ? requestedRange : "24h";
 
   const canManageAdmins = userHasSuperAdminAccess(adminContext.user);
 
-  const [waitlistSummary, analyticsDashboard, adminUsersResult] =
+  const [
+    waitlistSummary,
+    analyticsDashboard,
+    adminUsersResult,
+    waitlistEntriesResult,
+  ] =
     await Promise.all([
       getWaitlistSummary(),
       getAnalyticsDashboard(analyticsRange),
       canManageAdmins
         ? getAdminUsers()
         : Promise.resolve<AdminUsersResult>({ admins: [] }),
+      getWaitlistEntries(),
     ]);
   const adminUsers = adminUsersResult.admins;
   const adminUsersError = canManageAdmins ? adminUsersResult.error : undefined;
+  const waitlistEntries = waitlistEntriesResult.entries;
+  const waitlistEntriesError = waitlistEntriesResult.error;
+  const initialTab =
+    requestedTab === "waitlist"
+      ? "waitlist"
+      : requestedTab === "admins" && canManageAdmins
+      ? "admins"
+      : undefined;
 
   return (
     <div
@@ -203,11 +272,11 @@ export default async function AdminPage({
         <div className="flex w-full flex-col items-center gap-4 px-6 py-8 text-center sm:flex-row sm:items-center sm:justify-between sm:gap-0 sm:px-16 sm:py-10 sm:text-left">
           <div className="flex items-center justify-center gap-4 sm:justify-start">
             <Image
-            src="/SamuraiLogoOrange.png"
-            alt="Samurai Insurance logo"
-            width={64}
-            height={32}
-            priority
+              src="/SamuraiLogoOrange.png"
+              alt="Samurai Insurance logo"
+              width={64}
+              height={32}
+              priority
             />
             <span className="whitespace-nowrap text-lg font-bold uppercase text-[#f7f6f3] sm:text-2xl">
               Samurai Insurance
@@ -237,10 +306,13 @@ export default async function AdminPage({
           analyticsRange={analyticsRange}
           analyticsDashboard={analyticsDashboard}
           waitlistSummary={waitlistSummary}
+          waitlistEntries={waitlistEntries}
+          waitlistEntriesError={waitlistEntriesError}
           adminUsers={adminUsers}
           adminUsersError={adminUsersError}
           canManageAdmins={canManageAdmins}
           currentUserId={adminContext.user.id}
+          initialTab={initialTab}
         />
       </main>
     </div>
