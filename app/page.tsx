@@ -14,6 +14,7 @@ import { MobileWaitlistButton } from "@/app/components/MobileWaitlistButton";
 import { SiteFooter } from "@/app/components/SiteFooter";
 import { SuccessToast } from "@/app/components/SuccessToast";
 import { useWaitlistSuccessToast } from "@/app/hooks/useWaitlistSuccessToast";
+import { SavingsChartSection } from "@/app/components/SavingsChartSection";
 
 const WaitlistModal = dynamic(
   () => import("@/app/components/WaitlistModal"),
@@ -49,6 +50,7 @@ export default function Home() {
         <RenewalGuardFeature />
         <SmartShoppingFeature />
         <OnDemandSupportFeature />
+        <SavingsChartSection />
         <FaqSection />
       </main>
 

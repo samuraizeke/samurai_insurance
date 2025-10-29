@@ -1,4 +1,4 @@
-import { ReactNode, useCallback, useState } from "react";
+import { ReactNode, useCallback, useRef, useState } from "react";
 import { workSans } from "@/lib/fonts";
 
 type FaqItem = {
@@ -84,6 +84,7 @@ const faqItems: FaqItem[] = [
 
 export function FaqSection() {
   const [openFaqs, setOpenFaqs] = useState<Set<number>>(() => new Set());
+  const contentRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   const handleToggleFaq = useCallback((index: number) => {
     setOpenFaqs((prev) => {
@@ -98,7 +99,7 @@ export function FaqSection() {
   }, []);
 
   return (
-    <section className="w-full px-12 pb-16 pt-6 sm:px-16 sm:pb-36">
+    <section className="w-full px-12 pb-16 pt-6 sm:px-16 sm:pb-36 lg:pt-24">
       <div className="flex flex-col gap-10 lg:flex-row lg:items-start lg:gap-20">
         <div className="lg:w-1/3">
           <h2 className="text-center text-[56px] font-bold tracking-tight text-[#f7f6f3] sm:text-[64px] lg:text-left">
@@ -128,10 +129,20 @@ export function FaqSection() {
                   </button>
                   <div
                     id={`faq-panel-${index}`}
-                    className={`${workSans.className} overflow-hidden transition-[max-height,opacity] duration-300 ease-in-out ${isOpen ? "max-h-48 opacity-100" : "max-h-0 opacity-0"}`}
+                    className={`${workSans.className} overflow-hidden transition-[max-height,opacity] duration-300 ease-in-out ${isOpen ? "opacity-100" : "opacity-0"}`}
+                    style={{
+                      maxHeight: isOpen
+                        ? contentRefs.current[index]?.scrollHeight ?? 0
+                        : 0,
+                    }}
                     aria-hidden={!isOpen}
                   >
-                    <div className="space-y-4 pb-6 pr-12 text-base text-[#f7f6f3]/90 sm:text-lg">
+                    <div
+                      ref={(element) => {
+                        contentRefs.current[index] = element;
+                      }}
+                      className="space-y-4 pb-6 pr-12 text-base text-[#f7f6f3]/90 sm:text-lg"
+                    >
                       {faq.answer}
                     </div>
                   </div>
