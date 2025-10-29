@@ -190,7 +190,7 @@ export function SavingsChartSection() {
       "& .savings-area": {
         fill: `url(#${savingsGradientId})`,
       },
-      "& .savings-mark": {
+      "& .MuiMarkElement-root.MuiMarkElement-series-savings": {
         stroke: SAMURAI_COLOR,
         strokeWidth: isMobile ? 3 : 3.5,
       },
@@ -203,7 +203,7 @@ export function SavingsChartSection() {
     const animationProps = prefersReducedMotion ? {} : { pathLength: 1 };
 
     return {
-      line: ({ id }: { id: string | number }) => ({
+      line: ({ id }) => ({
         ...animationProps,
         className:
           id === "savings"
@@ -212,17 +212,9 @@ export function SavingsChartSection() {
             ? "baseline-line"
             : undefined,
       }),
-      area: ({ id }: { id: string | number }) => ({
+      area: ({ id }) => ({
         ...animationProps,
         className: id === "savings" ? "savings-area" : undefined,
-      }),
-      mark: ({ id }: { id: string | number }) => ({
-        className:
-          id === "savings"
-            ? "savings-mark"
-            : id === "baseline"
-            ? "baseline-mark"
-            : undefined,
       }),
     };
   }, [prefersReducedMotion]);
@@ -390,7 +382,7 @@ export function SavingsChartSection() {
                     {
                       min: 0,
                       max: yMax,
-                      valueFormatter: (value) => formatCurrency(value),
+                      valueFormatter: (value: number) => formatCurrency(value),
                       tickNumber: 5,
                       width: yAxisWidth,
                     },
@@ -505,8 +497,10 @@ export function SavingsChartSection() {
                       animation-fill-mode: both;
                     }
 
-                    .savings-chart--animated .baseline-mark,
-                    .savings-chart--animated .savings-mark {
+                    .savings-chart--animated
+                      .MuiMarkElement-root.MuiMarkElement-series-baseline,
+                    .savings-chart--animated
+                      .MuiMarkElement-root.MuiMarkElement-series-savings {
                       opacity: 0;
                       animation: markReveal 6.6s ease-in-out infinite;
                       animation-delay: 0.8s;
