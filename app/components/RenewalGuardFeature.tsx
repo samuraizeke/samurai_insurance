@@ -18,13 +18,13 @@ export function RenewalGuardFeature({
             Renewal Guard
           </h2>
           <p
-            className={`${workSans.className} text-lg text-[#f7f6f3]/85 sm:text-xl md:text-left`}
+            className={`${workSans.className} text-lg text-[#333333]/85 sm:text-xl md:text-left`}
           >
             No more renewal roulette or guesswork. We make sure the policy you
             approve is the policy you actually get.
           </p>
           <ul
-            className={`${workSans.className} flex w-full max-w-[360px] flex-col gap-4 text-left text-base text-[#f7f6f3]/85 sm:text-lg`}
+            className={`${workSans.className} flex w-full max-w-[360px] flex-col gap-4 text-left text-base text-[#333333]/85 sm:text-lg`}
           >
             <li className="flex items-start gap-3 md:items-center">
               <span className="mt-1.5 inline-flex h-2.5 w-2.5 flex-none rounded-full bg-[#de5e48]" />

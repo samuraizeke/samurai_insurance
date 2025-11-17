@@ -99,20 +99,20 @@ const toSentenceCase = (value: string) => {
 const getChartStyles = (isMobile: boolean) => ({
   [`& .${axisClasses.root}`]: {
     [`& .${axisClasses.line}`]: {
-      stroke: "rgba(247, 246, 243, 0.18)",
+      stroke: "rgba(51, 51, 51, 0.18)",
     },
     [`& .${axisClasses.tick}`]: {
-      stroke: "rgba(247, 246, 243, 0.22)",
+      stroke: "rgba(51, 51, 51, 0.22)",
     },
     [`& .${axisClasses.tickLabel}`]: {
-      fill: "rgba(247, 246, 243, 0.98)",
+      fill: "rgba(51, 51, 51, 0.98)",
       fontSize: isMobile ? 12 : 14,
       fontFamily: "var(--font-work-sans)",
       whiteSpace: "nowrap",
       overflow: "visible",
       textOverflow: "unset",
       paintOrder: "stroke",
-      stroke: "rgba(10, 11, 14, 0.85)",
+      stroke: "rgba(247, 246, 243, 0.85)",
       strokeWidth: isMobile ? 1 : 1.5,
       strokeLinejoin: "round",
     },
@@ -129,7 +129,7 @@ const getChartStyles = (isMobile: boolean) => ({
     lineHeight: isMobile ? 1.25 : 1.35,
   },
   "& .MuiChartsGrid-line": {
-    stroke: "rgba(247, 246, 243, 0.12)",
+    stroke: "rgba(51, 51, 51, 0.12)",
     strokeDasharray: "4 6",
   },
   "& .MuiLineElement-root.MuiLineElement-series-baseline": {
@@ -144,7 +144,7 @@ const getChartStyles = (isMobile: boolean) => ({
     filter: "drop-shadow(0px 0px 18px rgba(222, 94, 72, 0.35))",
   },
   "& .MuiMarkElement-root": {
-    fill: "#0f0f10",
+    fill: "#f7f6f3",
     strokeWidth: isMobile ? 2.4 : 3,
   },
   "& .MuiMarkElement-root.MuiMarkElement-series-baseline": {
@@ -324,7 +324,7 @@ export function SavingsChartSection() {
     ? "savings-chart savings-chart--animated"
     : "savings-chart";
   const totalSavingsCardBaseClasses =
-    "rounded-2xl border border-white/10 bg-[#1d1e21]/90 px-5 py-4 text-center shadow-lg backdrop-blur sm:text-right";
+    "rounded-2xl border border-[#333333]/10 bg-[#e2e0dd]/90 px-5 py-4 text-center shadow-lg backdrop-blur sm:text-right";
   const totalSavingsCardClassName = [
     totalSavingsCardBaseClasses,
     !prefersReducedMotion ? "total-savings-card" : "",
@@ -353,7 +353,7 @@ export function SavingsChartSection() {
   return (
     <section
       ref={sectionRef}
-      className="relative isolate flex flex-col overflow-hidden bg-gradient-to-b from-[#0f0f10] via-[#141517] to-[#0f0f10] pt-24 pb-0 sm:pt-32 sm:pb-0"
+      className="relative isolate flex flex-col overflow-hidden bg-gradient-to-b from-[#f7f6f3] via-[#ebe9e6] to-[#f7f6f3] pt-24 pb-0 sm:pt-32 sm:pb-0"
     >
       <div
         className="pointer-events-none absolute left-[-20%] top-[-30%] h-[75%] w-[65%] rounded-[999px] bg-[#de5e48]/25 blur-[140px]"
@@ -361,12 +361,12 @@ export function SavingsChartSection() {
       />
       <div className="relative z-10 mx-auto flex w-full max-w-[110rem] flex-1 flex-col px-4 pb-28 sm:px-8 sm:pb-24 lg:px-14 lg:pb-20">
         <div className="flex flex-1 flex-col justify-center gap-16 lg:flex-row lg:items-center lg:justify-between lg:gap-20">
-          <div className="lg:order-2 flex max-w-xl flex-col items-center space-y-8 text-center text-[#f7f6f3] lg:items-end lg:text-right">
+          <div className="lg:order-2 flex max-w-xl flex-col items-center space-y-8 text-center text-[#333333] lg:items-end lg:text-right">
             <h2 className="text-4xl font-bold leading-snug sm:text-5xl">
               Stop the 12% price creep before it hits.
             </h2>
             <p
-              className={`${workSans.className} w-full text-lg leading-relaxed text-[#f7f6f3]/80`}
+              className={`${workSans.className} w-full text-lg leading-relaxed text-[#333333]/80`}
             >
               We blended national premium data with typical marketplace savings to
               model yearly re-shopping from 2025 to 2033—this chart shows how
@@ -376,11 +376,11 @@ export function SavingsChartSection() {
 
           <div className="lg:order-1 flex flex-1 flex-col gap-6">
             <div
-              className={`rounded-3xl border border-white/10 bg-[#111214]/80 p-6 shadow-[0_30px_70px_rgba(0,0,0,0.35)] backdrop-blur-sm ${workSans.variable} ${alteHaasGrotesk.variable}`}
+              className={`rounded-3xl border border-[#333333]/10 bg-[#eeecea]/80 p-6 shadow-[0_30px_70px_rgba(51,51,51,0.15)] backdrop-blur-sm ${workSans.variable} ${alteHaasGrotesk.variable}`}
             >
               <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:text-left">
                 <div
-                  className={`${workSans.className} flex flex-col items-start gap-3 text-left text-sm text-[#f7f6f3]/80 sm:flex-row sm:flex-wrap sm:items-center sm:justify-start sm:gap-6 sm:text-base`}
+                  className={`${workSans.className} flex flex-col items-start gap-3 text-left text-sm text-[#333333]/80 sm:flex-row sm:flex-wrap sm:items-center sm:justify-start sm:gap-6 sm:text-base`}
                 >
                   <span className="flex w-full items-center gap-2 whitespace-nowrap sm:w-auto">
                     <span
@@ -399,7 +399,7 @@ export function SavingsChartSection() {
                 </div>
                 <div className={totalSavingsCardClassName}>
                   <p
-                    className={`${workSans.className} text-sm text-[#f7f6f3]/60`}
+                    className={`${workSans.className} text-sm text-[#333333]/60`}
                   >
                     {toSentenceCase("total savings by 2033")}
                   </p>
@@ -603,7 +603,7 @@ export function SavingsChartSection() {
         </div>
       </div>
       <p
-        className={`${workSans.className} absolute inset-x-2 bottom-6 z-20 whitespace-normal text-left text-[11px] leading-relaxed text-[#f7f6f3]/60 sm:inset-x-6 sm:bottom-8 sm:z-20 sm:whitespace-nowrap sm:overflow-x-auto sm:text-xs lg:inset-x-12 lg:bottom-10`}
+        className={`${workSans.className} absolute inset-x-2 bottom-6 z-20 whitespace-normal text-left text-[11px] leading-relaxed text-[#333333]/60 sm:inset-x-6 sm:bottom-8 sm:z-20 sm:whitespace-nowrap sm:overflow-x-auto sm:text-xs lg:inset-x-12 lg:bottom-10`}
       >
         Sources:{" "}
         {SOURCES.map((source, index) => (
@@ -612,7 +612,7 @@ export function SavingsChartSection() {
               href={source.href}
               target="_blank"
               rel="noreferrer"
-              className="transition-colors duration-200 hover:text-[#f7f6f3]"
+              className="transition-colors duration-200 hover:text-[#333333]"
             >
               {source.label}
             </a>

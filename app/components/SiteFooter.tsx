@@ -4,9 +4,17 @@ export function SiteFooter() {
   return (
     <footer className="pt-8 pb-28 sm:pb-8">
       <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-4 px-8 text-center sm:flex-row sm:justify-between sm:text-left">
-        <p className={`${workSans.className} text-sm text-[#f7f6f3]/80`}>
-          © 2025 Samurai Insurance. All Rights Reserved.
-        </p>
+        <div className="flex flex-col items-center sm:items-start gap-2">
+          <p className={`${workSans.className} text-sm text-[#333333]/80`}>
+            © 2025 Samurai Insurance. All Rights Reserved.
+          </p>
+          <a
+            href="/privacy"
+            className={`${workSans.className} text-sm text-[#de5e48] hover:text-[#de5e48]/80 transition-colors underline`}
+          >
+            Privacy Policy
+          </a>
+        </div>
         <nav aria-label="Social media">
           <ul className="flex flex-wrap items-center justify-center gap-3">
             <li>

@@ -15,11 +15,11 @@ export function HeroSection({ onJoinWaitlist }: HeroSectionProps) {
     <section className="w-full px-12 pt-6 pb-16 sm:px-16 sm:pt-16 sm:pb-44">
       <div className="flex flex-col gap-12 lg:flex-row lg:items-center">
         <div className="max-w-2xl text-center lg:flex-1 lg:max-w-none lg:text-left">
-          <h1 className="font-bold leading-tight text-[#f7f6f3] text-4xl sm:text-5xl md:text-6xl lg:text-[64px] lg:leading-[1.05]">
+          <h1 className="font-bold leading-tight text-[#333333] text-4xl sm:text-5xl md:text-6xl lg:text-[64px] lg:leading-[1.05]">
             Never Worry About Your Insurance Again.
           </h1>
           <p
-            className={`${workSans.className} mt-6 text-lg leading-relaxed text-[#f7f6f3] sm:text-xl`}
+            className={`${workSans.className} mt-6 text-lg leading-relaxed text-[#333333] sm:text-xl`}
           >
             We handle everything on your car and home insurance so you can relax and save money. AI that shops for better rates, guides you through claims, and makes updates when you need it.
           </p>

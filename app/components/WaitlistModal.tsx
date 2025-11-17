@@ -536,17 +536,17 @@ export default function WaitlistModal({
       aria-labelledby="waitlist-modal-title"
     >
       <div
-        className="absolute inset-0 bg-[#0f0f10]/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-[#f7f6f3]/60 backdrop-blur-sm"
         onClick={handleClose}
         aria-hidden="true"
       />
 
       <div className="relative flex h-full w-full items-center justify-center p-4 sm:p-8">
-        <div className="relative w-full max-w-xl rounded-[48px] bg-[#3a3c43] px-8 py-10 text-[#f7f6f3] shadow-[0_20px_60px_rgba(0,0,0,0.35)] sm:px-10">
+        <div className="relative w-full max-w-xl rounded-[48px] bg-[#c5c1ba] px-8 py-10 text-[#333333] shadow-[0_20px_60px_rgba(51,51,51,0.25)] sm:px-10">
           <button
             type="button"
             onClick={handleClose}
-            className="focus-outline-modal absolute right-6 top-6 inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#2d2f36] text-[#f7f6f3] transition hover:text-[#f7f6f3]"
+            className="focus-outline-modal absolute right-6 top-6 inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#d2cec9] text-[#333333] transition hover:text-[#333333]"
             aria-label="Close waitlist modal"
           >
             <svg
@@ -565,18 +565,18 @@ export default function WaitlistModal({
 
           <h2
             id="waitlist-modal-title"
-            className="text-3xl font-bold text-[#f7f6f3] sm:text-4xl"
+            className="text-3xl font-bold text-[#333333] sm:text-4xl"
           >
             Join the Waitlist
           </h2>
 
           <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-6">
-            <label className="flex flex-col gap-2 text-sm font-semibold uppercase tracking-[0.12em] text-[#f7f6f3]">
+            <label className="flex flex-col gap-2 text-sm font-semibold uppercase tracking-[0.12em] text-[#333333]">
               First Name
               <input
                 type="text"
                 name="firstName"
-                className="h-12 rounded-full border border-transparent bg-[#4a4c53] px-5 text-base font-normal text-[#f7f6f3] placeholder:text-[#f7f6f3] focus:border-[#de5e48] focus:outline-none focus:ring-2 focus:ring-[#de5e48]"
+                className="h-12 rounded-full border border-transparent bg-[#b5b0ac] px-5 text-base font-normal text-[#333333] placeholder:text-[#333333] focus:border-[#de5e48] focus:outline-none focus:ring-2 focus:ring-[#de5e48]"
                 placeholder="Enter your first name"
                 value={formValues.firstName}
                 onChange={handleFirstNameChange}
@@ -584,18 +584,18 @@ export default function WaitlistModal({
                 aria-invalid={firstNameErrors.length > 0}
               />
               {firstNameErrors.length > 0 ? (
-                <span className="text-xs font-normal uppercase tracking-[0.1em] text-[#f7f6f3]">
+                <span className="text-xs font-normal uppercase tracking-[0.1em] text-[#333333]">
                   {firstNameErrors[0]}
                 </span>
               ) : null}
             </label>
 
-            <label className="flex flex-col gap-2 text-sm font-semibold uppercase tracking-[0.12em] text-[#f7f6f3]">
+            <label className="flex flex-col gap-2 text-sm font-semibold uppercase tracking-[0.12em] text-[#333333]">
               Last Name
               <input
                 type="text"
                 name="lastName"
-                className="h-12 rounded-full border border-transparent bg-[#4a4c53] px-5 text-base font-normal text-[#f7f6f3] placeholder:text-[#f7f6f3] focus:border-[#de5e48] focus:outline-none focus:ring-2 focus:ring-[#de5e48]"
+                className="h-12 rounded-full border border-transparent bg-[#b5b0ac] px-5 text-base font-normal text-[#333333] placeholder:text-[#333333] focus:border-[#de5e48] focus:outline-none focus:ring-2 focus:ring-[#de5e48]"
                 placeholder="Enter your last name"
                 value={formValues.lastName}
                 onChange={handleLastNameChange}
@@ -603,18 +603,18 @@ export default function WaitlistModal({
                 aria-invalid={lastNameErrors.length > 0}
               />
               {lastNameErrors.length > 0 ? (
-                <span className="text-xs font-normal uppercase tracking-[0.1em] text-[#f7f6f3]">
+                <span className="text-xs font-normal uppercase tracking-[0.1em] text-[#333333]">
                   {lastNameErrors[0]}
                 </span>
               ) : null}
             </label>
 
-            <label className="flex flex-col gap-2 text-sm font-semibold uppercase tracking-[0.12em] text-[#f7f6f3]">
+            <label className="flex flex-col gap-2 text-sm font-semibold uppercase tracking-[0.12em] text-[#333333]">
               Email
               <input
                 type="email"
                 name="email"
-                className="h-12 rounded-full border border-transparent bg-[#4a4c53] px-5 text-base font-normal text-[#f7f6f3] placeholder:text-[#f7f6f3] focus:border-[#de5e48] focus:outline-none focus:ring-2 focus:ring-[#de5e48]"
+                className="h-12 rounded-full border border-transparent bg-[#b5b0ac] px-5 text-base font-normal text-[#333333] placeholder:text-[#333333] focus:border-[#de5e48] focus:outline-none focus:ring-2 focus:ring-[#de5e48]"
                 placeholder="Enter your email"
                 value={formValues.email}
                 onChange={handleEmailChange}
@@ -629,11 +629,11 @@ export default function WaitlistModal({
               ) : null}
             </label>
 
-            <label className="flex items-start gap-3 text-sm text-[#f7f6f3]">
+            <label className="flex items-start gap-3 text-sm text-[#333333]">
               <input
                 type="checkbox"
                 name="marketingConsent"
-                className="mt-[2px] h-5 w-5 rounded border border-[#63656b] bg-[#2c2d33] text-[#f7f6f3] focus:ring-[#de5e48]"
+                className="mt-[2px] h-5 w-5 rounded border border-[#9c9692] bg-[#d3cecb] text-[#333333] focus:ring-[#de5e48]"
                 checked={formValues.marketingConsent}
                 onChange={handleConsentChange}
                 required
@@ -642,7 +642,7 @@ export default function WaitlistModal({
               I agree to receive future marketing emails from Samurai Insurance.
             </label>
             {marketingConsentErrors.length > 0 ? (
-              <span className="text-xs font-normal uppercase tracking-[0.1em] text-[#f7f6f3]">
+              <span className="text-xs font-normal uppercase tracking-[0.1em] text-[#333333]">
                 {marketingConsentErrors[0]}
               </span>
             ) : null}
@@ -653,14 +653,14 @@ export default function WaitlistModal({
               </div>
             ) : null}
             {resolvedCaptchaError ? (
-              <span className="text-xs font-normal uppercase tracking-[0.1em] text-[#f7f6f3]">
+              <span className="text-xs font-normal uppercase tracking-[0.1em] text-[#333333]">
                 {resolvedCaptchaError}
               </span>
             ) : null}
-            <p className="mt-1 text-center text-xs text-[#f7f6f3]">
+            <p className="mt-1 text-center text-xs text-[#333333]">
               This site is protected by reCAPTCHA and the Google{" "}
               <a
-                className="underline transition hover:text-[#f7f6f3]"
+                className="underline transition hover:text-[#333333]"
                 href="https://policies.google.com/privacy"
                 rel="noreferrer"
                 target="_blank"
@@ -669,7 +669,7 @@ export default function WaitlistModal({
               </a>{" "}
               and{" "}
               <a
-                className="underline transition hover:text-[#f7f6f3]"
+                className="underline transition hover:text-[#333333]"
                 href="https://policies.google.com/terms"
                 rel="noreferrer"
                 target="_blank"
@@ -692,7 +692,7 @@ export default function WaitlistModal({
               {isPending ? "Submitting..." : "Submit"}
             </button>
             {formMessage ? (
-              <p className="text-sm font-medium text-[#f7f6f3]">{formMessage}</p>
+              <p className="text-sm font-medium text-[#333333]">{formMessage}</p>
             ) : null}
           </form>
         </div>

@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #333333;
-  --foreground: #f7f6f3;
+  --background: #f7f6f3;
+  --foreground: #333333;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-alte-haas);
@@ -10,9 +10,31 @@
 }
 
 body {
-  background: var(--background);
+  background:
+    radial-gradient(ellipse 900px 700px at 18% 8%, rgba(245, 225, 215, 0.55), transparent),
+    radial-gradient(ellipse 1000px 800px at 82% 25%, rgba(255, 180, 160, 0.5), transparent),
+    radial-gradient(ellipse 850px 900px at 50% 65%, rgba(255, 155, 135, 0.45), transparent),
+    radial-gradient(ellipse 950px 750px at 12% 88%, rgba(248, 220, 205, 0.5), transparent),
+    radial-gradient(ellipse 900px 950px at 88% 80%, rgba(250, 190, 175, 0.4), transparent),
+    var(--background);
   color: var(--foreground);
   font-family: var(--font-alte-haas), var(--font-work-sans), sans-serif;
+  position: relative;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.12;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+  mix-blend-mode: multiply;
 }
 
 .waitlist-search-input::-webkit-search-cancel-button {
@@ -27,7 +49,7 @@ body {
 }
 
 .feature-shield {
-  filter: drop-shadow(0 32px 64px rgba(0, 0, 0, 0.45));
+  filter: drop-shadow(0 24px 48px rgba(51, 51, 51, 0.15)) drop-shadow(0 8px 16px rgba(51, 51, 51, 0.1));
 }
 
 .feature-shield__svg {
@@ -103,7 +125,7 @@ body {
 
 .feature-shield__outline {
   fill: none;
-  stroke: rgba(247, 246, 243, 0.45);
+  stroke: rgba(51, 51, 51, 0.45);
   stroke-width: 3;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -133,7 +155,7 @@ body {
 }
 
 .feature-bag {
-  filter: drop-shadow(0 24px 48px rgba(0, 0, 0, 0.38));
+  filter: drop-shadow(0 20px 40px rgba(51, 51, 51, 0.12)) drop-shadow(0 8px 16px rgba(51, 51, 51, 0.08));
 }
 
 .feature-bag__svg {
@@ -201,7 +223,7 @@ body {
 }
 
 .feature-bag__straps line {
-  stroke: rgba(51, 51, 51, 0.4);
+  stroke: rgba(247, 246, 243, 0.4);
   stroke-width: 3;
   stroke-linecap: round;
   opacity: 0;
@@ -229,7 +251,7 @@ body {
 }
 
 .feature-clock {
-  filter: drop-shadow(0 24px 48px rgba(0, 0, 0, 0.38));
+  filter: drop-shadow(0 20px 40px rgba(51, 51, 51, 0.12)) drop-shadow(0 8px 16px rgba(51, 51, 51, 0.08));
 }
 
 .feature-clock__svg {
@@ -265,7 +287,7 @@ body {
     rgba(92, 175, 193, 0.45),
     rgba(255, 235, 211, 0.48) 38%,
     rgba(222, 94, 72, 0.5) 68%,
-    rgba(51, 51, 51, 0.16) 100%
+    rgba(247, 246, 243, 0.16) 100%
   );
   animation: clock-glow-breathe 4.4s ease-in-out infinite;
 }
@@ -320,7 +342,7 @@ body {
 }
 
 .feature-clock__hand-cap {
-  fill: rgba(247, 246, 243, 0.92);
+  fill: rgba(51, 51, 51, 0.92);
   stroke: rgba(222, 94, 72, 0.65);
   stroke-width: 2;
 }
@@ -385,7 +407,7 @@ button:disabled {
   }
 
   .focus-outline-brand-sm:focus-visible {
-    outline: 2px solid #f7f6f3;
+    outline: 2px solid #333333;
     outline-offset: 2px;
   }
 
@@ -394,7 +416,7 @@ button:disabled {
   }
 
   .focus-outline-brand-lg:focus-visible {
-    outline: 2px solid #f7f6f3;
+    outline: 2px solid #333333;
     outline-offset: 3px;
   }
 

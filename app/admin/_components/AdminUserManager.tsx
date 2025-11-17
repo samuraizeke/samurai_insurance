@@ -179,11 +179,11 @@ export function AdminUserManager({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h2
-            className={`${alteHaasGrotesk.className} text-lg font-semibold text-[#f7f6f3]`}
+            className={`${alteHaasGrotesk.className} text-lg font-semibold text-[#333333]`}
           >
             Admin access
           </h2>
-          <p className="mt-1 text-sm text-[#f7f6f3]/65">
+          <p className="mt-1 text-sm text-[#333333]/65">
             Invite new admins or promote existing Supabase accounts.
           </p>
         </div>
@@ -207,7 +207,7 @@ export function AdminUserManager({
             {loadError}
           </p>
         ) : sortedAdmins.length === 0 ? (
-          <p className="text-sm text-[#f7f6f3]/60">
+          <p className="text-sm text-[#333333]/60">
             No admin users found yet.
           </p>
         ) : (
@@ -221,11 +221,11 @@ export function AdminUserManager({
                 >
                   <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <p className="text-sm font-semibold text-[#f7f6f3]">
+                    <p className="text-sm font-semibold text-[#333333]">
                       {admin.email}
                     </p>
                     {admin.fullName ? (
-                      <p className="text-xs text-[#f7f6f3]/55">
+                      <p className="text-xs text-[#333333]/55">
                         {admin.fullName}
                       </p>
                     ) : null}
@@ -240,28 +240,28 @@ export function AdminUserManager({
                     Roles: {admin.isSuperAdmin ? "superadmin" : "admin"}
                   </span>
                 </div>
-                <dl className="mt-3 grid grid-cols-1 gap-3 text-xs text-[#f7f6f3]/55 sm:grid-cols-3">
+                <dl className="mt-3 grid grid-cols-1 gap-3 text-xs text-[#333333]/55 sm:grid-cols-3">
                   <div>
-                    <dt className="uppercase tracking-wide text-[#f7f6f3]/40">
+                    <dt className="uppercase tracking-wide text-[#333333]/40">
                       Created
                     </dt>
-                    <dd className="mt-1 text-[#f7f6f3]/70">
+                    <dd className="mt-1 text-[#333333]/70">
                       {formatTimestamp(admin.createdAt)}
                     </dd>
                   </div>
                   <div>
-                    <dt className="uppercase tracking-wide text-[#f7f6f3]/40">
+                    <dt className="uppercase tracking-wide text-[#333333]/40">
                       Last signin
                     </dt>
-                    <dd className="mt-1 text-[#f7f6f3]/70">
+                    <dd className="mt-1 text-[#333333]/70">
                       {formatTimestamp(admin.lastSignInAt)}
                     </dd>
                   </div>
                   <div>
-                    <dt className="uppercase tracking-wide text-[#f7f6f3]/40">
+                    <dt className="uppercase tracking-wide text-[#333333]/40">
                       Status
                     </dt>
-                    <dd className="mt-1 text-[#f7f6f3]/70">Ready</dd>
+                    <dd className="mt-1 text-[#333333]/70">Ready</dd>
                   </div>
                 </dl>
                   <div className="mt-4 flex flex-wrap gap-2">
@@ -269,7 +269,7 @@ export function AdminUserManager({
                     <button
                       type="button"
                       onClick={() => handleResendInvite(admin)}
-                      className="inline-flex items-center rounded-full border border-[#f7f6f3]/20 px-3 py-1.5 text-xs font-semibold text-[#f7f6f3] transition hover:border-[#f7f6f3]/40 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+                      className="inline-flex items-center rounded-full border border-[#f7f6f3]/20 px-3 py-1.5 text-xs font-semibold text-[#333333] transition hover:border-[#f7f6f3]/40 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
                       disabled={pendingAction?.userId === admin.id}
                     >
                       {pendingAction?.userId === admin.id &&
@@ -312,7 +312,7 @@ export function AdminUserManager({
           <div>
             <label
               htmlFor="admin-email"
-              className="mb-2 block text-xs font-semibold uppercase tracking-wide text-[#f7f6f3]/55"
+              className="mb-2 block text-xs font-semibold uppercase tracking-wide text-[#333333]/55"
             >
               Email
             </label>
@@ -346,7 +346,7 @@ export function AdminUserManager({
           <div>
             <label
               htmlFor="admin-password"
-              className="mb-2 block text-xs font-semibold uppercase tracking-wide text-[#f7f6f3]/55"
+              className="mb-2 block text-xs font-semibold uppercase tracking-wide text-[#333333]/55"
             >
               Password (optional)
             </label>

@@ -74,7 +74,7 @@ const faqItems: FaqItem[] = [
         </p>
         <ul className="list-disc list-inside space-y-2">
           <li>Annual price checks with clear explanations.</li>
-          <li>any quotes, changes, and paperwork handled for you.</li>
+          <li>Any quotes, changes, and paperwork handled for you.</li>
           <li>Answers on demand to all of your insurance questions.</li>
         </ul>
       </>
@@ -102,7 +102,7 @@ export function FaqSection() {
     <section className="w-full px-12 pb-16 pt-6 sm:px-16 sm:pb-36 lg:pt-24">
       <div className="flex flex-col gap-10 lg:flex-row lg:items-start lg:gap-20">
         <div className="lg:w-1/3">
-          <h2 className="text-center text-[56px] font-bold tracking-tight text-[#f7f6f3] sm:text-[64px] lg:text-left">
+          <h2 className="text-center text-[56px] font-bold tracking-tight text-[#333333] sm:text-[64px] lg:text-left">
             FAQ<span className="lowercase">s</span>
           </h2>
         </div>
@@ -114,7 +114,7 @@ export function FaqSection() {
                 <li key={faq.question} className="border-b border-[#de5e48]">
                   <button
                     type="button"
-                    className="flex w-full items-center justify-between gap-4 py-5 text-left text-xl font-bold text-[#f7f6f3] transition hover:text-[#ffb8a9] sm:text-2xl"
+                    className="flex w-full items-center justify-between gap-4 py-5 text-left text-xl font-bold text-[#333333] transition hover:text-[#ffb8a9] sm:text-2xl"
                     onClick={() => handleToggleFaq(index)}
                     aria-expanded={isOpen}
                     aria-controls={`faq-panel-${index}`}
@@ -141,7 +141,7 @@ export function FaqSection() {
                       ref={(element) => {
                         contentRefs.current[index] = element;
                       }}
-                      className="space-y-4 pb-6 pr-12 text-base text-[#f7f6f3]/90 sm:text-lg"
+                      className="space-y-4 pb-6 pr-12 text-base text-[#333333]/90 sm:text-lg"
                     >
                       {faq.answer}
                     </div>

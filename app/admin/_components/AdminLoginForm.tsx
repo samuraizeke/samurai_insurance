@@ -60,11 +60,11 @@ export function AdminLoginForm({ initialMessage }: AdminLoginFormProps) {
       className={`${workSans.className} admin-login-card w-full max-w-sm rounded-lg border border-white/10 bg-white/5 p-6 backdrop-blur`}
     >
       <h1
-        className={`${alteHaasGrotesk.className} mb-4 text-2xl font-semibold text-[#f7f6f3] text-center`}
+        className={`${alteHaasGrotesk.className} mb-4 text-2xl font-semibold text-[#333333] text-center`}
       >
         Admin Access
       </h1>
-      <p className="mb-6 text-sm text-[#f7f6f3]">
+      <p className="mb-6 text-sm text-[#333333]">
         Sign in with your Supabase admin credentials to view the dashboard.
       </p>
 
@@ -144,7 +144,7 @@ export function AdminLoginForm({ initialMessage }: AdminLoginFormProps) {
         .admin-login-card input:-webkit-autofill,
         .admin-login-card input:-webkit-autofill:hover,
         .admin-login-card input:-webkit-autofill:focus {
-          box-shadow: 0 0 0px 1000px #f7f6f3 inset;
+          box-shadow: 0 0 0px 1000px #333333 inset;
           -webkit-text-fill-color: #111111;
           caret-color: #111111;
         }

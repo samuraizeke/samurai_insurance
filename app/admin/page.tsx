@@ -199,9 +199,9 @@ export default async function AdminPage({
   if (!adminContext.authorized) {
     return (
       <div
-        className={`${alteHaasGrotesk.className} flex min-h-screen flex-col bg-[#333333] text-[#f7f6f3]`}
+        className={`${alteHaasGrotesk.className} flex min-h-screen flex-col bg-[#f7f6f3] text-[#333333]`}
       >
-        <header className="sticky top-0 z-40 w-full bg-[#333333]">
+        <header className="sticky top-0 z-40 w-full bg-[#f7f6f3]">
           <div className="flex w-full flex-col items-center gap-4 px-6 py-8 text-center sm:flex-row sm:items-center sm:justify-between sm:gap-0 sm:px-16 sm:py-10 sm:text-left">
             <div className="flex items-center justify-center gap-4 sm:justify-start">
               <Image
@@ -211,7 +211,7 @@ export default async function AdminPage({
                 height={32}
                 priority
               />
-              <span className="whitespace-nowrap text-lg font-bold uppercase text-[#f7f6f3] sm:text-2xl">
+              <span className="whitespace-nowrap text-lg font-bold uppercase text-[#333333] sm:text-2xl">
                 Samurai Insurance
               </span>
             </div>
@@ -266,9 +266,9 @@ export default async function AdminPage({
 
   return (
     <div
-      className={`${alteHaasGrotesk.className} flex min-h-screen flex-col bg-[#333333] text-[#f7f6f3]`}
+      className={`${alteHaasGrotesk.className} flex min-h-screen flex-col bg-[#f7f6f3] text-[#333333]`}
     >
-      <header className="sticky top-0 z-40 w-full bg-[#333333]">
+      <header className="sticky top-0 z-40 w-full bg-[#f7f6f3]">
         <div className="flex w-full flex-col items-center gap-4 px-6 py-8 text-center sm:flex-row sm:items-center sm:justify-between sm:gap-0 sm:px-16 sm:py-10 sm:text-left">
           <div className="flex items-center justify-center gap-4 sm:justify-start">
             <Image
@@ -278,14 +278,14 @@ export default async function AdminPage({
               height={32}
               priority
             />
-            <span className="whitespace-nowrap text-lg font-bold uppercase text-[#f7f6f3] sm:text-2xl">
+            <span className="whitespace-nowrap text-lg font-bold uppercase text-[#333333] sm:text-2xl">
               Samurai Insurance
             </span>
           </div>
           <div className="flex flex-col items-center gap-3 sm:items-end">
-            <p className="text-sm text-[#f7f6f3]/70">
+            <p className="text-sm text-[#333333]/70">
               Signed in as{" "}
-              <span className="font-medium text-[#f7f6f3]">
+              <span className="font-medium text-[#333333]">
                 {adminContext.user.email ?? "Unknown user"}
               </span>
             </p>

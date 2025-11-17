@@ -46,10 +46,10 @@ export function AdminAnalyticsPanel({
       />
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-[#f7f6f3]">
+          <h2 className="text-lg font-semibold text-[#333333]">
             Web analytics
           </h2>
-          <p className="mt-2 text-sm text-[#f7f6f3]/65">
+          <p className="mt-2 text-sm text-[#333333]/65">
             {RANGE_DESCRIPTION[analyticsRange]}
             {analyticsDashboard.summary.lastEventAt
               ? ` • Updated ${new Date(
@@ -102,14 +102,14 @@ export function AdminAnalyticsPanel({
       <div className="rounded-2xl border border-[#f7f6f3]/10 bg-[#2a2a2a]/80 p-6 shadow-[0_18px_40px_rgba(0,0,0,0.45)]">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h3 className="text-sm font-semibold text-[#f7f6f3]/70">
+            <h3 className="text-sm font-semibold text-[#333333]/70">
               Visitors trend
             </h3>
-            <p className="mt-1 text-sm text-[#f7f6f3]/65">
+            <p className="mt-1 text-sm text-[#333333]/65">
               Unique visitors across {RANGE_DESCRIPTION[analyticsRange].toLowerCase()}
             </p>
           </div>
-          <span className="text-xs text-[#f7f6f3]/55">
+          <span className="text-xs text-[#333333]/55">
             Peak:{" "}
             {formatNumber(
               Math.max(
@@ -188,13 +188,13 @@ function MetricCard({ label, value, caption, error, onClick }: MetricCardProps) 
           : ""
       }`}
     >
-      <p className="text-sm font-semibold text-[#f7f6f3]/70">{label}</p>
-      <p className="mt-4 text-4xl font-semibold text-[#f7f6f3]">{value}</p>
+      <p className="text-sm font-semibold text-[#333333]/70">{label}</p>
+      <p className="mt-4 text-4xl font-semibold text-[#333333]">{value}</p>
 
       {error ? (
         <p className="mt-3 text-sm text-rose-300/80">{error}</p>
       ) : caption ? (
-        <p className="mt-3 text-xs text-[#f7f6f3]/60">{caption}</p>
+        <p className="mt-3 text-xs text-[#333333]/60">{caption}</p>
       ) : null}
     </Component>
   );
@@ -209,14 +209,14 @@ function BreakdownCard({ title, items }: BreakdownCardProps) {
   return (
     <div className="rounded-2xl border border-[#f7f6f3]/10 bg-[#2a2a2a]/80 p-6 shadow-[0_18px_40px_rgba(0,0,0,0.45)]">
       <div className="flex items-center justify-between gap-3">
-        <h3 className="text-sm font-semibold text-[#f7f6f3]/70">{title}</h3>
-        <span className="text-xs text-[#f7f6f3]/55">Visitors</span>
+        <h3 className="text-sm font-semibold text-[#333333]/70">{title}</h3>
+        <span className="text-xs text-[#333333]/55">Visitors</span>
       </div>
 
       {items.length === 0 ? (
-        <p className="mt-5 text-sm text-[#f7f6f3]/55">No data yet.</p>
+        <p className="mt-5 text-sm text-[#333333]/55">No data yet.</p>
       ) : (
-        <ul className="mt-5 space-y-4 text-sm text-[#f7f6f3]/80">
+        <ul className="mt-5 space-y-4 text-sm text-[#333333]/80">
           {items.map((item) => (
             <li
               key={`${title}-${item.label}`}
@@ -224,10 +224,10 @@ function BreakdownCard({ title, items }: BreakdownCardProps) {
             >
               <span className="truncate">{item.label}</span>
               <span className="flex shrink-0 flex-col text-right">
-                <span className="text-sm font-semibold text-[#f7f6f3]">
+                <span className="text-sm font-semibold text-[#333333]">
                   {formatNumber(item.value)}
                 </span>
-                <span className="text-xs text-[#f7f6f3]/55">
+                <span className="text-xs text-[#333333]/55">
                   {formatPercent(item.percent)}
                 </span>
               </span>
@@ -242,7 +242,7 @@ function BreakdownCard({ title, items }: BreakdownCardProps) {
 function VisitorsLineChart({ data }: { data: AnalyticsTrendPoint[] }) {
   if (!data || data.length === 0) {
     return (
-      <div className="flex h-52 items-center justify-center rounded-xl border border-[#f7f6f3]/10 bg-[#1f1f1f]/80 text-sm text-[#f7f6f3]/55">
+      <div className="flex h-52 items-center justify-center rounded-xl border border-[#f7f6f3]/10 bg-[#1f1f1f]/80 text-sm text-[#333333]/55">
         Not enough traffic to chart yet.
       </div>
     );

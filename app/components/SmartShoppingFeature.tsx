@@ -10,7 +10,7 @@ export function SmartShoppingFeature({
 }: SmartShoppingFeatureProps) {
   return (
     <section
-      className={`w-full px-6 py-16 sm:px-16 sm:py-24 md:py-[150px] ${className}`}
+      className={`w-full bg-[#f7f6f3] px-6 py-16 sm:px-16 sm:py-24 md:py-[150px] ${className}`}
     >
       <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-12 text-center md:grid md:grid-cols-[minmax(0,0.95fr)_minmax(0,1.1fr)] md:items-center md:gap-24">
         <div className="order-2 mt-12 flex flex-col items-center gap-6 md:order-2 md:mt-0 md:items-end md:gap-7 md:text-right">
@@ -18,14 +18,14 @@ export function SmartShoppingFeature({
             Smart Shopping
           </h2>
           <p
-            className={`${workSans.className} text-lg text-[#f7f6f3]/85 sm:text-xl md:text-right`}
+            className={`${workSans.className} text-lg text-[#333333]/85 sm:text-xl md:text-right`}
           >
             Insurance is a chore, so hand it to us and get back to living. We
             only shop when it truly helps you, which means movement when it&apos;s
             worth it and no churn just to churn.
           </p>
           <ul
-            className={`${workSans.className} flex w-full max-w-[360px] flex-col gap-4 text-left text-base text-[#f7f6f3]/85 sm:text-lg md:self-end md:items-end md:text-right`}
+            className={`${workSans.className} flex w-full max-w-[360px] flex-col gap-4 text-left text-base text-[#333333]/85 sm:text-lg md:self-end md:items-end md:text-right`}
           >
             <li className="flex items-start gap-3 md:items-center">
               <span className="mt-1.5 inline-flex h-2.5 w-2.5 flex-none rounded-full bg-[#de5e48]" />
