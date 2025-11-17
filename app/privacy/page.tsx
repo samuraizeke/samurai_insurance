@@ -255,8 +255,7 @@ export default function PrivacyPage() {
                 information. You have the right to opt out of this sharing.
               </p>
               <p className="text-[#333333]/80 leading-relaxed mt-4">
-                To opt out, click here: [Do Not Sell or Share My Personal Information] or email
-                info@joinsamurai.com.
+                To opt out email info@joinsamurai.com.
               </p>
             </section>
 
