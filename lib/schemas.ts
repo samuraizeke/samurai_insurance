@@ -10,7 +10,7 @@ const waitlistBaseSchema = z.object({
 });
 
 export const waitlistSchema = waitlistBaseSchema.extend({
-  source: z.literal("Lander"),
+  source: z.enum(["Lander", "Facebook"]),
 });
 
 export const waitlistSubmissionSchema = waitlistSchema.extend({

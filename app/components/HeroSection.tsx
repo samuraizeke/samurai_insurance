@@ -24,7 +24,7 @@ export function HeroSection({ onJoinWaitlist }: HeroSectionProps) {
             We handle everything on your car and home insurance so you can relax and save money. AI that shops for better rates, guides you through claims, and makes updates when you need it.
           </p>
           <button
-            className="focus-outline-brand-lg mt-10 hidden items-center justify-center rounded-full bg-[#de5e48] px-8 py-3 text-lg font-bold text-[#f7f6f3] shadow-[0_4px_12px_rgba(222,94,72,0.22)] transition hover:-translate-y-0.5 hover:shadow-[0_6px_16px_rgba(222,94,72,0.27)] sm:flex mx-auto lg:mx-0"
+            className="focus-outline-brand-sm mt-10 hidden rounded-full bg-[#de5e48] px-6 py-2 text-med font-bold text-[#f7f6f3] shadow-[0_3px_8px_rgba(222,94,72,0.18)] transition hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(222,94,72,0.24)] sm:inline-flex mx-auto lg:mx-0"
             onClick={onJoinWaitlist}
             type="button"
           >
@@ -41,7 +41,7 @@ export function HeroSection({ onJoinWaitlist }: HeroSectionProps) {
               playsInline
               preload="metadata"
               onEnded={(event) => event.currentTarget.pause()}
-              src="https://samuraiinsurancestorage.blob.core.windows.net/videos/out.mp4?sp=r&st=2025-10-17T20:30:19Z&se=2028-12-31T05:45:19Z&spr=https&sv=2024-11-04&sr=b&sig=PHRlMyRp0HKt09E62qHJ5fbNsrk2vQ0ZJeinMaIeE6o%3D"
+              src="https://samuraiinsurancestorage.blob.core.windows.net/videos/quote%20demo.mp4?sp=r&st=2025-11-18T20:05:09Z&se=2025-11-19T04:20:09Z&spr=https&sv=2024-11-04&sr=b&sig=MMJXk4ETvU2g5nJCc5X8sSwWNHa6IDcto%2F1iS3YHBTs%3D"
             >
               Your browser does not support the video tag.
             </video>
