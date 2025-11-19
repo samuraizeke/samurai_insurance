@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { AnalyticsRange, getAnalyticsDashboard } from "@/lib/analytics";
 import { alteHaasGrotesk } from "@/lib/fonts";
 import { createSupabaseServerClient } from "@/lib/supabaseServerClient";
@@ -203,18 +204,15 @@ export default async function AdminPage({
       >
         <header className="sticky top-0 z-40 w-full bg-[#f7f6f3]">
           <div className="flex w-full flex-col items-center gap-4 px-6 py-8 text-center sm:flex-row sm:items-center sm:justify-between sm:gap-0 sm:px-16 sm:py-10 sm:text-left">
-            <div className="flex items-center justify-center gap-4 sm:justify-start">
+            <Link href="/" className="transition hover:opacity-80">
               <Image
-                src="/SamuraiLogoOrange.png"
+                src="/samurai-insurance-logo.png"
                 alt="Samurai Insurance logo"
-                width={64}
-                height={32}
+                width={300}
+                height={80}
                 priority
               />
-              <span className="whitespace-nowrap text-lg font-bold uppercase text-[#333333] sm:text-2xl">
-                Samurai Insurance
-              </span>
-            </div>
+            </Link>
           </div>
         </header>
 
@@ -270,18 +268,15 @@ export default async function AdminPage({
     >
       <header className="sticky top-0 z-40 w-full bg-[#f7f6f3]">
         <div className="flex w-full flex-col items-center gap-4 px-6 py-8 text-center sm:flex-row sm:items-center sm:justify-between sm:gap-0 sm:px-16 sm:py-10 sm:text-left">
-          <div className="flex items-center justify-center gap-4 sm:justify-start">
+          <Link href="/" className="transition hover:opacity-80">
             <Image
-              src="/SamuraiLogoOrange.png"
+              src="/samurai-insurance-logo.png"
               alt="Samurai Insurance logo"
-              width={64}
-              height={32}
+              width={300}
+              height={80}
               priority
             />
-            <span className="whitespace-nowrap text-lg font-bold uppercase text-[#333333] sm:text-2xl">
-              Samurai Insurance
-            </span>
-          </div>
+          </Link>
           <div className="flex flex-col items-center gap-3 sm:items-end">
             <p className="text-sm text-[#333333]/70">
               Signed in as{" "}

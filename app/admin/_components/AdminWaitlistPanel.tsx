@@ -87,15 +87,15 @@ export function AdminWaitlistPanel({
   const totalCount = entries.length;
 
   return (
-    <section className="rounded-2xl border border-[#f7f6f3]/10 bg-[#2a2a2a]/80 p-6 shadow-[0_18px_40px_rgba(0,0,0,0.45)]">
+    <section className="rounded-2xl border border-[#333333]/20 bg-white p-6 shadow-lg">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h2
-            className={`${alteHaasGrotesk.className} text-lg font-semibold text-[#f7f6f3]`}
+            className={`${alteHaasGrotesk.className} text-lg font-semibold text-[#333333]`}
           >
             Waitlist
           </h2>
-          <p className="mt-1 text-sm text-[#f7f6f3]/65">
+          <p className="mt-1 text-sm text-[#333333]/65">
             Review everyone who has signed up and where they came from.
           </p>
         </div>
@@ -109,9 +109,9 @@ export function AdminWaitlistPanel({
             value={searchTerm}
             onChange={(event) => setSearchTerm(event.target.value)}
             placeholder="Search waitlist..."
-            className="waitlist-search-input min-w-[220px] rounded-full border border-[#f7f6f3]/15 bg-[#1f1f1f] px-4 py-2 text-sm text-[#f7f6f3] placeholder:text-[#f7f6f3]/35 focus:border-[#de5e48]/60 focus:outline-none focus:ring-2 focus:ring-[#de5e48]/40"
+            className="waitlist-search-input min-w-[220px] rounded-full border border-[#333333]/20 bg-[#f7f6f3] px-4 py-2 text-sm text-[#333333] placeholder:text-[#333333]/35 focus:border-[#de5e48]/60 focus:outline-none focus:ring-2 focus:ring-[#de5e48]/40"
           />
-          <span className="text-xs font-medium uppercase tracking-wide text-[#f7f6f3]/55">
+          <span className="text-xs font-medium uppercase tracking-wide text-[#333333]/55">
             {visibleCount} of {totalCount}{" "}
             {totalCount === 1 ? "person" : "people"}
           </span>
@@ -119,15 +119,15 @@ export function AdminWaitlistPanel({
       </div>
 
       {loadError ? (
-        <p className="mt-6 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
+        <p className="mt-6 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-700">
           {loadError}
         </p>
       ) : displayEntries.length > 0 ? (
         <div className="mt-6 overflow-x-auto">
           <table
-            className={`${workSans.className} w-full table-auto text-left text-sm text-[#f7f6f3]/85`}
+            className={`${workSans.className} w-full table-auto text-left text-sm text-[#333333]/85`}
           >
-            <thead className="text-xs uppercase tracking-wide text-[#f7f6f3]/55">
+            <thead className="text-xs uppercase tracking-wide text-[#333333]/55">
               <tr>
                 <th className="px-3 py-2 font-semibold">Name</th>
                 <th className="px-3 py-2 font-semibold">Email</th>
@@ -139,9 +139,9 @@ export function AdminWaitlistPanel({
               {displayEntries.map((entry) => (
                 <tr
                   key={entry.key}
-                  className="border-t border-[#f7f6f3]/10 last:border-b last:border-[#f7f6f3]/10"
+                  className="border-t border-[#333333]/10 last:border-b last:border-[#333333]/10"
                 >
-                  <td className="px-3 py-3 text-[#f7f6f3]">{entry.fullName}</td>
+                  <td className="px-3 py-3 text-[#333333]">{entry.fullName}</td>
                   <td className="px-3 py-3">
                     {entry.email ? (
                       <a
@@ -154,10 +154,10 @@ export function AdminWaitlistPanel({
                       "—"
                     )}
                   </td>
-                  <td className="px-3 py-3 text-[#f7f6f3]/75">
+                  <td className="px-3 py-3 text-[#333333]/75">
                     {entry.source}
                   </td>
-                  <td className="px-3 py-3 text-[#f7f6f3]/75">
+                  <td className="px-3 py-3 text-[#333333]/75">
                     {entry.joined}
                   </td>
                 </tr>
@@ -166,7 +166,7 @@ export function AdminWaitlistPanel({
           </table>
         </div>
       ) : (
-        <p className="mt-6 text-sm text-[#f7f6f3]/65">
+        <p className="mt-6 text-sm text-[#333333]/65">
           No one has joined the waitlist yet.
         </p>
       )}

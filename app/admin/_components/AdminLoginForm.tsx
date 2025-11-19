@@ -57,7 +57,7 @@ export function AdminLoginForm({ initialMessage }: AdminLoginFormProps) {
 
   return (
     <div
-      className={`${workSans.className} admin-login-card w-full max-w-sm rounded-lg border border-white/10 bg-white/5 p-6 backdrop-blur`}
+      className={`${workSans.className} admin-login-card w-full max-w-sm rounded-lg border border-[#333333]/20 bg-white p-6 shadow-lg`}
     >
       <h1
         className={`${alteHaasGrotesk.className} mb-4 text-2xl font-semibold text-[#333333] text-center`}
@@ -71,7 +71,7 @@ export function AdminLoginForm({ initialMessage }: AdminLoginFormProps) {
       <form action={formAction} className="space-y-4">
         <div>
           <label
-            className="mb-2 block text-sm font-medium text-white/80"
+            className="mb-2 block text-sm font-medium text-[#333333]"
             htmlFor="email"
           >
             Email
@@ -80,7 +80,7 @@ export function AdminLoginForm({ initialMessage }: AdminLoginFormProps) {
             id="email"
             name="email"
             type="email"
-            className="w-full rounded-md border border-white/20 bg-[#f7f6f3] px-3 py-2 text-black focus:border-white focus:outline-none focus:ring-2 focus:ring-white/40"
+            className="w-full rounded-md border border-[#333333]/20 bg-[#f7f6f3] px-3 py-2 text-[#333333] focus:border-[#de5e48] focus:outline-none focus:ring-2 focus:ring-[#de5e48]/40"
             placeholder="your@email.com"
             required
             disabled={isPending}
@@ -95,7 +95,7 @@ export function AdminLoginForm({ initialMessage }: AdminLoginFormProps) {
 
         <div>
           <label
-            className="mb-2 block text-sm font-medium text-white/80"
+            className="mb-2 block text-sm font-medium text-[#333333]"
             htmlFor="password"
           >
             Password
@@ -105,7 +105,7 @@ export function AdminLoginForm({ initialMessage }: AdminLoginFormProps) {
               id="password"
               name="password"
               type={showPassword ? "text" : "password"}
-              className="w-full rounded-md border border-white/20 bg-[#f7f6f3] px-3 py-2 pr-11 text-black focus:border-white focus:outline-none focus:ring-2 focus:ring-white/40"
+              className="w-full rounded-md border border-[#333333]/20 bg-[#f7f6f3] px-3 py-2 pr-11 text-[#333333] focus:border-[#de5e48] focus:outline-none focus:ring-2 focus:ring-[#de5e48]/40"
               placeholder="Enter password"
               required
               disabled={isPending}
@@ -144,9 +144,9 @@ export function AdminLoginForm({ initialMessage }: AdminLoginFormProps) {
         .admin-login-card input:-webkit-autofill,
         .admin-login-card input:-webkit-autofill:hover,
         .admin-login-card input:-webkit-autofill:focus {
-          box-shadow: 0 0 0px 1000px #333333 inset;
-          -webkit-text-fill-color: #111111;
-          caret-color: #111111;
+          box-shadow: 0 0 0px 1000px #f7f6f3 inset;
+          -webkit-text-fill-color: #333333;
+          caret-color: #333333;
         }
       `}</style>
     </div>

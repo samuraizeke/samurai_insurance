@@ -46,7 +46,7 @@ export function AnalyticsRangeSelector({
 
   return (
     <div
-      className={`${alteHaasGrotesk.className} inline-flex rounded-full border border-[#f7f6f3]/10 bg-[#2a2a2a]/80 p-1 text-[0.65rem] font-medium text-[#f7f6f3]/70`}
+      className={`${alteHaasGrotesk.className} inline-flex rounded-full border border-[#333333]/20 bg-white p-1 text-[0.65rem] font-medium text-[#333333]/70`}
     >
       {OPTIONS.map((option) => {
         const isActive = option.value === value;
@@ -60,7 +60,7 @@ export function AnalyticsRangeSelector({
             className={`rounded-full px-3 py-1 transition ${
               isActive
                 ? "bg-[#de5e48] text-[#f7f6f3] shadow-[0_10px_22px_rgba(222,94,72,0.35)]"
-                : "text-[#f7f6f3]/60 hover:text-[#f7f6f3]"
+                : "text-[#333333]/60 hover:text-[#333333]"
             } ${isPending && !isActive ? "opacity-70" : ""}`}
           >
             {option.label}

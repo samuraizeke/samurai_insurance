@@ -175,7 +175,7 @@ export function AdminUserManager({
   }, [feedback]);
 
   return (
-    <section className="rounded-2xl border border-[#f7f6f3]/10 bg-[#2a2a2a]/80 p-6 shadow-[0_18px_40px_rgba(0,0,0,0.45)]">
+    <section className="rounded-2xl border border-[#333333]/20 bg-white p-6 shadow-lg">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h2
@@ -194,8 +194,8 @@ export function AdminUserManager({
           <p
             className={`rounded-xl border px-4 py-3 text-sm ${
               feedback.tone === "success"
-                ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-100"
-                : "border-rose-500/30 bg-rose-500/10 text-rose-100"
+                ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700"
+                : "border-rose-500/30 bg-rose-500/10 text-rose-700"
             }`}
           >
             {feedback.message}
@@ -203,7 +203,7 @@ export function AdminUserManager({
         ) : null}
 
         {loadError ? (
-          <p className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
+          <p className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-700">
             {loadError}
           </p>
         ) : sortedAdmins.length === 0 ? (
@@ -217,7 +217,7 @@ export function AdminUserManager({
               return (
                 <li
                   key={admin.id}
-                  className="rounded-xl border border-[#f7f6f3]/10 bg-[#1f1f1f]/70 px-4 py-4 transition hover:border-[#f7f6f3]/25"
+                  className="rounded-xl border border-[#333333]/20 bg-[#f7f6f3] px-4 py-4 transition hover:border-[#333333]/30"
                 >
                   <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
@@ -233,8 +233,8 @@ export function AdminUserManager({
                   <span
                     className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${
                       admin.isSuperAdmin
-                        ? "border border-indigo-400/40 bg-indigo-500/10 text-indigo-200"
-                        : "border border-emerald-500/40 bg-emerald-500/10 text-emerald-200"
+                        ? "border border-indigo-400/40 bg-indigo-500/10 text-indigo-700"
+                        : "border border-emerald-500/40 bg-emerald-500/10 text-emerald-700"
                     }`}
                   >
                     Roles: {admin.isSuperAdmin ? "superadmin" : "admin"}
@@ -269,7 +269,7 @@ export function AdminUserManager({
                     <button
                       type="button"
                       onClick={() => handleResendInvite(admin)}
-                      className="inline-flex items-center rounded-full border border-[#f7f6f3]/20 px-3 py-1.5 text-xs font-semibold text-[#333333] transition hover:border-[#f7f6f3]/40 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+                      className="inline-flex items-center rounded-full border border-[#333333]/20 px-3 py-1.5 text-xs font-semibold text-[#333333] transition hover:border-[#333333]/40 hover:text-[#333333] disabled:cursor-not-allowed disabled:opacity-60"
                       disabled={pendingAction?.userId === admin.id}
                     >
                       {pendingAction?.userId === admin.id &&
@@ -279,14 +279,14 @@ export function AdminUserManager({
                     </button>
                   ) : null}
                   {admin.isSuperAdmin ? (
-                    <span className="inline-flex items-center rounded-full border border-indigo-400/40 bg-indigo-500/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-indigo-200">
+                    <span className="inline-flex items-center rounded-full border border-indigo-400/40 bg-indigo-500/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-indigo-700">
                       Superadmin
                     </span>
                   ) : !isCurrentUser ? (
                     <button
                       type="button"
                       onClick={() => handleRemoveAdmin(admin)}
-                      className="inline-flex items-center rounded-full border border-rose-500/40 px-3 py-1.5 text-xs font-semibold text-rose-200 transition hover:border-rose-400/60 hover:text-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="inline-flex items-center rounded-full border border-rose-500/40 px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:border-rose-400/60 hover:text-rose-800 disabled:cursor-not-allowed disabled:opacity-60"
                       disabled={pendingAction?.userId === admin.id}
                     >
                       {pendingAction?.userId === admin.id &&
@@ -302,7 +302,7 @@ export function AdminUserManager({
           </ul>
         )}
 
-        <div className="h-px w-full bg-[#f7f6f3]/10" />
+        <div className="h-px w-full bg-[#333333]/20" />
 
         <form
           ref={formRef}
@@ -322,7 +322,7 @@ export function AdminUserManager({
               type="email"
               required
               placeholder="admin@example.com"
-              className="w-full rounded-md border border-[#f7f6f3]/15 bg-[#f7f6f3] px-3 py-2 text-sm text-black focus:border-[#de5e48] focus:outline-none focus:ring-2 focus:ring-[#de5e48]/40"
+              className="w-full rounded-md border border-[#333333]/20 bg-[#f7f6f3] px-3 py-2 text-sm text-[#333333] focus:border-[#de5e48] focus:outline-none focus:ring-2 focus:ring-[#de5e48]/40"
               disabled={isPending}
               autoComplete="off"
               value={emailInput}
@@ -332,12 +332,12 @@ export function AdminUserManager({
               onBlur={() => setEmailTouched(true)}
             />
             {state.fieldErrors?.email ? (
-              <p className="mt-2 text-xs font-medium text-rose-300">
+              <p className="mt-2 text-xs font-medium text-rose-700">
                 {state.fieldErrors.email}
               </p>
             ) : null}
             {!state.fieldErrors?.email && emailTouched && !isEmailValid ? (
-              <p className="mt-2 text-xs font-medium text-rose-300">
+              <p className="mt-2 text-xs font-medium text-rose-700">
                 Enter a valid email address.
               </p>
             ) : null}
@@ -355,26 +355,26 @@ export function AdminUserManager({
               name="password"
               type="password"
               placeholder="Set a password or leave blank to email invite"
-              className="w-full rounded-md border border-[#f7f6f3]/15 bg-[#f7f6f3] px-3 py-2 text-sm text-black focus:border-[#de5e48] focus:outline-none focus:ring-2 focus:ring-[#de5e48]/40"
+              className="w-full rounded-md border border-[#333333]/20 bg-[#f7f6f3] px-3 py-2 text-sm text-[#333333] focus:border-[#de5e48] focus:outline-none focus:ring-2 focus:ring-[#de5e48]/40"
               disabled={isPending}
               autoComplete="new-password"
               minLength={8}
             />
             {state.fieldErrors?.password ? (
-              <p className="mt-2 text-xs font-medium text-rose-300">
+              <p className="mt-2 text-xs font-medium text-rose-700">
                 {state.fieldErrors.password}
               </p>
             ) : null}
           </div>
 
           {state.error ? (
-            <p className="text-sm font-medium text-rose-300">
+            <p className="text-sm font-medium text-rose-700">
               {state.error}
             </p>
           ) : null}
 
           {showCreateAdminSuccess && state.success ? (
-            <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
+            <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-700">
               <p className="font-semibold">
                 {state.created
                   ? state.invited
@@ -385,7 +385,7 @@ export function AdminUserManager({
                       : `No changes were needed for ${state.email}.`}
               </p>
               {state.note ? (
-                <p className="mt-2 text-xs text-emerald-200/80">
+                <p className="mt-2 text-xs text-emerald-700/80">
                   {state.note}
                 </p>
               ) : null}

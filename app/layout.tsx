@@ -8,9 +8,6 @@ import { Analytics } from '@vercel/analytics/next';
 export const metadata: Metadata = {
   title: "Samurai Insurance",
   description: "Never Worry About Your P&C Insurance Again.",
-  icons: {
-    icon: [{ url: '/icon.png', type: 'image/png' }], // ensure this exists
-  }
 };
 
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID;

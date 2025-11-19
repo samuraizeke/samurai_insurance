@@ -92,10 +92,10 @@ export function AdminDashboardTabs({
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
-                className={`rounded-full border px-4 py-2 text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[#2a2a2a] ${
+                className={`rounded-full border px-4 py-2 text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[#f7f6f3] ${
                   isActive
                     ? "border-[#de5e48] bg-[#de5e48] text-[#f7f6f3] shadow-[0_10px_22px_rgba(222,94,72,0.35)]"
-                    : "border-[#f7f6f3]/15 bg-[#2a2a2a] text-[#333333]/70 hover:border-[#f7f6f3]/35 hover:text-[#333333]"
+                    : "border-[#333333]/20 bg-white text-[#333333]/70 hover:border-[#333333]/40 hover:text-[#333333]"
                 }`}
               >
                 {tab.label}

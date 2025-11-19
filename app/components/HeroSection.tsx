@@ -12,8 +12,8 @@ export function HeroSection({ onJoinWaitlist }: HeroSectionProps) {
   useAutoplayVideo(heroVideoRef);
 
   return (
-    <section className="w-full px-12 pt-6 pb-16 sm:px-16 sm:pt-16 sm:pb-44">
-      <div className="flex flex-col gap-12 lg:flex-row lg:items-center">
+    <section className="w-full px-4 pt-6 pb-16 sm:px-16 sm:pt-16 sm:pb-44">
+      <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:gap-12">
         <div className="max-w-2xl text-center lg:flex-1 lg:max-w-none lg:text-left">
           <h1 className="font-bold leading-tight text-[#333333] text-4xl sm:text-5xl md:text-6xl lg:text-[64px] lg:leading-[1.05]">
             Never Worry About Your Insurance Again.

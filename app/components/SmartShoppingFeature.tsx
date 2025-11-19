@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useEffect } from "react";
+import Image from "next/image";
 import { workSans } from "@/lib/fonts";
 
 type SmartShoppingFeatureProps = {
@@ -25,6 +26,15 @@ export function SmartShoppingFeature({
     if (hasPlayedRef.current) {
       return;
     }
+
+    // Stop video 0.5 seconds before the end
+    const handleTimeUpdate = () => {
+      if (video.duration - video.currentTime <= 0.5) {
+        video.pause();
+      }
+    };
+
+    video.addEventListener("timeupdate", handleTimeUpdate);
 
     if (!("IntersectionObserver" in window)) {
       // Fallback: play immediately if IntersectionObserver is not supported
@@ -53,6 +63,7 @@ export function SmartShoppingFeature({
 
     return () => {
       observer.disconnect();
+      video.removeEventListener("timeupdate", handleTimeUpdate);
     };
   }, []);
 
@@ -62,7 +73,50 @@ export function SmartShoppingFeature({
       className={`w-full bg-[#f7f6f3] px-4 py-8 sm:px-12 sm:py-12 md:px-16 md:py-16 ${className}`}
     >
       <div className="mx-auto max-w-7xl">
-        <div className="relative aspect-video w-full overflow-hidden rounded-xl sm:rounded-2xl md:rounded-3xl">
+        {/* Mobile view - Image with text */}
+        <div className="md:hidden">
+          <div className="mx-auto max-w-md">
+            <Image
+              src="/images/quote.png"
+              alt="Smart Shopping quote interface"
+              width={800}
+              height={600}
+              className="w-full h-auto rounded-xl"
+              priority
+            />
+            <div className="mt-8 px-4">
+              <h3 className="text-3xl sm:text-4xl font-bold text-[#de5e48] mb-6 text-center">
+                Smart Shopping
+              </h3>
+              <p className={`${workSans.className} text-lg text-[#333333] leading-relaxed mb-6`}>
+                Insurance is a chore, so hand it to us and get back to living. We only shop when it truly helps you.
+              </p>
+              <ul className={`${workSans.className} space-y-4 text-[#333333]`}>
+                <li className="flex gap-3">
+                  <span className="text-lg">-</span>
+                  <span className="text-lg leading-relaxed">
+                    AI compares trusted carriers and only surfaces winners.
+                  </span>
+                </li>
+                <li className="flex gap-3">
+                  <span className="text-lg">-</span>
+                  <span className="text-lg leading-relaxed">
+                    We scan renewals and market shifts before they hit your inbox.
+                  </span>
+                </li>
+                <li className="flex gap-3">
+                  <span className="text-lg">-</span>
+                  <span className="text-lg leading-relaxed">
+                    Clear, single-click approvals keep you moving without the churn.
+                  </span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        {/* Tablet and Desktop view - Video */}
+        <div className="hidden md:block relative aspect-video w-full overflow-hidden rounded-xl sm:rounded-2xl md:rounded-3xl">
           <video
             ref={videoRef}
             className="h-full w-full object-cover"

@@ -70,7 +70,7 @@ export function AdminAnalyticsPanel({
       </div>
 
       {analyticsDashboard.error ? (
-        <p className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100 shadow-[0_18px_40px_rgba(0,0,0,0.45)]">
+        <p className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-700 shadow-lg">
           {analyticsDashboard.error}
         </p>
       ) : null}
@@ -99,7 +99,7 @@ export function AdminAnalyticsPanel({
         />
       </div>
 
-      <div className="rounded-2xl border border-[#f7f6f3]/10 bg-[#2a2a2a]/80 p-6 shadow-[0_18px_40px_rgba(0,0,0,0.45)]">
+      <div className="rounded-2xl border border-[#333333]/20 bg-white p-6 shadow-lg">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h3 className="text-sm font-semibold text-[#333333]/70">
@@ -182,9 +182,9 @@ function MetricCard({ label, value, caption, error, onClick }: MetricCardProps) 
     <Component
       type={onClick ? "button" : undefined}
       onClick={onClick}
-      className={`rounded-2xl border border-[#f7f6f3]/10 bg-[#2a2a2a]/80 p-6 text-left shadow-[0_18px_40px_rgba(0,0,0,0.45)] ${
+      className={`rounded-2xl border border-[#333333]/20 bg-white p-6 text-left shadow-lg ${
         onClick
-          ? "transition hover:-translate-y-0.5 hover:border-[#de5e48]/60 hover:shadow-[0_22px_50px_rgba(222,94,72,0.22)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#de5e48] focus-visible:ring-offset-2 focus-visible:ring-offset-[#2a2a2a]"
+          ? "transition hover:-translate-y-0.5 hover:border-[#de5e48]/60 hover:shadow-[0_22px_50px_rgba(222,94,72,0.22)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#de5e48] focus-visible:ring-offset-2 focus-visible:ring-offset-[#f7f6f3]"
           : ""
       }`}
     >
@@ -207,7 +207,7 @@ type BreakdownCardProps = {
 
 function BreakdownCard({ title, items }: BreakdownCardProps) {
   return (
-    <div className="rounded-2xl border border-[#f7f6f3]/10 bg-[#2a2a2a]/80 p-6 shadow-[0_18px_40px_rgba(0,0,0,0.45)]">
+    <div className="rounded-2xl border border-[#333333]/20 bg-white p-6 shadow-lg">
       <div className="flex items-center justify-between gap-3">
         <h3 className="text-sm font-semibold text-[#333333]/70">{title}</h3>
         <span className="text-xs text-[#333333]/55">Visitors</span>
@@ -242,7 +242,7 @@ function BreakdownCard({ title, items }: BreakdownCardProps) {
 function VisitorsLineChart({ data }: { data: AnalyticsTrendPoint[] }) {
   if (!data || data.length === 0) {
     return (
-      <div className="flex h-52 items-center justify-center rounded-xl border border-[#f7f6f3]/10 bg-[#1f1f1f]/80 text-sm text-[#333333]/55">
+      <div className="flex h-52 items-center justify-center rounded-xl border border-[#333333]/20 bg-[#f7f6f3] text-sm text-[#333333]/55">
         Not enough traffic to chart yet.
       </div>
     );
@@ -259,13 +259,13 @@ function VisitorsLineChart({ data }: { data: AnalyticsTrendPoint[] }) {
   const chartStyles = {
     [`& .${axisClasses.root}`]: {
       [`& .${axisClasses.tick}`]: {
-        stroke: "rgba(247, 246, 243, 0.14)",
+        stroke: "rgba(51, 51, 51, 0.2)",
       },
       [`& .${axisClasses.line}`]: {
-        stroke: "rgba(247, 246, 243, 0.12)",
+        stroke: "rgba(51, 51, 51, 0.2)",
       },
       [`& .${axisClasses.tickLabel}`]: {
-        fill: "rgba(247, 246, 243, 0.86)",
+        fill: "rgba(51, 51, 51, 0.7)",
         fontSize: 12,
         fontFamily: "var(--font-work-sans)",
       },
@@ -277,7 +277,7 @@ function VisitorsLineChart({ data }: { data: AnalyticsTrendPoint[] }) {
       transform: "translateX(-8px)",
     },
     "& .MuiChartsGrid-line": {
-      stroke: "rgba(247, 246, 243, 0.12)",
+      stroke: "rgba(51, 51, 51, 0.1)",
       strokeDasharray: "4 6",
     },
     "& .MuiLineElement-root": {
@@ -290,7 +290,7 @@ function VisitorsLineChart({ data }: { data: AnalyticsTrendPoint[] }) {
     "& .MuiMarkElement-root": {
       stroke: VISITORS_CHART_COLOR,
       strokeWidth: 2.5,
-      fill: "#101010",
+      fill: "#ffffff",
     },
   } as const;
 
