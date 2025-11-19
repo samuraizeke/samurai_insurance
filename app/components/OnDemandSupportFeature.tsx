@@ -1,5 +1,6 @@
-import { workSans } from "@/lib/fonts";
-import { OnDemandSupportClock } from "@/app/components/OnDemandSupportClock";
+"use client";
+
+import { useRef, useEffect } from "react";
 
 type OnDemandSupportFeatureProps = {
   className?: string;
@@ -8,49 +9,70 @@ type OnDemandSupportFeatureProps = {
 export function OnDemandSupportFeature({
   className = "",
 }: OnDemandSupportFeatureProps) {
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const sectionRef = useRef<HTMLElement | null>(null);
+  const hasPlayedRef = useRef(false);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    const section = sectionRef.current;
+
+    if (!video || !section) {
+      return;
+    }
+
+    if (hasPlayedRef.current) {
+      return;
+    }
+
+    if (!("IntersectionObserver" in window)) {
+      // Fallback: play immediately if IntersectionObserver is not supported
+      video.play().catch(() => {
+        // Autoplay may be blocked
+      });
+      hasPlayedRef.current = true;
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (entry.isIntersecting && !hasPlayedRef.current) {
+          hasPlayedRef.current = true;
+          video.play().catch(() => {
+            // Autoplay may be blocked
+          });
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.5 }
+    );
+
+    observer.observe(section);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
   return (
     <section
-      className={`w-full bg-[#f7f6f3] px-6 py-16 sm:px-16 sm:py-24 md:py-[150px] ${className}`}
+      ref={sectionRef}
+      className={`w-full bg-[#f7f6f3] px-4 py-8 sm:px-12 sm:py-12 md:px-16 md:py-16 ${className}`}
     >
-      <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-12 text-center md:grid md:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] md:items-center md:gap-24 md:text-left">
-        <div className="order-2 mt-12 flex flex-col items-center gap-6 md:order-1 md:mt-0 md:items-start md:gap-7">
-          <h2 className="text-4xl font-bold leading-tight text-[#de5e48] sm:text-[48px] md:text-left">
-            On Demand Support
-          </h2>
-          <p
-            className={`${workSans.className} text-lg text-[#333333]/85 sm:text-xl md:text-left`}
+      <div className="mx-auto max-w-7xl">
+        <div className="relative aspect-video w-full overflow-hidden rounded-xl sm:rounded-2xl md:rounded-3xl">
+          <video
+            ref={videoRef}
+            className="h-full w-full object-cover"
+            muted
+            playsInline
+            preload="metadata"
+            onEnded={(event) => event.currentTarget.pause()}
+            src="https://samuraiinsurancestorage.blob.core.windows.net/videos/On%20Demand%20Help.mp4?sp=r&st=2025-11-19T13:59:10Z&se=2030-01-01T22:14:10Z&spr=https&sv=2024-11-04&sr=b&sig=l%2BJbSAv7Z3UQXA9nxgPkl2mPWfTQmv1SxkDfRSXwe5E%3D"
           >
-            Ask for a change, we make it happen and confirm when it is done.
-            Instant help from an agent that moves as fast as you do.
-          </p>
-          <ul
-            className={`${workSans.className} flex w-full max-w-[360px] flex-col gap-4 text-left text-base text-[#333333]/85 sm:text-lg`}
-          >
-            <li className="flex items-start gap-3 md:items-center">
-              <span className="mt-1.5 inline-flex h-2.5 w-2.5 flex-none rounded-full bg-[#de5e48]" />
-              <span>
-                Claims help on-call—if something happens, we guide you step by
-                step so you never feel alone.
-              </span>
-            </li>
-            <li className="flex items-start gap-3 md:items-center">
-              <span className="mt-1.5 inline-flex h-2.5 w-2.5 flex-none rounded-full bg-[#de5e48]" />
-              <span>
-                You stay in control with clear choices in plain language and
-                updates in minutes, not days.
-              </span>
-            </li>
-            <li className="flex items-start gap-3 md:items-center">
-              <span className="mt-1.5 inline-flex h-2.5 w-2.5 flex-none rounded-full bg-[#de5e48]" />
-              <span>
-                Need a change? Ping us any time—confirmations and follow-through
-                happen automatically.
-              </span>
-            </li>
-          </ul>
-        </div>
-        <div className="order-1 flex items-center justify-center md:order-2 md:justify-end">
-          <OnDemandSupportClock className="max-w-[360px] sm:max-w-[420px]" />
+            Your browser does not support the video tag.
+          </video>
         </div>
       </div>
     </section>

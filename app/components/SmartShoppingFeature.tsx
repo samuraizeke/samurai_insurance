@@ -1,5 +1,7 @@
+"use client";
+
+import { useRef, useEffect } from "react";
 import { workSans } from "@/lib/fonts";
-import { SmartShoppingBag } from "@/app/components/SmartShoppingBag";
 
 type SmartShoppingFeatureProps = {
   className?: string;
@@ -8,47 +10,70 @@ type SmartShoppingFeatureProps = {
 export function SmartShoppingFeature({
   className = "",
 }: SmartShoppingFeatureProps) {
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const sectionRef = useRef<HTMLElement | null>(null);
+  const hasPlayedRef = useRef(false);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    const section = sectionRef.current;
+
+    if (!video || !section) {
+      return;
+    }
+
+    if (hasPlayedRef.current) {
+      return;
+    }
+
+    if (!("IntersectionObserver" in window)) {
+      // Fallback: play immediately if IntersectionObserver is not supported
+      video.play().catch(() => {
+        // Autoplay may be blocked
+      });
+      hasPlayedRef.current = true;
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (entry.isIntersecting && !hasPlayedRef.current) {
+          hasPlayedRef.current = true;
+          video.play().catch(() => {
+            // Autoplay may be blocked
+          });
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.5 }
+    );
+
+    observer.observe(section);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
   return (
     <section
-      className={`w-full bg-[#f7f6f3] px-6 py-16 sm:px-16 sm:py-24 md:py-[150px] ${className}`}
+      ref={sectionRef}
+      className={`w-full bg-[#f7f6f3] px-4 py-8 sm:px-12 sm:py-12 md:px-16 md:py-16 ${className}`}
     >
-      <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-12 text-center md:grid md:grid-cols-[minmax(0,0.95fr)_minmax(0,1.1fr)] md:items-center md:gap-24">
-        <div className="order-2 mt-12 flex flex-col items-center gap-6 md:order-2 md:mt-0 md:items-end md:gap-7 md:text-right">
-          <h2 className="text-4xl font-bold leading-tight text-[#de5e48] sm:text-[48px] md:text-right">
-            Smart Shopping
-          </h2>
-          <p
-            className={`${workSans.className} text-lg text-[#333333]/85 sm:text-xl md:text-right`}
+      <div className="mx-auto max-w-7xl">
+        <div className="relative aspect-video w-full overflow-hidden rounded-xl sm:rounded-2xl md:rounded-3xl">
+          <video
+            ref={videoRef}
+            className="h-full w-full object-cover"
+            muted
+            playsInline
+            preload="metadata"
+            onEnded={(event) => event.currentTarget.pause()}
+            src="https://samuraiinsurancestorage.blob.core.windows.net/videos/Smart%20Shopping%20Site.mp4?sp=r&st=2025-11-19T14:39:23Z&se=2030-01-01T22:54:23Z&spr=https&sv=2024-11-04&sr=b&sig=a%2B364Ig1pmuF4IOiK0gM%2FLQAK%2B%2BX92TUEW7ouq37OtM%3D"
           >
-            Insurance is a chore, so hand it to us and get back to living. We
-            only shop when it truly helps you, which means movement when it&apos;s
-            worth it and no churn just to churn.
-          </p>
-          <ul
-            className={`${workSans.className} flex w-full max-w-[360px] flex-col gap-4 text-left text-base text-[#333333]/85 sm:text-lg md:self-end md:items-end md:text-right`}
-          >
-            <li className="flex items-start gap-3 md:items-center">
-              <span className="mt-1.5 inline-flex h-2.5 w-2.5 flex-none rounded-full bg-[#de5e48]" />
-              <span className="md:text-right">
-                AI compares trusted carriers and only surfaces winners.
-              </span>
-            </li>
-            <li className="flex items-start gap-3 md:items-center">
-              <span className="mt-1.5 inline-flex h-2.5 w-2.5 flex-none rounded-full bg-[#de5e48]" />
-              <span className="md:text-right">
-                We scan renewals and market shifts before they hit your inbox.
-              </span>
-            </li>
-            <li className="flex items-start gap-3 md:items-center">
-              <span className="mt-1.5 inline-flex h-2.5 w-2.5 flex-none rounded-full bg-[#de5e48]" />
-              <span className="md:text-right">
-                Clear, single-click approvals keep you moving without the churn.
-              </span>
-            </li>
-          </ul>
-        </div>
-        <div className="order-1 flex items-center justify-center md:order-1 md:justify-start">
-          <SmartShoppingBag className="max-w-[360px] sm:max-w-[420px]" />
+            Your browser does not support the video tag.
+          </video>
         </div>
       </div>
     </section>
