@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { AnalyticsDashboard, AnalyticsRange } from "@/lib/analytics";
+import type { AnalyticsDashboard, AnalyticsRange, AnalyticsTrendPoint } from "@/lib/analytics";
 import { AdminAnalyticsPanel } from "./AdminAnalyticsPanel";
 import {
   AdminUserManager,
@@ -20,6 +20,8 @@ type AdminDashboardTabsProps = {
   waitlistSummary: WaitlistSummary;
   waitlistEntries: WaitlistEntrySummary[];
   waitlistEntriesError?: string;
+  waitlistTrend: AnalyticsTrendPoint[];
+  waitlistTrendError?: string;
   adminUsers: AdminUserSummary[];
   adminUsersError?: string;
   canManageAdmins: boolean;
@@ -42,6 +44,8 @@ export function AdminDashboardTabs({
   waitlistSummary,
   waitlistEntries,
   waitlistEntriesError,
+  waitlistTrend,
+  waitlistTrendError,
   adminUsers,
   adminUsersError,
   canManageAdmins,
@@ -117,6 +121,9 @@ export function AdminDashboardTabs({
           <AdminWaitlistPanel
             entries={waitlistEntries}
             loadError={waitlistEntriesError}
+            trend={waitlistTrend}
+            trendError={waitlistTrendError}
+            analyticsRange={analyticsRange}
           />
         ) : canManageAdmins ? (
           <AdminUserManager

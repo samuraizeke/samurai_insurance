@@ -523,3 +523,86 @@ export async function getAnalyticsSummaryFromDrain(
     lastEventAt: dashboard.summary.lastEventAt,
   };
 }
+
+export type WaitlistTrendData = {
+  trend: AnalyticsTrendPoint[];
+  error?: string;
+};
+
+export async function getWaitlistTrend(
+  range: AnalyticsRange = "24h"
+): Promise<WaitlistTrendData> {
+  const hours = RANGE_TO_HOURS[range] ?? RANGE_TO_HOURS["24h"];
+  const since = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
+
+  const supabase = createSupabaseServerClient();
+
+  const { data, error } = await supabase
+    .from("waitlist")
+    .select("created_at")
+    .gte("created_at", since)
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    console.error("Failed to load waitlist trend data", error);
+    return {
+      trend: [],
+      error: "Unable to load waitlist trend data right now.",
+    };
+  }
+
+  const rows = (data ?? []) as { created_at: string }[];
+
+  if (rows.length === 0) {
+    return {
+      trend: [],
+    };
+  }
+
+  const { bucketDurationMs, labelFormatter } = bucketConfiguration(hours);
+  const nowMs = Date.now();
+  const rangeEndMs = nowMs;
+  const bucketCount = Math.max(
+    1,
+    Math.ceil((hours * 60 * 60 * 1000) / bucketDurationMs)
+  );
+  const bucketStartMs = rangeEndMs - bucketCount * bucketDurationMs;
+
+  const bucketCounts = Array.from({ length: bucketCount }, () => 0);
+  const bucketTimestamps: number[] = [];
+
+  for (let index = 0; index < bucketCount; index++) {
+    bucketTimestamps.push(bucketStartMs + index * bucketDurationMs);
+  }
+
+  for (const row of rows) {
+    const createdAtMs = Date.parse(row.created_at);
+
+    if (Number.isNaN(createdAtMs)) {
+      continue;
+    }
+
+    const bucketIndex = Math.min(
+      bucketCount - 1,
+      Math.max(
+        0,
+        Math.floor((createdAtMs - bucketStartMs) / bucketDurationMs)
+      )
+    );
+
+    bucketCounts[bucketIndex]++;
+  }
+
+  const trend: AnalyticsTrendPoint[] = bucketCounts.map((count, index) => {
+    const timestamp = new Date(bucketTimestamps[index]).toISOString();
+    return {
+      label: labelFormatter.format(new Date(bucketTimestamps[index])),
+      value: count,
+      timestamp,
+    };
+  });
+
+  return {
+    trend,
+  };
+}

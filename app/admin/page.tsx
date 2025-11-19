@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { AnalyticsRange, getAnalyticsDashboard } from "@/lib/analytics";
+import { AnalyticsRange, getAnalyticsDashboard, getWaitlistTrend } from "@/lib/analytics";
 import { alteHaasGrotesk } from "@/lib/fonts";
 import { createSupabaseServerClient } from "@/lib/supabaseServerClient";
 import { AdminLoginForm } from "./_components/AdminLoginForm";
@@ -242,6 +242,7 @@ export default async function AdminPage({
     analyticsDashboard,
     adminUsersResult,
     waitlistEntriesResult,
+    waitlistTrendData,
   ] =
     await Promise.all([
       getWaitlistSummary(),
@@ -250,6 +251,7 @@ export default async function AdminPage({
         ? getAdminUsers()
         : Promise.resolve<AdminUsersResult>({ admins: [] }),
       getWaitlistEntries(),
+      getWaitlistTrend(analyticsRange),
     ]);
   const adminUsers = adminUsersResult.admins;
   const adminUsersError = canManageAdmins ? adminUsersResult.error : undefined;
@@ -303,6 +305,8 @@ export default async function AdminPage({
           waitlistSummary={waitlistSummary}
           waitlistEntries={waitlistEntries}
           waitlistEntriesError={waitlistEntriesError}
+          waitlistTrend={waitlistTrendData.trend}
+          waitlistTrendError={waitlistTrendData.error}
           adminUsers={adminUsers}
           adminUsersError={adminUsersError}
           canManageAdmins={canManageAdmins}
