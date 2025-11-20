@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { alteHaasGrotesk, workSans } from "@/lib/fonts";
+import { alteHaasGrotesk, workSans, leagueGothic } from "@/lib/fonts";
 import Script from "next/script";
 import "./globals.css";
 import CustomCursor from "./components/CustomCursor";
@@ -20,7 +20,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${alteHaasGrotesk.variable} ${workSans.variable} antialiased`}
+        className={`${alteHaasGrotesk.variable} ${workSans.variable} ${leagueGothic.variable} antialiased`}
       >
         <CustomCursor />
         {children}
