@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { SiteHeader } from "@/app/components/SiteHeader";
+import Link from "next/link";
 import { SiteFooter } from "@/app/components/SiteFooter";
 
 export default function PressPage() {
@@ -7,7 +7,20 @@ export default function PressPage() {
         <div className="min-h-screen flex flex-col bg-[var(--background)]">
             {/* Dark Header Section */}
             <div className="bg-[var(--foreground)] text-[var(--background)] pb-96 relative overflow-hidden">
-                <SiteHeader />
+                {/* Custom Header with Inverted Logo */}
+                <header className="sticky top-0 z-40 w-full bg-transparent backdrop-blur-sm">
+                    <div className="flex w-full flex-col items-center gap-4 px-6 py-8 text-center sm:flex-row sm:items-center sm:justify-between sm:gap-0 sm:px-16 sm:py-10 sm:text-left">
+                        <Link href="/" className="flex items-center justify-center sm:justify-start">
+                            <Image
+                                src="/images/inverted-wordmark.png"
+                                alt="Samurai Insurance"
+                                width={300}
+                                height={80}
+                                priority
+                            />
+                        </Link>
+                    </div>
+                </header>
 
                 <div className="container mx-auto px-6 pt-12 flex flex-col items-center text-center relative z-10">
                     {/* News Badge */}
