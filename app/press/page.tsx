@@ -86,7 +86,7 @@ export default function PressPage() {
                         </p>
 
                         <p>
-                            The beta launches in December, with manual quoting beginning in January. Samurai has 156 waitlist signups in its first two days and contracts with six major carriers. The company targets 150 customers per month by March and needs just 285,000 customers (0.17% of the market) to reach $100 million in revenue.
+                            The beta launches in December, with manual quoting beginning in January. Samurai has 225 waitlist signups in its first two days and contracts with six major carriers. The company targets 150 customers per month by March and needs just 285,000 customers (0.17% of the market) to reach $100 million in revenue.
                         </p>
 
                         <p>
@@ -100,7 +100,7 @@ export default function PressPage() {
                         <div className="pt-8 border-t border-[var(--foreground)]/20">
                             <p className="font-bold text-xl mb-4 font-[family-name:var(--font-alte-haas)]">About Samurai Insurance</p>
                             <p>
-                                Samurai Insurance is an AI-powered insurance broker that eliminates annual price increases by automatically re-shopping customers' auto and renters insurance policies every year. Founded in 2024 and based in Columbus, Ohio, Samurai provides free service to consumers through standard insurance commissions. Learn more at joinsamurai.com.
+                                Samurai Insurance is an AI-powered insurance broker that eliminates annual price increases by automatically re-shopping customers' auto and renters insurance policies every year. Founded in 2025 and based in Columbus, Ohio, Samurai provides free service to consumers through standard insurance commissions. Learn more at joinsamurai.com.
                             </p>
                         </div>
 
@@ -122,11 +122,6 @@ export default function PressPage() {
                             </p>
                             <div className="mt-4 space-y-1">
                                 <p>
-                                    <a href="https://twitter.com/JoinSamurai" target="_blank" rel="noopener noreferrer" className="underline hover:text-[#de5e48]">
-                                        X
-                                    </a>
-                                </p>
-                                <p>
                                     <a href="https://www.instagram.com/joinsamurai" target="_blank" rel="noopener noreferrer" className="underline hover:text-[#de5e48]">
                                         Instagram
                                     </a>
@@ -144,6 +139,11 @@ export default function PressPage() {
                                 <p>
                                     <a href="https://www.tiktok.com/@samuraiinsurance" target="_blank" rel="noopener noreferrer" className="underline hover:text-[#de5e48]">
                                         TikTok
+                                    </a>
+                                </p>
+                                <p>
+                                    <a href="https://twitter.com/JoinSamurai" target="_blank" rel="noopener noreferrer" className="underline hover:text-[#de5e48]">
+                                        X
                                     </a>
                                 </p>
                             </div>
