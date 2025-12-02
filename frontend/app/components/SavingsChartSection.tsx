@@ -4,7 +4,7 @@ import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
 import type { ComponentProps } from "react";
 import { LineChart } from "@mui/x-charts/LineChart";
 import { axisClasses } from "@mui/x-charts/ChartsAxis";
-import { alteHaasGrotesk, workSans } from "@/frontend/lib/fonts";
+import { alteHaasGrotesk, workSans } from "@/lib/fonts";
 
 const SAMURAI_COLOR = "#de5e48";
 const BASELINE_COLOR = "#5cafc1";

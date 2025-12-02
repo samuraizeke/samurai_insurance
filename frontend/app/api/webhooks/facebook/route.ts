@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSupabaseServerClient } from '@/frontend/lib/supabaseServerClient';
+import { createSupabaseServerClient } from '@/lib/supabaseServerClient';
 import crypto from 'crypto';
 
 const VERIFY_TOKEN = process.env.FACEBOOK_WEBHOOK_VERIFY_TOKEN;

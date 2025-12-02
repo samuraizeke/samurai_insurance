@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { workSans, alteHaasGrotesk } from "@/frontend/lib/fonts";
+import { workSans, alteHaasGrotesk } from "@/lib/fonts";
 import { SiteHeader } from "@/app/components/SiteHeader";
 import { SiteFooter } from "@/app/components/SiteFooter";
 

@@ -1,4 +1,4 @@
-import { alteHaasGrotesk } from "@/frontend/lib/fonts";
+import { alteHaasGrotesk } from "@/lib/fonts";
 
 type SuccessToastProps = {
   visible: boolean;

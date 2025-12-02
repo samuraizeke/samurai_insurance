@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
-import { createSupabaseServerClient } from "@/frontend/lib/supabaseServerClient";
+import { createSupabaseServerClient } from "@/lib/supabaseServerClient";
 import {
   ADMIN_ROLE,
   SUPERADMIN_ROLE,

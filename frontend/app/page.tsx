@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useCallback, useState } from "react";
-import { alteHaasGrotesk } from "@/frontend/lib/fonts";
+import { alteHaasGrotesk } from "@/lib/fonts";
 import { RenewalGuardFeature } from "@/app/components/RenewalGuardFeature";
 import { SmartShoppingFeature } from "@/app/components/SmartShoppingFeature";
 import { OnDemandSupportFeature } from "@/app/components/OnDemandSupportFeature";

@@ -1,5 +1,5 @@
 import { ReactNode, useCallback, useRef, useState } from "react";
-import { workSans } from "@/frontend/lib/fonts";
+import { workSans } from "@/lib/fonts";
 
 type FaqItem = {
   question: string;

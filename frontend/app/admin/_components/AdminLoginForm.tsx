@@ -6,7 +6,7 @@ import {
   authenticateAdmin,
   type AdminAuthState,
 } from "../actions";
-import { alteHaasGrotesk, workSans } from "@/frontend/lib/fonts";
+import { alteHaasGrotesk, workSans } from "@/lib/fonts";
 
 const EyeIcon = ({ open }: { open: boolean }) => (
   <svg

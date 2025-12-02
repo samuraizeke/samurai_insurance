@@ -1,7 +1,7 @@
 import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/frontend/lib/supabaseServerClient";
+import { createSupabaseServerClient } from "@/lib/supabaseServerClient";
 
 export const runtime = "nodejs";
 

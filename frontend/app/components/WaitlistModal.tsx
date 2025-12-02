@@ -15,8 +15,8 @@ import {
   waitlistSchema,
   waitlistSubmissionSchema,
   type WaitlistPayload,
-} from "@/frontend/lib/schemas";
-import { alteHaasGrotesk, workSans } from "@/frontend/lib/fonts";
+} from "@/lib/schemas";
+import { alteHaasGrotesk, workSans } from "@/lib/fonts";
 
 declare global {
   interface Window {

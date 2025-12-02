@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { alteHaasGrotesk, workSans } from "@/frontend/lib/fonts";
+import { alteHaasGrotesk, workSans } from "@/lib/fonts";
 
 type Option = {
   id: string;

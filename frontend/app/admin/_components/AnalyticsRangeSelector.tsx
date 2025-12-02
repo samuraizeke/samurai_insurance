@@ -2,8 +2,8 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
-import type { AnalyticsRange } from "@/frontend/lib/analytics";
-import { alteHaasGrotesk } from "@/frontend/lib/fonts";
+import type { AnalyticsRange } from "@/lib/analytics";
+import { alteHaasGrotesk } from "@/lib/fonts";
 
 const OPTIONS: Array<{ value: AnalyticsRange; label: string }> = [
   { value: "24h", label: "24h" },

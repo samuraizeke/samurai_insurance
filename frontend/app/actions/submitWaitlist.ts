@@ -1,11 +1,11 @@
 'use server';
 
-import { createSupabaseServerClient } from "@/frontend/lib/supabaseServerClient";
+import { createSupabaseServerClient } from "@/lib/supabaseServerClient";
 import {
   waitlistSubmissionSchema,
   type WaitlistPayload,
-} from "@/frontend/lib/schemas";
-import { sendWaitlistWelcomeEmail } from "@/frontend/lib/emailjs";
+} from "@/lib/schemas";
+import { sendWaitlistWelcomeEmail } from "@/lib/emailjs";
 
 export type WaitlistActionResult =
   | { success: true }

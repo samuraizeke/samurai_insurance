@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import type { AnalyticsRange } from "@/frontend/lib/analytics";
+import type { AnalyticsRange } from "@/lib/analytics";
 
 type AnalyticsLiveUpdaterProps = {
   range: AnalyticsRange;

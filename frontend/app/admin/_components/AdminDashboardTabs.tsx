@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { AnalyticsDashboard, AnalyticsRange, AnalyticsTrendPoint } from "@/frontend/lib/analytics";
+import type { AnalyticsDashboard, AnalyticsRange, AnalyticsTrendPoint } from "@/lib/analytics";
 import { AdminAnalyticsPanel } from "./AdminAnalyticsPanel";
 import {
   AdminUserManager,

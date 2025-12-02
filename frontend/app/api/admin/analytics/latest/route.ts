@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import {
   getLatestAnalyticsEvent,
   type AnalyticsRange,
-} from "@/frontend/lib/analytics";
+} from "@/lib/analytics";
 import { resolveAdminContext } from "@/app/admin/adminContext";
 
 function normaliseRange(value: string | null): AnalyticsRange {

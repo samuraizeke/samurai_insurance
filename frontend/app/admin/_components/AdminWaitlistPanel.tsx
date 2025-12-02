@@ -3,8 +3,8 @@
 import { useMemo, useState } from "react";
 import { axisClasses } from "@mui/x-charts/ChartsAxis";
 import { LineChart } from "@mui/x-charts/LineChart";
-import type { AnalyticsRange, AnalyticsTrendPoint } from "@/frontend/lib/analytics";
-import { alteHaasGrotesk, workSans } from "@/frontend/lib/fonts";
+import type { AnalyticsRange, AnalyticsTrendPoint } from "@/lib/analytics";
+import { alteHaasGrotesk, workSans } from "@/lib/fonts";
 import { AnalyticsRangeSelector } from "./AnalyticsRangeSelector";
 
 export type WaitlistEntrySummary = {

@@ -1,8 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
-import { AnalyticsRange, getAnalyticsDashboard, getWaitlistTrend } from "@/frontend/lib/analytics";
-import { alteHaasGrotesk } from "@/frontend/lib/fonts";
-import { createSupabaseServerClient } from "@/frontend/lib/supabaseServerClient";
+import { AnalyticsRange, getAnalyticsDashboard, getWaitlistTrend } from "@/lib/analytics";
+import { alteHaasGrotesk } from "@/lib/fonts";
+import { createSupabaseServerClient } from "@/lib/supabaseServerClient";
 import { AdminLoginForm } from "./_components/AdminLoginForm";
 import {
   type AdminUserSummary,

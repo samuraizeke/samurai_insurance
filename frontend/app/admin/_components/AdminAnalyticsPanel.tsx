@@ -7,8 +7,8 @@ import type {
   AnalyticsDashboard,
   AnalyticsRange,
   AnalyticsTrendPoint,
-} from "@/frontend/lib/analytics";
-import { alteHaasGrotesk } from "@/frontend/lib/fonts";
+} from "@/lib/analytics";
+import { alteHaasGrotesk } from "@/lib/fonts";
 import { AnalyticsRangeSelector } from "./AnalyticsRangeSelector";
 import { AnalyticsLiveUpdater } from "./AnalyticsLiveUpdater";
 

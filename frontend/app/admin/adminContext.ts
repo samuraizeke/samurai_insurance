@@ -1,7 +1,7 @@
 import "server-only";
 
 import type { User } from "@supabase/supabase-js";
-import { createSupabaseServerClient } from "@/frontend/lib/supabaseServerClient";
+import { createSupabaseServerClient } from "@/lib/supabaseServerClient";
 import {
   clearAdminSessionCookies,
   readAdminSessionTokens,

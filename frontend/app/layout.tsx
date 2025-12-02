@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { alteHaasGrotesk, workSans, leagueGothic } from "@/frontend/lib/fonts";
+import { alteHaasGrotesk, workSans, leagueGothic } from "@/lib/fonts";
 import Script from "next/script";
 import "./globals.css";
 import CustomCursor from "./components/CustomCursor";

@@ -14,7 +14,7 @@ import {
   removeAdminAccessAction,
   resendAdminInviteAction,
 } from "../actions";
-import { alteHaasGrotesk, workSans } from "@/frontend/lib/fonts";
+import { alteHaasGrotesk, workSans } from "@/lib/fonts";
 
 export type AdminUserSummary = {
   id: string;

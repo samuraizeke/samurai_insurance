@@ -2,7 +2,7 @@
 
 import { useRef, useEffect } from "react";
 import Image from "next/image";
-import { workSans } from "@/frontend/lib/fonts";
+import { workSans } from "@/lib/fonts";
 
 type OnDemandSupportFeatureProps = {
   className?: string;

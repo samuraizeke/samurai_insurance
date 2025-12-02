@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { workSans } from "@/frontend/lib/fonts";
+import { workSans } from "@/lib/fonts";
 import { useAutoplayVideo } from "@/app/hooks/useAutoplayVideo";
 
 const processSteps = [
