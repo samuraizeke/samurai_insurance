@@ -1,20 +1,9 @@
-import "server-only";
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from '@supabase/supabase-js';
+import dotenv from 'dotenv';
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SECRET_KEY;
+dotenv.config();
 
-if (!supabaseUrl) {
-  throw new Error("Missing Supabase URL environment variable");
-}
+const supabaseUrl = process.env.SUPABASE_URL!;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!; // Use Service Role for backend!
 
-if (!supabaseServiceKey) {
-  throw new Error("Missing Supabase service key environment variable");
-}
-
-export const createSupabaseServerClient = () =>
-  createClient(supabaseUrl, supabaseServiceKey, {
-    auth: {
-      persistSession: false,
-    },
-  });
+export const supabase = createClient(supabaseUrl, supabaseKey);
