@@ -18,7 +18,10 @@
     "type": "commonjs",
     "dependencies": {
         "@google-cloud/discoveryengine": "^2.5.2",
+        "@google-cloud/storage": "^7.18.0",
         "@supabase/supabase-js": "^2.86.0",
+        "@types/cors": "^2.8.19",
+        "cors": "^2.8.5",
         "dotenv": "^17.2.3",
         "express": "^5.2.1",
         "openai": "^6.9.1"
