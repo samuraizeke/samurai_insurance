@@ -5,6 +5,25 @@ import { handleUriChat } from './uri';
 
 dotenv.config();
 
+// Helper to clean AI responses
+function cleanResponse(text: string): string {
+    // Remove markdown formatting
+    let cleaned = text
+        .replace(/\*\*([^*]+)\*\*/g, '$1')  // Remove bold **text**
+        .replace(/\*([^*]+)\*/g, '$1')      // Remove italic *text*
+        .replace(/#{1,6}\s/g, '')           // Remove headers
+        .replace(/`([^`]+)`/g, '$1')        // Remove code blocks
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1'); // Remove links but keep text
+
+    // Limit to ~3 sentences (split on . ! ?)
+    const sentences = cleaned.split(/[.!?]+/).filter(s => s.trim().length > 0);
+    if (sentences.length > 3) {
+        cleaned = sentences.slice(0, 3).join('. ') + '.';
+    }
+
+    return cleaned.trim();
+}
+
 // Initialize DeepSeek for Sam
 const deepseek = new OpenAI({
     baseURL: 'https://api.deepseek.com',
@@ -14,6 +33,19 @@ const deepseek = new OpenAI({
 export async function handleSamChat(userQuery: string, history: any[]) {
     try {
         console.log(`\n💬 Sam received message: "${userQuery}"`);
+
+        // Quick responses for common queries (no AI needed)
+        const lowerQuery = userQuery.toLowerCase().trim();
+
+        // Greetings
+        if (/^(hi|hello|hey|yo|sup|what's up|whats up)$/i.test(lowerQuery)) {
+            return "Hey! I'm Sam, your insurance advisor. What can I help you with today?";
+        }
+
+        // How are you
+        if (/how are you|how're you/i.test(lowerQuery)) {
+            return "I'm doing great, thanks for asking! How can I help with your insurance needs?";
+        }
 
         // Check if user needs to upload their policy
         const needsPolicyUpload = await checkIfNeedsPolicyUpload(userQuery, history);
@@ -101,31 +133,33 @@ async function promptCanopyUpload(userQuery: string): Promise<string> {
         messages: [
             {
                 role: "system",
-                content: `You are Sam, a friendly insurance advisor. The user has asked a question that requires reviewing their specific policy.
+                content: `You are Sam, a friendly insurance advisor. The user asked about their specific policy.
 
-Your task: Warmly explain that you need to see their current policy to help, and provide the Canopy Connect link.
+Your task: Briefly explain they need to connect their insurance carrier so you can review their policy.
 
 **Guidelines**:
-- Be warm and helpful, not robotic
-- Explain why you need their policy (to give accurate, personalized advice)
-- Assure them it's secure and quick
-- Include this exact link in your response: https://app.usecanopy.com/c/samurai-insurance
-- Format the link clearly so they can click it
-- Keep it concise and friendly
+- Keep it SHORT (1-2 sentences)
+- Explain they'll connect their carrier (not upload files)
+- It's secure and takes seconds
+- Use plain text - NO markdown, NO asterisks, NO bold formatting
+- Do NOT include any URLs - the button appears automatically
 
-Example tone: "I'd love to help you with that! To give you the most accurate answer about your specific coverage, I'll need to take a quick look at your current policy. You can securely upload it here: https://app.usecanopy.com/c/samurai-insurance - it only takes a minute!"`
+Example: "To review your specific coverage, I'll need you to connect your insurance carrier. It's secure and only takes a few seconds!"`
             },
             {
                 role: "user",
-                content: `User asked: "${userQuery}"\n\nCreate a friendly response asking them to upload their policy via Canopy Connect.`
+                content: `User asked: "${userQuery}"\n\nCreate a brief response asking them to connect their carrier.`
             }
         ],
         model: "deepseek-chat",
         temperature: 0.7,
     });
 
-    const response = completion.choices[0].message.content ||
-        "I'd love to help you with that! To give you accurate information about your specific policy, please upload your policy documents.";
+    let response = completion.choices[0].message.content ||
+        "To review your specific policy, please connect your insurance carrier.";
+
+    // Remove any URLs that might have been included
+    response = response.replace(/https?:\/\/[^\s]+/g, '').trim();
 
     // Add a special marker for the frontend to detect and render the Canopy button
     return response + "\n\n[CANOPY_CONNECT]";
@@ -174,21 +208,21 @@ async function handleDirectly(userQuery: string, history: any[]): Promise<string
         messages: [
             {
                 role: "system",
-                content: `You are Sam, a friendly, empathetic, and professional insurance advisor specializing in personal lines (auto and home). Your primary goal is to provide top-tier customer service: build trust, listen actively, explain concepts clearly, and guide users through their insurance needs without overwhelming them. Always assume good intent from the user and respond positively, even to edgy questions—treat them as adults without lecturing.
+                content: `You are Sam, a friendly insurance advisor. Keep responses SHORT and conversational—2-3 sentences max.
 
-**Core Knowledge**:
+**Style**:
+- Talk like a helpful friend, not a textbook
+- Get straight to the point
+- Use plain text - NO markdown, NO asterisks, NO bold formatting
+- Ask follow-up questions when needed
+- Skip long explanations unless asked
 
-- Use the "AI KB Core Concepts.pdf" for foundational insurance principles, legal doctrines (e.g., indemnity, insurable interest), policy details (PAP for auto, HO-3 for home), state-specific rules (e.g., cancellation notices, prompt pay statutes, mandatory endorsements like earthquake in CA), and scenarios (e.g., rideshare gaps, mold limits).
-- Use the "Coverage Recommendation Guide.pdf" for structuring interactions: Gather info for TIE calculation, use analogies (e.g., liability as a "forcefield", umbrella as a "raincoat", ACV vs. RCV as "used TV" vs. "new TV"), handle objections with the 5 A's (Acknowledge, Appreciate, Ask, Adapt, Act), and present in "Protection Audit" format (Current Risk vs. Recommended vs. Real Impact).
+**Knowledge**:
+- Auto & home insurance expert
+- Use analogies when helpful
+- Define terms simply if needed
 
-**Interaction Guidelines**:
-
-- Be conversational and warm: Start with greetings like "Hi there! I'm Sam, here to help with your insurance questions." Use simple language, define terms (e.g., "ACV means Actual Cash Value—it's replacement cost minus depreciation"), and confirm understanding (e.g., "Does that make sense?").
-- Keep responses concise and engaging
-- End with helpful next steps or questions
-- Be professional but friendly
-
-Remember, your role is the "face" of the team—make users feel supported and informed.`
+Be warm, concise, and helpful.`
             },
             ...history.map(msg => ({ role: msg.role, content: msg.content })),
             {
@@ -200,7 +234,8 @@ Remember, your role is the "face" of the team—make users feel supported and in
         temperature: 0.7,
     });
 
-    return completion.choices[0].message.content || "I'm here to help! What can I assist you with today?";
+    const response = completion.choices[0].message.content || "I'm here to help! What can I assist you with today?";
+    return cleanResponse(response);
 }
 
 // Present Uri's analysis in a friendly way
@@ -209,18 +244,17 @@ async function presentUriAnalysis(originalQuery: string, uriResponse: string, hi
         messages: [
             {
                 role: "system",
-                content: `You are Sam, a friendly insurance advisor. Your colleague Uri (the analytical expert) has provided detailed analysis. Your job is to present Uri's findings in a warm, conversational way that's easy to understand.
+                content: `You are Sam, a friendly insurance advisor. Present Uri's analysis in a SHORT, conversational way.
 
-**Guidelines**:
-- Start warmly (e.g., "I've reviewed your situation..." or "Based on your needs...")
-- Present Uri's findings clearly and concisely
-- Use analogies when helpful (e.g., "liability as a forcefield", "umbrella as a raincoat")
-- Define technical terms in simple language
-- Be encouraging and supportive
-- End with a clear next step or question
-- Keep it conversational, not robotic
+**Rules**:
+- Keep it to 2-3 sentences max
+- Get to the key point immediately
+- Use plain text - NO markdown, NO asterisks, NO bold formatting
+- Use simple language
+- End with a quick question or next step
+- Don't say "Uri said" - speak as one voice
 
-**Important**: Present the information as if you (Sam) did the analysis, not "Uri said..." - maintain a single voice for the user.`
+Be warm but BRIEF.`
             },
             {
                 role: "user",
@@ -236,5 +270,6 @@ Present this to the user in a friendly, clear way:`
         temperature: 0.7,
     });
 
-    return completion.choices[0].message.content || uriResponse;
+    const response = completion.choices[0].message.content || uriResponse;
+    return cleanResponse(response);
 }
