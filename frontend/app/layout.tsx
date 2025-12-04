@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { alteHaasGrotesk, workSans, leagueGothic } from "@/lib/fonts";
 import Script from "next/script";
 import "./globals.css";
-import CustomCursor from "./components/CustomCursor";
 import { Analytics } from '@vercel/analytics/next';
 
 export const metadata: Metadata = {
@@ -18,11 +17,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${alteHaasGrotesk.variable} ${workSans.variable} ${leagueGothic.variable} antialiased`}
+        suppressHydrationWarning
       >
-        <CustomCursor />
         {children}
         {process.env.NEXT_PUBLIC_VERCEL_ANALYTICS_ID ? (
           <Script

@@ -18,7 +18,8 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 import type React from "react";
 import { useState } from "react";
-import { ChevronDownIcon, ChevronUpIcon } from "@radix-ui/react-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faChevronDown, faChevronUp } from "@fortawesome/free-solid-svg-icons";
 
 export type Route = {
   id: string;
@@ -72,9 +73,9 @@ export default function DashboardNavigation({ routes }: { routes: Route[] }) {
                     {!isCollapsed && hasSubRoutes && (
                       <span className="ml-auto">
                         {isOpen ? (
-                          <ChevronUpIcon className="size-4" />
+                          <FontAwesomeIcon icon={faChevronUp} className="size-4" />
                         ) : (
-                          <ChevronDownIcon className="size-4" />
+                          <FontAwesomeIcon icon={faChevronDown} className="size-4" />
                         )}
                       </span>
                     )}

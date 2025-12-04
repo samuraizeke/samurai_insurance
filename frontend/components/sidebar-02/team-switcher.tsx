@@ -16,7 +16,8 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import * as React from "react";
-import { CaretSortIcon, PlusIcon } from "@radix-ui/react-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faSort, faPlus } from "@fortawesome/free-solid-svg-icons";
 
 type Team = {
   name: string;
@@ -50,7 +51,7 @@ export function TeamSwitcher({ teams }: { teams: Team[] }) {
                 </span>
                 <span className="truncate text-xs font-[family-name:var(--font-work-sans)]">{activeTeam.plan}</span>
               </div>
-              <CaretSortIcon className="ml-auto" />
+              <FontAwesomeIcon icon={faSort} className="ml-auto size-4" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
@@ -81,7 +82,7 @@ export function TeamSwitcher({ teams }: { teams: Team[] }) {
             <DropdownMenuSeparator />
             <DropdownMenuItem className="gap-2 p-2">
               <div className="flex size-6 items-center justify-center rounded-md border bg-background">
-                <PlusIcon className="size-4" />
+                <FontAwesomeIcon icon={faPlus} className="size-4" />
               </div>
               <div className="font-medium text-muted-foreground font-[family-name:var(--font-work-sans)]">Add team</div>
             </DropdownMenuItem>

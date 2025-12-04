@@ -10,7 +10,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { BellIcon } from "lucide-react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faBell } from "@fortawesome/free-regular-svg-icons";
 
 type Notification = {
   id: string;
@@ -34,7 +35,7 @@ export function NotificationsPopover({
           className="rounded-full"
           aria-label="Open notifications"
         >
-          <BellIcon className="size-5" />
+          <FontAwesomeIcon icon={faBell} className="size-5" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent side="right" className="w-80 my-6">

@@ -15,19 +15,20 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import {
-    IconAdjustmentsHorizontal,
-    IconArrowUp,
-    IconCirclePlus,
-    IconClipboard,
-    IconHistory,
-    IconLink,
-    IconPaperclip,
-    IconPlayerPlay,
-    IconPlus,
-    IconSparkles,
-    IconTemplate,
-    IconX,
-} from "@tabler/icons-react";
+    faSliders,
+    faArrowUp,
+    faPlusCircle,
+    faClipboard,
+    faHistory,
+    faLink,
+    faPaperclip,
+    faPlay,
+    faPlus,
+    faMagic,
+    faFileLines,
+    faXmark,
+} from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { sendChatMessage } from "@/lib/api";
@@ -229,10 +230,18 @@ export default function ChatWidget() {
                                         : "bg-muted mr-auto max-w-[80%]"
                                 )}
                             >
+                                {message.role === "assistant" && (
+                                    <div className="shrink-0">
+                                        <Image
+                                            src="/sam-head-logo.png"
+                                            alt="Sam"
+                                            width={32}
+                                            height={32}
+                                            className="rounded-full object-contain"
+                                        />
+                                    </div>
+                                )}
                                 <div className="flex flex-col gap-2 w-full">
-                                    <p className="text-sm font-medium">
-                                        {message.role === "user" ? "You" : "Sam"}
-                                    </p>
                                     <p className="text-sm whitespace-pre-wrap">{displayContent}</p>
                                     {showCanopyButton && (
                                         <Button
@@ -248,8 +257,16 @@ export default function ChatWidget() {
                     })}
                     {isLoading && (
                         <div className="flex gap-3 p-4 rounded-lg bg-muted mr-auto max-w-[80%]">
-                            <div className="flex flex-col gap-1">
-                                <p className="text-sm font-medium">Assistant</p>
+                            <div className="shrink-0">
+                                <Image
+                                    src="/sam-head-logo.png"
+                                    alt="Sam"
+                                    width={32}
+                                    height={32}
+                                    className="rounded-full object-contain"
+                                />
+                            </div>
+                            <div className="flex flex-col gap-1 justify-center">
                                 <div className="flex gap-1">
                                     <span className="animate-bounce text-sm" style={{ animationDelay: "0ms" }}>●</span>
                                     <span className="animate-bounce text-sm" style={{ animationDelay: "150ms" }}>●</span>
@@ -292,7 +309,7 @@ export default function ChatWidget() {
                                                     height={16}
                                                 />
                                             ) : (
-                                                <IconPaperclip className="opacity-60" size={12} />
+                                                <FontAwesomeIcon icon={faPaperclip} className="opacity-60 size-3" />
                                             )}
                                         </div>
                                         <span className="inline overflow-hidden truncate pr-1.5 transition-all">
@@ -304,7 +321,7 @@ export default function ChatWidget() {
                                         onClick={() => handleRemoveFile(file.id)}
                                         type="button"
                                     >
-                                        <IconX size={12} />
+                                        <FontAwesomeIcon icon={faXmark} className="size-3" />
                                     </button>
                                 </Badge>
                             ))}
@@ -336,7 +353,7 @@ export default function ChatWidget() {
                                         type="button"
                                         variant="ghost"
                                     >
-                                        <IconPlus size={16} className="text-[#de5e48]" />
+                                        <FontAwesomeIcon icon={faPlus} className="text-[#de5e48] size-4" />
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent
@@ -349,25 +366,25 @@ export default function ChatWidget() {
                                             onClick={() => fileInputRef.current?.click()}
                                         >
                                             <div className="flex items-center gap-2">
-                                                <IconPaperclip className="text-[#de5e48]" size={16} />
+                                                <FontAwesomeIcon icon={faPaperclip} className="text-[#de5e48] size-4" />
                                                 <span>Attach Files</span>
                                             </div>
                                         </DropdownMenuItem>
                                         <DropdownMenuItem className="rounded-[calc(1rem-6px)] text-xs">
                                             <div className="flex items-center gap-2">
-                                                <IconLink className="text-[#de5e48]" size={16} />
+                                                <FontAwesomeIcon icon={faLink} className="text-[#de5e48] size-4" />
                                                 <span>Import from URL</span>
                                             </div>
                                         </DropdownMenuItem>
                                         <DropdownMenuItem className="rounded-[calc(1rem-6px)] text-xs">
                                             <div className="flex items-center gap-2">
-                                                <IconClipboard className="text-[#de5e48]" size={16} />
+                                                <FontAwesomeIcon icon={faClipboard} className="text-[#de5e48] size-4" />
                                                 <span>Paste from Clipboard</span>
                                             </div>
                                         </DropdownMenuItem>
                                         <DropdownMenuItem className="rounded-[calc(1rem-6px)] text-xs">
                                             <div className="flex items-center gap-2">
-                                                <IconTemplate className="text-[#de5e48]" size={16} />
+                                                <FontAwesomeIcon icon={faFileLines} className="text-[#de5e48] size-4" />
                                                 <span>Use Template</span>
                                             </div>
                                         </DropdownMenuItem>
@@ -383,7 +400,7 @@ export default function ChatWidget() {
                                         type="button"
                                         variant="ghost"
                                     >
-                                        <IconAdjustmentsHorizontal size={16} className="text-[#de5e48]" />
+                                        <FontAwesomeIcon icon={faSliders} className="text-[#de5e48] size-4" />
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent
@@ -393,7 +410,7 @@ export default function ChatWidget() {
                                     <DropdownMenuGroup className="space-y-3">
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-2">
-                                                <IconSparkles className="text-[#de5e48]" size={16} />
+                                                <FontAwesomeIcon icon={faMagic} className="text-[#de5e48] size-4" />
                                                 <Label className="text-xs">Auto-complete</Label>
                                             </div>
                                             <Switch
@@ -407,7 +424,7 @@ export default function ChatWidget() {
 
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-2">
-                                                <IconPlayerPlay className="text-[#de5e48]" size={16} />
+                                                <FontAwesomeIcon icon={faPlay} className="text-[#de5e48] size-4" />
                                                 <Label className="text-xs">Streaming</Label>
                                             </div>
                                             <Switch
@@ -421,7 +438,7 @@ export default function ChatWidget() {
 
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-2">
-                                                <IconHistory className="text-[#de5e48]" size={16} />
+                                                <FontAwesomeIcon icon={faHistory} className="text-[#de5e48] size-4" />
                                                 <Label className="text-xs">Show History</Label>
                                             </div>
                                             <Switch
@@ -445,7 +462,7 @@ export default function ChatWidget() {
                                 type="submit"
                                 variant="default"
                             >
-                                <IconArrowUp size={16} className="text-[#f7f6f3]" />
+                                <FontAwesomeIcon icon={faArrowUp} className="text-[#f7f6f3] size-4" />
                             </Button>
                         </div>
                     </div>
@@ -457,7 +474,7 @@ export default function ChatWidget() {
                         )}
                     >
                         <span className="flex w-full items-center justify-center gap-1 font-medium">
-                            <IconCirclePlus className="min-w-4" size={16} />
+                            <FontAwesomeIcon icon={faPlusCircle} className="min-w-4 size-4" />
                             Drop files here to add as attachments
                         </span>
                     </div>
@@ -478,7 +495,7 @@ export default function ChatWidget() {
                             onClick={() => setShowCanopyModal(false)}
                             className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white/90 hover:bg-white shadow-md"
                         >
-                            <IconX size={20} />
+                            <FontAwesomeIcon icon={faXmark} className="size-5" />
                         </button>
                         <iframe
                             src="https://app.usecanopy.com/c/samurai-insurance"

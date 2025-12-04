@@ -10,27 +10,13 @@ import {
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
-import {
-  Activity,
-  DollarSign,
-  Home,
-  Infinity,
-  LinkIcon,
-  Package2,
-  Percent,
-  PieChart,
-  ShoppingBag,
-  Sparkles,
-  Store,
-  TrendingUp,
-  Users,
-} from "lucide-react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faPlus, faComment } from "@fortawesome/free-solid-svg-icons";
 import { Logo } from "@/components/sidebar-02/logo";
 import type { Route } from "./nav-main";
 import DashboardNavigation from "@/components/sidebar-02/nav-main";
 import { NotificationsPopover } from "@/components/sidebar-02/nav-notifications";
 import { TeamSwitcher } from "@/components/sidebar-02/team-switcher";
-import { GearIcon } from "@radix-ui/react-icons";
 
 const sampleNotifications = [
   {
@@ -56,116 +42,31 @@ const sampleNotifications = [
   },
 ];
 
-const dashboardRoutes: Route[] = [
+const chatRoutes: Route[] = [
   {
-    id: "home",
-    title: "Home",
-    icon: <Home className="size-4" />,
+    id: "new-chat",
+    title: "New Chat",
+    icon: <FontAwesomeIcon icon={faPlus} className="size-4" />,
     link: "#",
   },
   {
-    id: "products",
-    title: "Products",
-    icon: <Package2 className="size-4" />,
+    id: "chats",
+    title: "Chats",
+    icon: <FontAwesomeIcon icon={faComment} className="size-4" />,
     link: "#",
     subs: [
       {
-        title: "Catalogue",
+        title: "Insurance Quote Request",
         link: "#",
-        icon: <Package2 className="size-4" />,
       },
       {
-        title: "Checkout Links",
+        title: "Policy Coverage Question",
         link: "#",
-        icon: <LinkIcon className="size-4" />,
       },
       {
-        title: "Discounts",
+        title: "Claim Status Inquiry",
         link: "#",
-        icon: <Percent className="size-4" />,
       },
-    ],
-  },
-  {
-    id: "usage-billing",
-    title: "Usage Billing",
-    icon: <PieChart className="size-4" />,
-    link: "#",
-    subs: [
-      {
-        title: "Meters",
-        link: "#",
-        icon: <PieChart className="size-4" />,
-      },
-      {
-        title: "Events",
-        link: "#",
-        icon: <Activity className="size-4" />,
-      },
-    ],
-  },
-  {
-    id: "benefits",
-    title: "Benefits",
-    icon: <Sparkles className="size-4" />,
-    link: "#",
-  },
-  {
-    id: "customers",
-    title: "Customers",
-    icon: <Users className="size-4" />,
-    link: "#",
-  },
-  {
-    id: "sales",
-    title: "Sales",
-    icon: <ShoppingBag className="size-4" />,
-    link: "#",
-    subs: [
-      {
-        title: "Orders",
-        link: "#",
-        icon: <ShoppingBag className="size-4" />,
-      },
-      {
-        title: "Subscriptions",
-        link: "#",
-        icon: <Infinity className="size-4" />,
-      },
-    ],
-  },
-  {
-    id: "storefront",
-    title: "Storefront",
-    icon: <Store className="size-4" />,
-    link: "#",
-  },
-  {
-    id: "analytics",
-    title: "Analytics",
-    icon: <TrendingUp className="size-4" />,
-    link: "#",
-  },
-  {
-    id: "finance",
-    title: "Finance",
-    icon: <DollarSign className="size-4" />,
-    link: "#",
-    subs: [
-      { title: "Incoming", link: "#" },
-      { title: "Outgoing", link: "#" },
-      { title: "Payout Account", link: "#" },
-    ],
-  },
-  {
-    id: "settings",
-    title: "Settings",
-    icon: <GearIcon className="size-4" />,
-    link: "#",
-    subs: [
-      { title: "General", link: "#" },
-      { title: "Webhooks", link: "#" },
-      { title: "Custom Fields", link: "#" },
     ],
   },
 ];
@@ -188,9 +89,9 @@ export function DashboardSidebar() {
             : "flex-row items-center justify-between"
         )}
       >
-        <a href="/" className="flex items-center">
+        <div className="flex items-center">
           <Logo collapsed={isCollapsed} />
-        </a>
+        </div>
 
         <motion.div
           key={isCollapsed ? "header-collapsed" : "header-expanded"}
@@ -207,7 +108,7 @@ export function DashboardSidebar() {
         </motion.div>
       </SidebarHeader>
       <SidebarContent className="gap-4 px-2 py-4">
-        <DashboardNavigation routes={dashboardRoutes} />
+        <DashboardNavigation routes={chatRoutes} />
       </SidebarContent>
       <SidebarFooter className="px-2">
         <TeamSwitcher teams={teams} />

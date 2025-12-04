@@ -25,6 +25,7 @@ const NOISE_TEXTURE =
   "data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAxMjAgMTIwJz4KICA8ZmlsdGVyIGlkPSdub2lzZSc+CiAgICA8ZmVUdXJidWxlbmNlIHR5cGU9J2ZyYWN0YWxOb2lzZScgYmFzZUZyZXF1ZW5jeT0nMS4yJyBudW1PY3RhdmVzPSczJyBzdGl0Y2hUaWxlcz0nc3RpdGNoJy8+CiAgPC9maWx0ZXI+CiAgPHJlY3Qgd2lkdGg9JzEyMCcgaGVpZ2h0PScxMjAnIGZpbHRlcj0ndXJsKCNub2lzZSknIG9wYWNpdHk9JzAuNDUnLz4KPC9zdmc+";
 
 export function CustomCursor() {
+  const [isMounted, setIsMounted] = useState(false);
   const [isActive, setIsActive] = useState(false);
   const [isHidden, setIsHidden] = useState(true);
   const [isPressed, setIsPressed] = useState(false);
@@ -36,6 +37,12 @@ export function CustomCursor() {
   const isHiddenRef = useRef(true);
 
   useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isMounted) return;
+
     const mediaQuery = window.matchMedia("(pointer: coarse)");
     if (mediaQuery.matches) {
       return;
@@ -64,7 +71,7 @@ export function CustomCursor() {
       mediaQuery.removeEventListener("change", handleChange);
       document.body.classList.remove("custom-cursor-active");
     };
-  }, []);
+  }, [isMounted]);
 
   const applyCursorTransform = useCallback((position: CursorPosition) => {
     const element = cursorRef.current;
@@ -189,7 +196,7 @@ export function CustomCursor() {
     return style;
   }, [isHoveringInteractive, isPressed, isSafari]);
 
-  if (!isActive) {
+  if (!isMounted || !isActive) {
     return null;
   }
 

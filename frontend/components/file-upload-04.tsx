@@ -1,13 +1,13 @@
 "use client";
 
-import { File, FileSpreadsheet } from "lucide-react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faFile, faFileExcel, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { ChangeEvent, DragEvent, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Cross2Icon } from "@radix-ui/react-icons";
 
 export default function FileUpload04() {
   const [uploadState, setUploadState] = useState<{
@@ -69,13 +69,13 @@ export default function FileUpload04() {
   };
 
   const getFileIcon = () => {
-    if (!uploadState.file) return <File />;
+    if (!uploadState.file) return <FontAwesomeIcon icon={faFile} />;
 
     const fileExt = uploadState.file.name.split(".").pop()?.toLowerCase() || "";
     return ["csv", "xlsx", "xls"].includes(fileExt) ? (
-      <FileSpreadsheet className="h-5 w-5 text-foreground" />
+      <FontAwesomeIcon icon={faFileExcel} className="h-5 w-5 text-foreground" />
     ) : (
-      <File className="h-5 w-5 text-foreground" />
+      <FontAwesomeIcon icon={faFile} className="h-5 w-5 text-foreground" />
     );
   };
 
@@ -100,7 +100,8 @@ export default function FileUpload04() {
           onDrop={handleDrop}
         >
           <div>
-            <File
+            <FontAwesomeIcon
+              icon={faFile}
               className="mx-auto h-12 w-12 text-muted-foreground"
               aria-hidden={true}
             />
@@ -141,12 +142,13 @@ export default function FileUpload04() {
               aria-label="Remove"
               onClick={() => setShowDummy(false)}
             >
-              <Cross2Icon className="h-5 w-5 shrink-0" aria-hidden={true} />
+              <FontAwesomeIcon icon={faXmark} className="h-5 w-5 shrink-0" aria-hidden={true} />
             </Button>
 
             <div className="flex items-center space-x-2.5">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-background shadow-sm ring-1 ring-inset ring-border">
-                <FileSpreadsheet
+                <FontAwesomeIcon
+                  icon={faFileExcel}
                   className="h-5 w-5 text-foreground"
                   aria-hidden={true}
                 />
@@ -176,7 +178,7 @@ export default function FileUpload04() {
               aria-label="Remove"
               onClick={resetFile}
             >
-              <Cross2Icon className="h-5 w-5 shrink-0" aria-hidden={true} />
+              <FontAwesomeIcon icon={faXmark} className="h-5 w-5 shrink-0" aria-hidden={true} />
             </Button>
 
             <div className="flex items-center space-x-2.5">
