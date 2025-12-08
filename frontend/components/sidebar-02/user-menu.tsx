@@ -46,7 +46,7 @@ export function UserMenu() {
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               size="lg"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+              className="hover:bg-[#333333]/5 data-[state=open]:bg-[#333333]/10 data-[state=open]:text-foreground transition-colors"
             >
               <Avatar className="h-8 w-8">
                 <AvatarImage src={user.user_metadata?.avatar_url} alt={displayName} />
@@ -78,21 +78,21 @@ export function UserMenu() {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="gap-2 p-2 cursor-pointer">
+            <DropdownMenuItem className="gap-2 p-2 cursor-pointer hover:bg-[#333333]/5 focus:bg-[#333333]/5 rounded-lg">
               <FontAwesomeIcon icon={faUser} className="size-4" />
               <span className="font-[family-name:var(--font-work-sans)]">Profile</span>
             </DropdownMenuItem>
-            <DropdownMenuItem className="gap-2 p-2 cursor-pointer">
+            <DropdownMenuItem className="gap-2 p-2 cursor-pointer hover:bg-[#333333]/5 focus:bg-[#333333]/5 rounded-lg">
               <FontAwesomeIcon icon={faBell} className="size-4" />
               <span className="font-[family-name:var(--font-work-sans)]">Notifications</span>
             </DropdownMenuItem>
-            <DropdownMenuItem className="gap-2 p-2 cursor-pointer">
+            <DropdownMenuItem className="gap-2 p-2 cursor-pointer hover:bg-[#333333]/5 focus:bg-[#333333]/5 rounded-lg">
               <FontAwesomeIcon icon={faGear} className="size-4" />
               <span className="font-[family-name:var(--font-work-sans)]">Settings</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              className="gap-2 p-2 cursor-pointer text-destructive focus:text-destructive"
+              className="gap-2 p-2 cursor-pointer text-destructive focus:text-destructive hover:bg-red-50 focus:bg-red-50 rounded-lg"
               onClick={() => signOut()}
             >
               <FontAwesomeIcon icon={faRightFromBracket} className="size-4" />

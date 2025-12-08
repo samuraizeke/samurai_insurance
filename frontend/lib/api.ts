@@ -138,6 +138,58 @@ export async function getUserSessions(userId: string, limit: number = 10): Promi
 }
 
 /**
+ * Rename a chat session by updating its summary
+ */
+export async function renameSession(sessionId: number, userId: string, newName: string): Promise<boolean> {
+    try {
+        const response = await fetch(`${BACKEND_URL}/api/chat-sessions/${sessionId}`, {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ userId, summary: newName }),
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            console.error("Error renaming session:", error);
+            return false;
+        }
+
+        return true;
+    } catch (error) {
+        console.error("Error renaming session:", error);
+        return false;
+    }
+}
+
+/**
+ * Soft delete a chat session (hides from UI but retains in database)
+ */
+export async function deleteSession(sessionId: number, userId: string): Promise<boolean> {
+    try {
+        const response = await fetch(`${BACKEND_URL}/api/chat-sessions/${sessionId}`, {
+            method: "DELETE",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ userId }),
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            console.error("Error deleting session:", error);
+            return false;
+        }
+
+        return true;
+    } catch (error) {
+        console.error("Error deleting session:", error);
+        return false;
+    }
+}
+
+/**
  * Send a chat message with session tracking
  */
 export async function sendChatMessage(

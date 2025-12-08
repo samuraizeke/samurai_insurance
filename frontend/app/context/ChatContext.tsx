@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useCallback, ReactNode } from "react";
-import { ChatSession, getUserSessions } from "@/lib/api";
+import { ChatSession, getUserSessions, deleteSession as apiDeleteSession, renameSession as apiRenameSession } from "@/lib/api";
 
 interface ChatContextType {
     hasMessages: boolean;
@@ -15,6 +15,8 @@ interface ChatContextType {
     onSessionSelected: (callback: (sessionId: number) => void) => void;
     currentSessionId: number | null;
     setCurrentSessionId: (id: number | null) => void;
+    removeSession: (sessionId: number, userId: string) => Promise<boolean>;
+    renameSession: (sessionId: number, userId: string, newName: string) => Promise<boolean>;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -59,6 +61,24 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         setSessionSelectedCallback(() => callback);
     }, []);
 
+    const removeSession = useCallback(async (sessionId: number, userId: string): Promise<boolean> => {
+        const success = await apiDeleteSession(sessionId, userId);
+        if (success) {
+            setRecentSessions(prev => prev.filter(s => s.id !== sessionId));
+        }
+        return success;
+    }, []);
+
+    const renameSession = useCallback(async (sessionId: number, userId: string, newName: string): Promise<boolean> => {
+        const success = await apiRenameSession(sessionId, userId, newName);
+        if (success) {
+            setRecentSessions(prev => prev.map(s =>
+                s.id === sessionId ? { ...s, summary: newName } : s
+            ));
+        }
+        return success;
+    }, []);
+
     return (
         <ChatContext.Provider value={{
             hasMessages,
@@ -71,7 +91,9 @@ export function ChatProvider({ children }: { children: ReactNode }) {
             selectSession,
             onSessionSelected,
             currentSessionId,
-            setCurrentSessionId
+            setCurrentSessionId,
+            removeSession,
+            renameSession
         }}>
             {children}
         </ChatContext.Provider>

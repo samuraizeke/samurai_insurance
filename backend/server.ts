@@ -239,6 +239,122 @@ app.get('/api/chat-sessions/:sessionId/messages', async (req, res) => {
   }
 });
 
+// Rename a chat session
+app.patch('/api/chat-sessions/:sessionId', async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const { userId, summary } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ error: 'userId is required' });
+    }
+
+    if (!summary || typeof summary !== 'string') {
+      return res.status(400).json({ error: 'summary is required' });
+    }
+
+    // Look up internal user ID to verify ownership
+    const { data: userData } = await supabase
+      .from('users')
+      .select('id')
+      .eq('external_id', userId)
+      .single();
+
+    if (!userData) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Verify the session belongs to this user
+    const { data: session } = await supabase
+      .from('chat_sessions')
+      .select('id, user_id')
+      .eq('id', sessionId)
+      .single();
+
+    if (!session) {
+      return res.status(404).json({ error: 'Session not found' });
+    }
+
+    if (session.user_id !== userData.id) {
+      return res.status(403).json({ error: 'Not authorized to rename this session' });
+    }
+
+    // Update the summary
+    const { error: updateError } = await supabase
+      .from('chat_sessions')
+      .update({ summary: summary.trim() })
+      .eq('id', sessionId);
+
+    if (updateError) {
+      console.error('Failed to rename session:', updateError);
+      return res.status(500).json({ error: 'Failed to rename session' });
+    }
+
+    console.log(`✏️ Renamed chat session ${sessionId} to: "${summary.trim()}"`);
+    res.json({ success: true, message: 'Session renamed successfully' });
+
+  } catch (error) {
+    console.error('❌ Error renaming chat session:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// Soft delete a chat session
+app.delete('/api/chat-sessions/:sessionId', async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const { userId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ error: 'userId is required' });
+    }
+
+    // Look up internal user ID to verify ownership
+    const { data: userData } = await supabase
+      .from('users')
+      .select('id')
+      .eq('external_id', userId)
+      .single();
+
+    if (!userData) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Verify the session belongs to this user before deleting
+    const { data: session } = await supabase
+      .from('chat_sessions')
+      .select('id, user_id')
+      .eq('id', sessionId)
+      .single();
+
+    if (!session) {
+      return res.status(404).json({ error: 'Session not found' });
+    }
+
+    if (session.user_id !== userData.id) {
+      return res.status(403).json({ error: 'Not authorized to delete this session' });
+    }
+
+    // Soft delete by setting deleted_at timestamp
+    const { error: deleteError } = await supabase
+      .from('chat_sessions')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', sessionId);
+
+    if (deleteError) {
+      console.error('Failed to soft delete session:', deleteError);
+      return res.status(500).json({ error: 'Failed to delete session' });
+    }
+
+    console.log(`🗑️ Soft deleted chat session: ${sessionId}`);
+    res.json({ success: true, message: 'Session deleted successfully' });
+
+  } catch (error) {
+    console.error('❌ Error deleting chat session:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 // Get user's recent chat sessions
 app.get('/api/users/:userId/chat-sessions', async (req, res) => {
   try {
@@ -256,10 +372,12 @@ app.get('/api/users/:userId/chat-sessions', async (req, res) => {
       return res.json({ sessions: [] });
     }
 
+    // Fetch sessions that are not soft-deleted (deleted_at is null)
     const { data: sessions, error } = await supabase
       .from('chat_sessions')
       .select('id, session_uuid, started_at, last_message_at, total_messages, conversation_context, summary, active')
       .eq('user_id', userData.id)
+      .is('deleted_at', null)
       .order('last_message_at', { ascending: false })
       .limit(limit);
 

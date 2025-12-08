@@ -570,6 +570,7 @@ CREATE TABLE IF NOT EXISTS public.chat_sessions (
   total_messages integer DEFAULT 0,
   active boolean DEFAULT true,
   conversation_context character varying,
+  deleted_at timestamp with time zone DEFAULT NULL,
   CONSTRAINT chat_sessions_pkey PRIMARY KEY (id),
   CONSTRAINT chat_sessions_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
   CONSTRAINT chat_sessions_topic_id_fkey FOREIGN KEY (topic_id) REFERENCES public.chat_topics(id),
@@ -642,6 +643,7 @@ CREATE INDEX IF NOT EXISTS idx_claims_status ON public.claims(status);
 -- Chat sessions indexes
 CREATE INDEX IF NOT EXISTS idx_chat_sessions_user_id ON public.chat_sessions(user_id);
 CREATE INDEX IF NOT EXISTS idx_chat_sessions_session_uuid ON public.chat_sessions(session_uuid);
+CREATE INDEX IF NOT EXISTS idx_chat_sessions_deleted_at ON public.chat_sessions(deleted_at);
 
 -- Conversations indexes
 CREATE INDEX IF NOT EXISTS idx_conversations_session_id ON public.conversations(session_id);

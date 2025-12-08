@@ -40,7 +40,7 @@ export function TeamSwitcher({ teams }: { teams: Team[] }) {
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               size="lg"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+              className="hover:bg-[#333333]/5 data-[state=open]:bg-[#333333]/10 data-[state=open]:text-foreground transition-colors"
             >
               <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-background text-foreground overflow-hidden">
                 <LogoComponent collapsed={true} className="size-8" />
@@ -69,7 +69,7 @@ export function TeamSwitcher({ teams }: { teams: Team[] }) {
                 <DropdownMenuItem
                   key={team.name}
                   onClick={() => setActiveTeam(team)}
-                  className="gap-2 p-2"
+                  className="gap-2 p-2 hover:bg-[#333333]/5 focus:bg-[#333333]/5 rounded-lg cursor-pointer"
                 >
                   <div className="flex size-6 items-center justify-center rounded-sm border overflow-hidden">
                     <TeamLogo collapsed={true} className="size-6" />
@@ -80,7 +80,7 @@ export function TeamSwitcher({ teams }: { teams: Team[] }) {
               );
             })}
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="gap-2 p-2">
+            <DropdownMenuItem className="gap-2 p-2 hover:bg-[#333333]/5 focus:bg-[#333333]/5 rounded-lg cursor-pointer">
               <div className="flex size-6 items-center justify-center rounded-md border bg-background">
                 <FontAwesomeIcon icon={faPlus} className="size-4" />
               </div>

@@ -42,7 +42,7 @@ export function NotificationsPopover({
         <DropdownMenuLabel>Notifications</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {notifications.map(({ id, avatar, fallback, text, time }) => (
-          <DropdownMenuItem key={id} className="flex items-start gap-3">
+          <DropdownMenuItem key={id} className="flex items-start gap-3 hover:bg-[#333333]/5 focus:bg-[#333333]/5 rounded-lg cursor-pointer">
             <Avatar className="size-8">
               <AvatarImage src={avatar} alt="Avatar" />
               <AvatarFallback>{fallback}</AvatarFallback>
@@ -54,7 +54,7 @@ export function NotificationsPopover({
           </DropdownMenuItem>
         ))}
         <DropdownMenuSeparator />
-        <DropdownMenuItem className="justify-center text-sm text-muted-foreground hover:text-primary">
+        <DropdownMenuItem className="justify-center text-sm text-muted-foreground hover:text-primary hover:bg-[#333333]/5 focus:bg-[#333333]/5 rounded-lg cursor-pointer">
           View all notifications
         </DropdownMenuItem>
       </DropdownMenuContent>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   Sidebar,
   SidebarContent,
@@ -18,7 +18,21 @@ import {
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlus, faHistory } from "@fortawesome/free-solid-svg-icons";
+import { faPlus, faHistory, faEllipsisVertical, faTrash, faPen } from "@fortawesome/free-solid-svg-icons";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Logo } from "@/components/sidebar-02/logo";
 import { UserMenu } from "@/components/sidebar-02/user-menu";
 import { useChatContext } from "@/app/context/ChatContext";
@@ -58,8 +72,57 @@ export function DashboardSidebar() {
     loadRecentSessions,
     isLoadingSessions,
     selectSession,
-    currentSessionId
+    currentSessionId,
+    removeSession,
+    renameSession
   } = useChatContext();
+
+  // Rename dialog state
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
+  const [sessionToRename, setSessionToRename] = useState<{ id: number; currentName: string } | null>(null);
+  const [newSessionName, setNewSessionName] = useState("");
+
+  // Delete dialog state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [sessionToDelete, setSessionToDelete] = useState<{ id: number; title: string } | null>(null);
+
+  const handleOpenDeleteDialog = (e: React.MouseEvent, sessionId: number, title: string) => {
+    e.stopPropagation();
+    setSessionToDelete({ id: sessionId, title });
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!user?.id || !sessionToDelete) return;
+
+    const success = await removeSession(sessionToDelete.id, user.id);
+    if (success) {
+      setDeleteDialogOpen(false);
+      setSessionToDelete(null);
+    } else {
+      alert("Failed to delete conversation. Please try again.");
+    }
+  };
+
+  const handleOpenRenameDialog = (e: React.MouseEvent, sessionId: number, currentName: string) => {
+    e.stopPropagation();
+    setSessionToRename({ id: sessionId, currentName });
+    setNewSessionName(currentName);
+    setRenameDialogOpen(true);
+  };
+
+  const handleRenameSession = async () => {
+    if (!user?.id || !sessionToRename || !newSessionName.trim()) return;
+
+    const success = await renameSession(sessionToRename.id, user.id, newSessionName.trim());
+    if (success) {
+      setRenameDialogOpen(false);
+      setSessionToRename(null);
+      setNewSessionName("");
+    } else {
+      alert("Failed to rename conversation. Please try again.");
+    }
+  };
 
   // Load recent sessions when user is available
   useEffect(() => {
@@ -103,7 +166,7 @@ export function DashboardSidebar() {
               onClick={hasMessages ? triggerNewChat : undefined}
               className={cn(
                 "flex items-center rounded-lg px-2 transition-colors text-muted-foreground",
-                hasMessages ? "hover:bg-sidebar-muted hover:text-foreground cursor-pointer" : "cursor-default",
+                hasMessages ? "hover:bg-[#333333]/5 hover:text-foreground cursor-pointer" : "cursor-default",
                 isCollapsed && "justify-center"
               )}
             >
@@ -126,7 +189,7 @@ export function DashboardSidebar() {
               tooltip="Chat History"
               asChild
               className={cn(
-                "flex items-center rounded-lg px-2 transition-colors text-muted-foreground hover:bg-sidebar-muted hover:text-foreground",
+                "flex items-center rounded-lg px-2 transition-colors text-muted-foreground hover:bg-[#333333]/5 hover:text-foreground",
                 isCollapsed && "justify-center"
               )}
             >
@@ -147,7 +210,7 @@ export function DashboardSidebar() {
         {/* Recents Section */}
         {!isCollapsed && recentSessions.length > 0 && (
           <SidebarGroup>
-            <SidebarGroupLabel className="text-sm text-muted-foreground font-[family-name:var(--font-work-sans)]">
+            <SidebarGroupLabel className="text-xs font-bold text-muted-foreground font-[family-name:var(--font-work-sans)]">
               Recents
             </SidebarGroupLabel>
             <SidebarGroupContent>
@@ -158,19 +221,47 @@ export function DashboardSidebar() {
                   </SidebarMenuItem>
                 ) : (
                   recentSessions.slice(0, 10).map((session) => (
-                    <SidebarMenuItem key={session.id}>
-                      <SidebarMenuButton
-                        tooltip={getSessionPreview(session)}
-                        onClick={() => selectSession(session.id)}
-                        className={cn(
-                          "flex items-center rounded-lg px-2 py-1.5 transition-colors text-muted-foreground hover:bg-sidebar-muted hover:text-foreground",
-                          currentSessionId === session.id && "bg-sidebar-muted text-foreground"
-                        )}
-                      >
-                        <p className="text-sm font-medium truncate font-[family-name:var(--font-work-sans)]">
-                          {getSessionPreview(session)}
-                        </p>
-                      </SidebarMenuButton>
+                    <SidebarMenuItem key={session.id} className="group/item">
+                      <div className="flex items-center w-full rounded-lg hover:bg-[#333333]/5 transition-colors">
+                        <SidebarMenuButton
+                          tooltip={getSessionPreview(session)}
+                          onClick={() => selectSession(session.id)}
+                          className={cn(
+                            "flex-1 flex items-center rounded-lg px-2 py-1.5 transition-colors text-muted-foreground hover:text-foreground",
+                            currentSessionId === session.id && "bg-[#333333]/10 text-foreground"
+                          )}
+                        >
+                          <p className="text-sm font-medium truncate font-[family-name:var(--font-work-sans)]">
+                            {getSessionPreview(session)}
+                          </p>
+                        </SidebarMenuButton>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button
+                              className="opacity-0 group-hover/item:opacity-100 data-[state=open]:opacity-100 p-1 text-muted-foreground hover:text-foreground transition-all rounded-md hover:bg-sidebar-muted"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <FontAwesomeIcon icon={faEllipsisVertical} className="size-3" />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" side="bottom" className="rounded-2xl p-1.5 border-[#333333]/10 shadow-lg bg-[hsl(0_0%_98%)] font-[family-name:var(--font-work-sans)]">
+                            <DropdownMenuItem
+                              onClick={(e) => handleOpenRenameDialog(e, session.id, getSessionPreview(session))}
+                              className="cursor-pointer hover:bg-[#333333]/5 focus:bg-[#333333]/5 rounded-lg"
+                            >
+                              <FontAwesomeIcon icon={faPen} className="size-3 mr-2" />
+                              Rename
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={(e) => handleOpenDeleteDialog(e, session.id, getSessionPreview(session))}
+                              className="text-red-600 focus:text-red-600 hover:bg-red-50 focus:bg-red-50 cursor-pointer rounded-lg"
+                            >
+                              <FontAwesomeIcon icon={faTrash} className="size-3 mr-2" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </SidebarMenuItem>
                   ))
                 )}
@@ -183,6 +274,57 @@ export function DashboardSidebar() {
       <SidebarFooter className="px-2">
         <UserMenu />
       </SidebarFooter>
+
+      {/* Rename Dialog */}
+      <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
+        <DialogContent className="sm:max-w-lg rounded-2xl font-[family-name:var(--font-work-sans)] p-8">
+          <DialogHeader className="pb-4">
+            <DialogTitle className="font-[family-name:var(--font-alte-haas)] text-xl">Rename conversation</DialogTitle>
+          </DialogHeader>
+          <div className="py-2">
+            <input
+              type="text"
+              value={newSessionName}
+              onChange={(e) => setNewSessionName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleRenameSession();
+                }
+              }}
+              placeholder="Enter new name"
+              className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#de5e48] focus:border-transparent"
+              autoFocus
+            />
+          </div>
+          <DialogFooter className="gap-3 pt-4">
+            <button
+              onClick={() => setRenameDialogOpen(false)}
+              className="px-5 py-2.5 text-base font-medium text-[#fffaf3] bg-[#333333] rounded-lg hover:bg-[#444444] transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleRenameSession}
+              disabled={!newSessionName.trim()}
+              className="px-5 py-2.5 text-base font-medium text-white bg-[#de5e48] rounded-lg hover:bg-[#c54d3a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Save
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Delete conversation"
+        description={`Are you sure you want to delete "${sessionToDelete?.title || "this conversation"}"? This action will remove it from your history.`}
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        onConfirm={handleConfirmDelete}
+        variant="destructive"
+      />
     </Sidebar>
   );
 }

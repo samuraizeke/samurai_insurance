@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
     faSliders,
     faArrowUp,
@@ -96,9 +97,45 @@ export default function ChatWidget() {
 
     // Get user's display name (check multiple possible metadata fields)
     const getUserFirstName = () => {
-        const metadata = user?.user_metadata;
+        if (!user) return "";
+
+        // Check user_metadata first (works for email signups)
+        const metadata = user.user_metadata;
+        let fullName = metadata?.full_name || metadata?.name || "";
+
+        // If not found, check identities (works for OAuth like Google)
+        if (!fullName && user.identities && user.identities.length > 0) {
+            const identityData = user.identities[0].identity_data;
+            fullName = identityData?.full_name || identityData?.name || "";
+        }
+
+        // Fallback to email username if no name found
+        if (!fullName && user.email) {
+            const username = user.email.split('@')[0];
+            return username.charAt(0).toUpperCase() + username.slice(1).toLowerCase();
+        }
+
+        const firstName = fullName.split(' ')[0];
+        return firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
+    };
+
+    // Get user initials for avatar
+    const getUserInitials = () => {
+        if (!user) return "U";
+
+        const metadata = user.user_metadata;
         const fullName = metadata?.full_name || metadata?.name || "";
-        return fullName.split(' ')[0];
+
+        if (fullName) {
+            return fullName
+                .split(" ")
+                .map((n: string) => n[0])
+                .join("")
+                .toUpperCase()
+                .slice(0, 2);
+        }
+
+        return user.email?.slice(0, 2).toUpperCase() || "U";
     };
 
     const generateFileId = () => Math.random().toString(36).substring(7);
@@ -136,16 +173,8 @@ export default function ChatWidget() {
                         setMessages(loadedMessages);
                         console.log(`✅ Loaded ${history.length} messages from history`);
                     }
-                } else {
-                    // Create new session for this user
-                    console.log('🆕 Creating new chat session for user:', user.id);
-                    const session = await createChatSession(user.id);
-                    if (session) {
-                        setDbSessionId(session.sessionId);
-                        setCurrentSessionId(session.sessionId);
-                        console.log('✅ Created session:', session.sessionId);
-                    }
                 }
+                // Don't create a new session here - wait until first message is sent
             } catch (err) {
                 console.error('Failed to initialize session:', err);
             } finally {
@@ -332,6 +361,19 @@ export default function ChatWidget() {
             setError(null);
 
             try {
+                // Create session on first message if we don't have one
+                let currentDbSessionId = dbSessionId;
+                if (!currentDbSessionId && user?.id) {
+                    console.log('🆕 Creating new chat session on first message for user:', user.id);
+                    const session = await createChatSession(user.id);
+                    if (session) {
+                        currentDbSessionId = session.sessionId;
+                        setDbSessionId(session.sessionId);
+                        setCurrentSessionId(session.sessionId);
+                        console.log('✅ Created session:', session.sessionId);
+                    }
+                }
+
                 // Convert messages to the format expected by the backend
                 const history = messages.map(msg => ({
                     role: msg.role,
@@ -343,7 +385,7 @@ export default function ChatWidget() {
                     userMessageContent,
                     history,
                     user?.id,
-                    dbSessionId ?? undefined
+                    currentDbSessionId ?? undefined
                 );
 
                 // Add assistant response
@@ -439,16 +481,20 @@ export default function ChatWidget() {
                     <p className="text-muted-foreground font-[family-name:var(--font-work-sans)]">Loading your conversation...</p>
                 </div>
             ) : messages.length === 0 ? (
-                <>
+                <div className="flex items-center justify-center gap-4 mb-6 max-w-2xl w-full mx-auto">
+                    <Image
+                        src="/sam-body-logo.png"
+                        alt="Sam"
+                        width={56}
+                        height={56}
+                        className="object-contain"
+                    />
                     <h1 className="text-pretty text-center font-heading font-semibold text-[29px] text-foreground tracking-tighter sm:text-[32px] md:text-[46px]">
                         {getUserFirstName()
-                            ? `${getTimeBasedGreeting()}, ${getUserFirstName()}!`
+                            ? `${getTimeBasedGreeting()}, ${getUserFirstName()}`
                             : "How can I help you today?"}
                     </h1>
-                    <h2 className="-my-5 pb-4 text-center text-xl text-muted-foreground font-[family-name:var(--font-work-sans)]">
-                        Never Worry About Your Insurance Again.
-                    </h2>
-                </>
+                </div>
             ) : (
                 <div className="flex-1 overflow-y-auto pb-4 space-y-4 max-w-2xl w-full mx-auto scrollbar-hide">
                     {messages.map((message) => {
@@ -459,10 +505,10 @@ export default function ChatWidget() {
                             <div
                                 key={message.id}
                                 className={cn(
-                                    "flex gap-3 p-4 rounded-lg",
+                                    "flex items-center gap-3 px-4 py-2 rounded-lg w-fit max-w-[80%]",
                                     message.role === "user"
-                                        ? "bg-[#de5e48]/10 ml-auto max-w-[80%]"
-                                        : "bg-muted mr-auto max-w-[80%]"
+                                        ? "bg-[#de5e48]/10 ml-auto"
+                                        : "bg-muted mr-auto"
                                 )}
                             >
                                 {message.role === "assistant" && (
@@ -476,8 +522,8 @@ export default function ChatWidget() {
                                         />
                                     </div>
                                 )}
-                                <div className="flex flex-col gap-2 w-full">
-                                    <p className="text-sm whitespace-pre-wrap">{displayContent}</p>
+                                <div className="flex flex-col gap-2">
+                                    <p className="text-base whitespace-pre-wrap font-[family-name:var(--font-work-sans)]">{displayContent}</p>
                                     {showUploadButton && (
                                         <Button
                                             onClick={() => setShowUploadModal(true)}
@@ -488,11 +534,21 @@ export default function ChatWidget() {
                                         </Button>
                                     )}
                                 </div>
+                                {message.role === "user" && (
+                                    <div className="shrink-0">
+                                        <Avatar className="h-8 w-8">
+                                            <AvatarImage src={user?.user_metadata?.avatar_url} alt="User" />
+                                            <AvatarFallback className="bg-[#de5e48] text-white text-sm">
+                                                {getUserInitials()}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                    </div>
+                                )}
                             </div>
                         );
                     })}
                     {isLoading && (
-                        <div className="flex gap-3 p-4 rounded-lg bg-muted mr-auto max-w-[80%]">
+                        <div className="flex items-center gap-3 px-4 py-2 rounded-lg bg-muted mr-auto w-fit max-w-[80%]">
                             <div className="shrink-0">
                                 <Image
                                     src="/sam-head-logo.png"
@@ -533,7 +589,7 @@ export default function ChatWidget() {
                 messages.length > 0 && "mt-auto"
             )}>
                 <form
-                    className="overflow-visible rounded-2xl border border-[#333333]/10 p-2 transition-colors duration-200 focus-within:border-[#de5e48]/30 bg-[hsl(0_0%_98%)] shadow-sm"
+                    className="overflow-visible rounded-2xl border border-[#333333]/10 p-3 transition-colors duration-200 focus-within:border-[#de5e48]/30 bg-[hsl(0_0%_98%)] shadow-sm"
                     onDragLeave={handleDragLeave}
                     onDragOver={handleDragOver}
                     onDrop={handleDrop}
@@ -577,10 +633,10 @@ export default function ChatWidget() {
                         </div>
                     )}
                     <Textarea
-                        className="max-h-50 min-h-12 resize-none rounded-none border-none bg-transparent! p-0 text-sm shadow-none focus-visible:border-transparent focus-visible:ring-0 font-[family-name:var(--font-work-sans)]"
+                        className="max-h-50 min-h-14 resize-none rounded-none border-none bg-transparent! p-0 pl-2 pt-1 text-base shadow-none focus-visible:border-transparent focus-visible:ring-0 font-[family-name:var(--font-work-sans)] placeholder:text-base"
                         onChange={handleTextareaChange}
                         onKeyDown={handleKeyDown}
-                        placeholder="Ask Sam"
+                        placeholder="What can I help you with?"
                         value={prompt}
                     />
 
@@ -597,7 +653,7 @@ export default function ChatWidget() {
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button
-                                        className="ml-[-2px] h-7 w-7 rounded-md"
+                                        className="ml-[-2px] h-7 w-7 rounded-md hover:bg-[#333333]/5 transition-colors"
                                         size="icon"
                                         type="button"
                                         variant="ghost"
@@ -611,7 +667,7 @@ export default function ChatWidget() {
                                 >
                                     <DropdownMenuGroup className="space-y-1">
                                         <DropdownMenuItem
-                                            className="rounded-[calc(1rem-6px)] text-xs"
+                                            className="rounded-lg text-xs hover:bg-[#333333]/5 focus:bg-[#333333]/5 cursor-pointer"
                                             onClick={() => setShowUploadModal(true)}
                                         >
                                             <div className="flex items-center gap-2">
@@ -620,7 +676,7 @@ export default function ChatWidget() {
                                             </div>
                                         </DropdownMenuItem>
                                         <DropdownMenuItem
-                                            className="rounded-[calc(1rem-6px)] text-xs"
+                                            className="rounded-lg text-xs hover:bg-[#333333]/5 focus:bg-[#333333]/5 cursor-pointer"
                                             onClick={() => fileInputRef.current?.click()}
                                         >
                                             <div className="flex items-center gap-2">
@@ -628,7 +684,7 @@ export default function ChatWidget() {
                                                 <span>Attach Files</span>
                                             </div>
                                         </DropdownMenuItem>
-                                        <DropdownMenuItem className="rounded-[calc(1rem-6px)] text-xs">
+                                        <DropdownMenuItem className="rounded-lg text-xs hover:bg-[#333333]/5 focus:bg-[#333333]/5 cursor-pointer">
                                             <div className="flex items-center gap-2">
                                                 <FontAwesomeIcon icon={faClipboard} className="text-[#de5e48] size-4" />
                                                 <span>Paste from Clipboard</span>
@@ -641,7 +697,7 @@ export default function ChatWidget() {
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button
-                                        className="size-7 rounded-md"
+                                        className="size-7 rounded-md hover:bg-[#333333]/5 transition-colors"
                                         size="icon"
                                         type="button"
                                         variant="ghost"
