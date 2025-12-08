@@ -164,7 +164,7 @@ function Sidebar({
   variant?: "sidebar" | "floating" | "inset"
   collapsible?: "offcanvas" | "icon" | "none"
 }) {
-  const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
+  const { isMobile, state, openMobile, setOpenMobile, toggleSidebar } = useSidebar()
 
   if (collapsible === "none") {
     return (
@@ -245,7 +245,15 @@ function Sidebar({
         <div
           data-sidebar="sidebar"
           data-slot="sidebar-inner"
-          className="bg-sidebar group-data-[variant=floating]:border-sidebar-border flex h-full w-full flex-col group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:shadow-sm"
+          className={cn(
+            "bg-sidebar group-data-[variant=floating]:border-sidebar-border flex h-full w-full flex-col group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:shadow-sm",
+            state === "collapsed" && "cursor-e-resize"
+          )}
+          onClick={state === "collapsed" ? (e) => {
+            // Only toggle if clicking on the sidebar background, not on buttons
+            if ((e.target as HTMLElement).closest('button, a, [role="button"]')) return;
+            toggleSidebar();
+          } : undefined}
         >
           {children}
         </div>

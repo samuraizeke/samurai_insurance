@@ -119,14 +119,18 @@ Answer the user's question directly and briefly.`;
             contents: [{ role: 'user', parts: [{ text: prompt }] }],
             generationConfig: {
                 temperature: 0.3,
-                maxOutputTokens: 1024,
+                maxOutputTokens: 2048,
             },
         });
 
-        const answer = result.response.candidates?.[0]?.content?.parts?.[0]?.text ||
-            "I couldn't generate a response.";
+        const candidate = result.response.candidates?.[0];
+        const finishReason = candidate?.finishReason;
+        const answer = candidate?.content?.parts?.[0]?.text || "I couldn't generate a response.";
 
-        console.log("✅ Uri completed analysis");
+        if (finishReason && finishReason !== 'STOP') {
+            console.warn(`⚠️ [Uri] Generation stopped with reason: ${finishReason}`);
+        }
+        console.log(`✅ Uri completed analysis (${answer.length} chars)`);
 
         // RETURN AN OBJECT (required for Rai's review)
         return {

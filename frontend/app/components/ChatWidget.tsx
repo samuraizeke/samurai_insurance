@@ -31,9 +31,17 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
-import { sendChatMessage, uploadPolicyDocument } from "@/lib/api";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+    sendChatMessage,
+    uploadPolicyDocument,
+    createChatSession,
+    getStoredSessionId,
+    getChatHistory,
+    clearStoredSession
+} from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
+import { useChatContext } from "@/app/context/ChatContext";
 
 interface AttachedFile {
     id: string;
@@ -51,6 +59,7 @@ interface Message {
 
 export default function ChatWidget() {
     const { user } = useAuth();
+    const { setHasMessages, onNewChatRequested, onSessionSelected, setCurrentSessionId, loadRecentSessions } = useChatContext();
     const [prompt, setPrompt] = useState("");
     const [isDragOver, setIsDragOver] = useState(false);
     const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
@@ -59,10 +68,13 @@ export default function ChatWidget() {
     const [isUploadingPolicy, setIsUploadingPolicy] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [showUploadModal, setShowUploadModal] = useState(false);
-    const [sessionId] = useState(() => `session_${Date.now()}_${Math.random().toString(36).substring(7)}`);
+    const [sessionId, setSessionId] = useState<string>(() => `session_${Date.now()}_${Math.random().toString(36).substring(7)}`);
+    const [dbSessionId, setDbSessionId] = useState<number | null>(null);
+    const [isLoadingHistory, setIsLoadingHistory] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const policyFileInputRef = useRef<HTMLInputElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const sessionInitialized = useRef(false);
 
     const [settings, setSettings] = useState({
         autoComplete: true,
@@ -70,11 +82,153 @@ export default function ChatWidget() {
         showHistory: false,
     });
 
+    // Get time-based greeting
+    const getTimeBasedGreeting = () => {
+        const hour = new Date().getHours();
+        if (hour >= 5 && hour < 12) {
+            return "Good morning";
+        } else if (hour >= 12 && hour < 18) {
+            return "Good afternoon";
+        } else {
+            return "Good evening";
+        }
+    };
+
+    // Get user's display name (check multiple possible metadata fields)
+    const getUserFirstName = () => {
+        const metadata = user?.user_metadata;
+        const fullName = metadata?.full_name || metadata?.name || "";
+        return fullName.split(' ')[0];
+    };
+
     const generateFileId = () => Math.random().toString(36).substring(7);
 
     // Check if message contains upload policy marker
     const hasUploadMarker = (content: string) => content.includes('[UPLOAD_POLICY]');
     const removeUploadMarker = (content: string) => content.replace('[UPLOAD_POLICY]', '').trim();
+
+    // Initialize session and load history for logged-in users
+    useEffect(() => {
+        const initializeSession = async () => {
+            if (!user?.id || sessionInitialized.current) return;
+            sessionInitialized.current = true;
+
+            setIsLoadingHistory(true);
+
+            try {
+                // Check for existing session in localStorage
+                const storedSessionId = getStoredSessionId();
+
+                if (storedSessionId) {
+                    // Load existing session history
+                    console.log('📂 Loading existing session:', storedSessionId);
+                    setDbSessionId(storedSessionId);
+                    setCurrentSessionId(storedSessionId);
+
+                    const history = await getChatHistory(storedSessionId);
+                    if (history.length > 0) {
+                        const loadedMessages: Message[] = history.map(msg => ({
+                            id: msg.id,
+                            content: msg.content,
+                            role: msg.role,
+                            timestamp: new Date(msg.timestamp)
+                        }));
+                        setMessages(loadedMessages);
+                        console.log(`✅ Loaded ${history.length} messages from history`);
+                    }
+                } else {
+                    // Create new session for this user
+                    console.log('🆕 Creating new chat session for user:', user.id);
+                    const session = await createChatSession(user.id);
+                    if (session) {
+                        setDbSessionId(session.sessionId);
+                        setCurrentSessionId(session.sessionId);
+                        console.log('✅ Created session:', session.sessionId);
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to initialize session:', err);
+            } finally {
+                setIsLoadingHistory(false);
+            }
+        };
+
+        initializeSession();
+    }, [user?.id, setCurrentSessionId]);
+
+    // Function to start a new conversation
+    const startNewConversation = useCallback(async () => {
+        if (!user?.id) return;
+
+        // Clear current session
+        clearStoredSession();
+        setMessages([]);
+        setDbSessionId(null);
+        setCurrentSessionId(null);
+
+        // Create new session
+        const session = await createChatSession(user.id);
+        if (session) {
+            setDbSessionId(session.sessionId);
+            setCurrentSessionId(session.sessionId);
+            setSessionId(`session_${Date.now()}_${Math.random().toString(36).substring(7)}`);
+            sessionInitialized.current = true; // Mark as initialized with new session
+            console.log('🆕 Started new conversation:', session.sessionId);
+            // Refresh recent sessions in sidebar
+            loadRecentSessions(user.id);
+        } else {
+            // If session creation failed, allow re-initialization on next attempt
+            sessionInitialized.current = false;
+            console.error('Failed to create new conversation');
+        }
+    }, [user?.id, setCurrentSessionId, loadRecentSessions]);
+
+    // Function to load a specific session (called from sidebar)
+    const loadSession = useCallback(async (targetSessionId: number) => {
+        if (!user?.id) return;
+
+        setIsLoadingHistory(true);
+        try {
+            // Update localStorage to persist the selection
+            localStorage.setItem('samurai_chat_session_id', targetSessionId.toString());
+            setDbSessionId(targetSessionId);
+            setCurrentSessionId(targetSessionId);
+
+            // Load chat history for this session
+            const history = await getChatHistory(targetSessionId);
+            if (history.length > 0) {
+                const loadedMessages: Message[] = history.map(msg => ({
+                    id: msg.id,
+                    content: msg.content,
+                    role: msg.role,
+                    timestamp: new Date(msg.timestamp)
+                }));
+                setMessages(loadedMessages);
+                console.log(`✅ Loaded session ${targetSessionId} with ${history.length} messages`);
+            } else {
+                setMessages([]);
+            }
+        } catch (err) {
+            console.error('Failed to load session:', err);
+        } finally {
+            setIsLoadingHistory(false);
+        }
+    }, [user?.id, setCurrentSessionId]);
+
+    // Sync messages state with chat context for sidebar
+    useEffect(() => {
+        setHasMessages(messages.length > 0);
+    }, [messages.length, setHasMessages]);
+
+    // Register the new chat callback with context for sidebar to use
+    useEffect(() => {
+        onNewChatRequested(startNewConversation);
+    }, [onNewChatRequested, startNewConversation]);
+
+    // Register the session selection callback with context for sidebar to use
+    useEffect(() => {
+        onSessionSelected(loadSession);
+    }, [onSessionSelected, loadSession]);
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -184,8 +338,13 @@ export default function ChatWidget() {
                     content: msg.content,
                 }));
 
-                // Call the backend API
-                const response = await sendChatMessage(userMessageContent, history, user?.id);
+                // Call the backend API with session tracking
+                const response = await sendChatMessage(
+                    userMessageContent,
+                    history,
+                    user?.id,
+                    dbSessionId ?? undefined
+                );
 
                 // Add assistant response
                 const assistantMessage: Message = {
@@ -196,8 +355,13 @@ export default function ChatWidget() {
                 };
 
                 setMessages((prev) => [...prev, assistantMessage]);
-            } catch (error) {
-                console.error("Error sending message:", error);
+
+                // Refresh recent sessions in sidebar to show updated last_message_at
+                if (user?.id) {
+                    loadRecentSessions(user.id);
+                }
+            } catch (err) {
+                console.error("Error sending message:", err);
                 setError("Failed to send message. Please try again.");
 
                 // Add error message to chat
@@ -263,12 +427,23 @@ export default function ChatWidget() {
     return (
         <div className={cn(
             "mx-auto flex w-full flex-col h-full",
-            messages.length === 0 ? "justify-center gap-4" : "gap-4"
+            (messages.length === 0 || isLoadingHistory) ? "justify-center gap-4" : "gap-4"
         )}>
-            {messages.length === 0 ? (
+            {isLoadingHistory ? (
+                <div className="flex flex-col items-center justify-center gap-4">
+                    <div className="flex gap-1">
+                        <span className="animate-bounce text-2xl text-[#de5e48]" style={{ animationDelay: "0ms" }}>●</span>
+                        <span className="animate-bounce text-2xl text-[#de5e48]" style={{ animationDelay: "150ms" }}>●</span>
+                        <span className="animate-bounce text-2xl text-[#de5e48]" style={{ animationDelay: "300ms" }}>●</span>
+                    </div>
+                    <p className="text-muted-foreground font-[family-name:var(--font-work-sans)]">Loading your conversation...</p>
+                </div>
+            ) : messages.length === 0 ? (
                 <>
                     <h1 className="text-pretty text-center font-heading font-semibold text-[29px] text-foreground tracking-tighter sm:text-[32px] md:text-[46px]">
-                        How can I help you today?
+                        {getUserFirstName()
+                            ? `${getTimeBasedGreeting()}, ${getUserFirstName()}!`
+                            : "How can I help you today?"}
                     </h1>
                     <h2 className="-my-5 pb-4 text-center text-xl text-muted-foreground font-[family-name:var(--font-work-sans)]">
                         Never Worry About Your Insurance Again.

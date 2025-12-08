@@ -17,7 +17,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/lib/auth-context";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSort, faGear, faRightFromBracket, faUser } from "@fortawesome/free-solid-svg-icons";
+import { faSort, faGear, faRightFromBracket, faUser, faBell } from "@fortawesome/free-solid-svg-icons";
 
 export function UserMenu() {
   const { isMobile } = useSidebar();
@@ -66,7 +66,7 @@ export function UserMenu() {
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg mb-4"
+            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-2xl p-1.5 mb-4 border-[#333333]/10 shadow-lg bg-[hsl(0_0%_98%)]"
             align="start"
             side={isMobile ? "bottom" : "right"}
             sideOffset={4}
@@ -81,6 +81,10 @@ export function UserMenu() {
             <DropdownMenuItem className="gap-2 p-2 cursor-pointer">
               <FontAwesomeIcon icon={faUser} className="size-4" />
               <span className="font-[family-name:var(--font-work-sans)]">Profile</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem className="gap-2 p-2 cursor-pointer">
+              <FontAwesomeIcon icon={faBell} className="size-4" />
+              <span className="font-[family-name:var(--font-work-sans)]">Notifications</span>
             </DropdownMenuItem>
             <DropdownMenuItem className="gap-2 p-2 cursor-pointer">
               <FontAwesomeIcon icon={faGear} className="size-4" />

@@ -21,15 +21,112 @@ const model = vertexAI.getGenerativeModel({
 
 const GCS_BUCKET_NAME = process.env.GCS_BUCKET_NAME;
 
-// In-memory store for analyzed policies (keyed by session ID)
+// Policy types we support
+export type PolicyType = 'auto' | 'home' | 'renters' | 'umbrella' | 'life' | 'health' | 'other';
+
+// Structure for stored policy data
+export interface StoredPolicy {
+    policyType: PolicyType;
+    carrier: string;
+    analysis: string;
+    rawData: any;
+    timestamp: number;
+}
+
+// In-memory store for analyzed policies (keyed by visitorId, then by policyType)
+// Structure: Map<visitorId, Map<policyType, StoredPolicy>>
 // In production, use a database like Supabase
+export const userPolicies: Map<string, Map<PolicyType, StoredPolicy>> = new Map();
+
+// Legacy support - single policy store (deprecated, use userPolicies)
 export const analyzedPolicies: Map<string, { analysis: string; rawData: any; timestamp: number }> = new Map();
 
 // Store for pending responses that should be delivered to the user
 let pendingPolicyResponse: { analysis: string; rawData: any; timestamp: number } | null = null;
 
 /**
- * Gets the most recent policy analysis (for chat to use)
+ * Detects the policy type from the analysis text
+ */
+export function detectPolicyType(analysisText: string): PolicyType {
+    const lowerAnalysis = analysisText.toLowerCase();
+
+    // Check for specific policy type indicators
+    if (lowerAnalysis.includes('auto') || lowerAnalysis.includes('vehicle') ||
+        lowerAnalysis.includes('car insurance') || lowerAnalysis.includes('automobile') ||
+        lowerAnalysis.includes('collision') || lowerAnalysis.includes('comprehensive coverage')) {
+        return 'auto';
+    }
+    if (lowerAnalysis.includes('homeowner') || lowerAnalysis.includes('home insurance') ||
+        lowerAnalysis.includes('dwelling') || lowerAnalysis.includes('ho-3') ||
+        lowerAnalysis.includes('ho-5') || lowerAnalysis.includes('property coverage')) {
+        return 'home';
+    }
+    if (lowerAnalysis.includes('renter') || lowerAnalysis.includes('tenant')) {
+        return 'renters';
+    }
+    if (lowerAnalysis.includes('umbrella') || lowerAnalysis.includes('excess liability')) {
+        return 'umbrella';
+    }
+    if (lowerAnalysis.includes('life insurance') || lowerAnalysis.includes('term life') ||
+        lowerAnalysis.includes('whole life') || lowerAnalysis.includes('death benefit')) {
+        return 'life';
+    }
+    if (lowerAnalysis.includes('health insurance') || lowerAnalysis.includes('medical') ||
+        lowerAnalysis.includes('hmo') || lowerAnalysis.includes('ppo')) {
+        return 'health';
+    }
+
+    return 'other';
+}
+
+/**
+ * Extracts the carrier name from the analysis text
+ */
+function extractCarrier(analysisText: string): string {
+    // Look for common patterns like "Carrier: XYZ" or "Insurance Company: XYZ"
+    const carrierMatch = analysisText.match(/(?:carrier|insurance company|insurer|underwritten by)[:\s]+([A-Za-z0-9\s&.,']+?)(?:\n|$|,|\.|Coverage)/i);
+    if (carrierMatch) {
+        return carrierMatch[1].trim();
+    }
+    return 'Unknown';
+}
+
+/**
+ * Stores a policy for a user by type
+ */
+export function storeUserPolicy(userId: string, policy: StoredPolicy): void {
+    if (!userPolicies.has(userId)) {
+        userPolicies.set(userId, new Map());
+    }
+    userPolicies.get(userId)!.set(policy.policyType, policy);
+    console.log(`📁 Stored ${policy.policyType} policy for user ${userId} (carrier: ${policy.carrier})`);
+}
+
+/**
+ * Gets all policies for a user
+ */
+export function getUserPolicies(userId: string): Map<PolicyType, StoredPolicy> | null {
+    return userPolicies.get(userId) || null;
+}
+
+/**
+ * Gets a specific policy type for a user
+ */
+export function getUserPolicyByType(userId: string, policyType: PolicyType): StoredPolicy | null {
+    const policies = userPolicies.get(userId);
+    return policies?.get(policyType) || null;
+}
+
+/**
+ * Gets a list of all policy types a user has uploaded
+ */
+export function getUserPolicyTypes(userId: string): PolicyType[] {
+    const policies = userPolicies.get(userId);
+    return policies ? Array.from(policies.keys()) : [];
+}
+
+/**
+ * Gets the most recent policy analysis (for chat to use) - legacy support
  */
 export function getLatestPolicyAnalysis(): { analysis: string; rawData: any } | null {
     if (analyzedPolicies.size === 0) return null;
@@ -43,6 +140,44 @@ export function getLatestPolicyAnalysis(): { analysis: string; rawData: any } | 
     }
 
     return latest ? { analysis: latest.analysis, rawData: latest.rawData } : null;
+}
+
+/**
+ * Gets the best matching policy for a user query
+ * Returns the policy that matches the query context, or the most recent if no specific match
+ */
+export function getPolicyForQuery(userId: string, query: string): StoredPolicy | null {
+    const policies = userPolicies.get(userId);
+    if (!policies || policies.size === 0) return null;
+
+    const lowerQuery = query.toLowerCase();
+
+    // Check for explicit policy type references in the query
+    if (lowerQuery.includes('auto') || lowerQuery.includes('car') || lowerQuery.includes('vehicle') || lowerQuery.includes('driving')) {
+        const autoPolicy = policies.get('auto');
+        if (autoPolicy) return autoPolicy;
+    }
+    if (lowerQuery.includes('home') || lowerQuery.includes('house') || lowerQuery.includes('property') || lowerQuery.includes('dwelling')) {
+        const homePolicy = policies.get('home');
+        if (homePolicy) return homePolicy;
+    }
+    if (lowerQuery.includes('rent') || lowerQuery.includes('apartment') || lowerQuery.includes('tenant')) {
+        const rentersPolicy = policies.get('renters');
+        if (rentersPolicy) return rentersPolicy;
+    }
+    if (lowerQuery.includes('umbrella') || lowerQuery.includes('excess')) {
+        const umbrellaPolicy = policies.get('umbrella');
+        if (umbrellaPolicy) return umbrellaPolicy;
+    }
+
+    // Return the most recent policy if no specific match
+    let mostRecent: StoredPolicy | null = null;
+    for (const policy of policies.values()) {
+        if (!mostRecent || policy.timestamp > mostRecent.timestamp) {
+            mostRecent = policy;
+        }
+    }
+    return mostRecent;
 }
 
 /**
@@ -141,6 +276,9 @@ Return the extracted text in a structured format. Be thorough and include everyt
 
         const extractedText = result.response.candidates?.[0]?.content?.parts?.[0]?.text || '';
         console.log(`✅ Extracted ${extractedText.length} characters from PDF`);
+        console.log('📋 EXTRACTED TEXT START ===');
+        console.log(extractedText);
+        console.log('=== EXTRACTED TEXT END');
         return extractedText;
     } catch (error) {
         console.error('❌ PDF extraction error:', error);
@@ -281,25 +419,44 @@ export async function handleDocumentUpload(
         // 3. Analyze the extracted text
         const analysis = await analyzePolicyText(extractedText, originalName);
 
-        // 4. Store the analysis (keyed by userId if available, otherwise sessionId)
+        // 4. Detect policy type and carrier from the analysis
+        const policyType = detectPolicyType(analysis);
+        const carrier = extractCarrier(analysis);
+
+        // 5. Store the analysis (keyed by userId if available, otherwise sessionId)
         const storageKey = userId || sessionId;
-        const policyData = {
-            analysis,
-            rawData: {
-                fileName: originalName,
-                extractedText,
-                gcsPath: gcsFileName,
-                uploadedAt: new Date().toISOString(),
-                documentType: docType,
-                userId: userId || null
-            },
-            timestamp: Date.now()
+        const rawData = {
+            fileName: originalName,
+            extractedText,
+            gcsPath: gcsFileName,
+            uploadedAt: new Date().toISOString(),
+            documentType: docType,
+            userId: userId || null,
+            policyType,
+            carrier
         };
 
+        // Store in new multi-policy structure
+        const storedPolicy: StoredPolicy = {
+            policyType,
+            carrier,
+            analysis,
+            rawData,
+            timestamp: Date.now()
+        };
+        storeUserPolicy(storageKey, storedPolicy);
+
+        // Also store in legacy structure for backwards compatibility
+        const policyData = {
+            analysis,
+            rawData,
+            timestamp: Date.now()
+        };
         analyzedPolicies.set(storageKey, policyData);
         setPendingPolicyResponse(analysis, policyData.rawData);
 
-        console.log(`✅ Document processed and stored for ${userId ? `user ${userId}` : `session ${sessionId}`}`);
+        console.log(`✅ Document processed: ${policyType} policy from ${carrier}`);
+        console.log(`   Stored for ${userId ? `user ${userId}` : `session ${sessionId}`}`);
 
         return {
             success: true,

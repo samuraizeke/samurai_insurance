@@ -10,6 +10,8 @@ import multer from 'multer';
 // Load environment variables
 dotenv.config();
 
+import { supabase } from './lib/supabase';
+
 // Decode base64 credentials and write to temp file for Google SDK
 if (process.env.GOOGLE_CREDENTIALS_BASE64) {
     const credentials = Buffer.from(process.env.GOOGLE_CREDENTIALS_BASE64, 'base64').toString('utf-8');
@@ -20,6 +22,7 @@ if (process.env.GOOGLE_CREDENTIALS_BASE64) {
 
 import { handleSamChat } from './agents/sam';
 import { handleDocumentUpload, getPendingPolicyResponse } from './services/document-upload';
+import { generateSessionSummary, regenerateSummary } from './services/session-summary';
 
 const app = express();
 // Google Cloud Run sets PORT to 8080 automatically
@@ -128,11 +131,181 @@ app.get('/api/policy-status', (req, res) => {
   }
 });
 
-// --- 4. CHAT ENDPOINT ---
+// --- 4. CHAT SESSION ENDPOINTS ---
+
+// Create a new chat session
+app.post('/api/chat-sessions', async (req, res) => {
+  try {
+    const { userId, topicId, policyId, claimId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ error: "userId is required" });
+    }
+
+    // Look up the internal user ID from external_id (Supabase auth ID)
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('id')
+      .eq('external_id', userId)
+      .single();
+
+    let internalUserId = userData?.id;
+
+    // If user doesn't exist in our users table, create them
+    if (!internalUserId) {
+      console.log(`📝 Creating user record for external_id: ${userId}`);
+      const { data: newUser, error: createError } = await supabase
+        .from('users')
+        .insert({
+          external_id: userId,
+          name: 'Chat User',
+          email: `${userId}@placeholder.local`,
+          password_hash: 'oauth_user'
+        })
+        .select('id')
+        .single();
+
+      if (createError) {
+        console.error('Failed to create user:', createError);
+        return res.status(500).json({ error: 'Failed to create user record' });
+      }
+      internalUserId = newUser.id;
+    }
+
+    // Create new chat session
+    const { data: session, error: sessionError } = await supabase
+      .from('chat_sessions')
+      .insert({
+        user_id: internalUserId,
+        topic_id: topicId || null,
+        policy_id: policyId || null,
+        claim_id: claimId || null,
+        started_at: new Date().toISOString(),
+        last_message_at: new Date().toISOString(),
+        total_messages: 0,
+        active: true
+      })
+      .select('id, session_uuid')
+      .single();
+
+    if (sessionError) {
+      console.error('Failed to create chat session:', sessionError);
+      return res.status(500).json({ error: 'Failed to create chat session' });
+    }
+
+    console.log(`✅ Created chat session: ${session.session_uuid}`);
+    res.json({
+      sessionId: session.id,
+      sessionUuid: session.session_uuid
+    });
+
+  } catch (error) {
+    console.error('❌ Error creating chat session:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// Get chat history for a session
+app.get('/api/chat-sessions/:sessionId/messages', async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+
+    const { data: messages, error } = await supabase
+      .from('conversations')
+      .select('id, message, timestamp, intent, entities')
+      .eq('session_id', sessionId)
+      .order('timestamp', { ascending: true });
+
+    if (error) {
+      console.error('Failed to fetch chat history:', error);
+      return res.status(500).json({ error: 'Failed to fetch chat history' });
+    }
+
+    // Transform to frontend format
+    const formattedMessages = messages.map((msg, index) => ({
+      id: msg.id.toString(),
+      content: msg.message,
+      role: index % 2 === 0 ? 'user' : 'assistant', // Alternating pattern
+      timestamp: msg.timestamp,
+      intent: msg.intent,
+      entities: msg.entities
+    }));
+
+    res.json({ messages: formattedMessages });
+
+  } catch (error) {
+    console.error('❌ Error fetching chat history:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// Get user's recent chat sessions
+app.get('/api/users/:userId/chat-sessions', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const limit = parseInt(req.query.limit as string) || 10;
+
+    // Look up internal user ID
+    const { data: userData } = await supabase
+      .from('users')
+      .select('id')
+      .eq('external_id', userId)
+      .single();
+
+    if (!userData) {
+      return res.json({ sessions: [] });
+    }
+
+    const { data: sessions, error } = await supabase
+      .from('chat_sessions')
+      .select('id, session_uuid, started_at, last_message_at, total_messages, conversation_context, summary, active')
+      .eq('user_id', userData.id)
+      .order('last_message_at', { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      console.error('Failed to fetch user sessions:', error);
+      return res.status(500).json({ error: 'Failed to fetch sessions' });
+    }
+
+    // For sessions without summaries, generate them
+    const sessionsWithPreviews = await Promise.all(
+      (sessions || []).map(async (session) => {
+        // Fetch first message for preview
+        const { data: messages } = await supabase
+          .from('conversations')
+          .select('message')
+          .eq('session_id', session.id)
+          .order('timestamp', { ascending: true })
+          .limit(3);
+
+        // If no summary in DB, generate one (this also saves it)
+        let summary = session.summary;
+        if (!summary && messages && messages.length > 0) {
+          summary = await generateSessionSummary(session.id, messages);
+        }
+
+        return {
+          ...session,
+          first_message: messages?.[0]?.message || null,
+          summary: summary || "New conversation"
+        };
+      })
+    );
+
+    res.json({ sessions: sessionsWithPreviews });
+
+  } catch (error) {
+    console.error('❌ Error fetching user sessions:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// --- 5. CHAT ENDPOINT ---
 // The main entry point for the Agent Logic
 app.post('/chat', async (req, res) => {
   try {
-    const { message, history, userId } = req.body;
+    const { message, history, userId, sessionId } = req.body;
 
     // 1. Basic Validation
     if (!message) {
@@ -143,15 +316,72 @@ app.post('/chat', async (req, res) => {
     if (userId) {
       console.log(`👤 User ID: ${userId}`);
     }
+    if (sessionId) {
+      console.log(`📋 Session ID: ${sessionId}`);
+    }
 
-    // 2. Call Agent Sam (The Customer-Facing Advisor)
+    // 2. Save user message to database (if sessionId provided)
+    if (sessionId) {
+      try {
+        await supabase
+          .from('conversations')
+          .insert({
+            session_id: sessionId,
+            message: message,
+            language: 'en',
+            channel: 'web',
+            timestamp: new Date().toISOString()
+          });
+      } catch (dbError) {
+        console.error('⚠️ Failed to save user message:', dbError);
+        // Continue processing even if save fails
+      }
+    }
+
+    // 3. Call Agent Sam (The Customer-Facing Advisor)
     // Sam decides if this needs Uri's analysis or can be handled directly
     console.log("👉 Routing to Agent Sam...");
     const finalResponse = await handleSamChat(message, history || [], userId);
 
     console.log("✅ Sam completed. Sending final response.");
 
-    // 3. Send Final Response
+    // 4. Save assistant response to database (if sessionId provided)
+    if (sessionId) {
+      try {
+        await supabase
+          .from('conversations')
+          .insert({
+            session_id: sessionId,
+            message: finalResponse,
+            language: 'en',
+            channel: 'web',
+            timestamp: new Date().toISOString()
+          });
+
+        // Update session metadata
+        const messageCount = (history?.length || 0) + 2;
+        await supabase
+          .from('chat_sessions')
+          .update({
+            last_message_at: new Date().toISOString(),
+            total_messages: messageCount
+          })
+          .eq('id', sessionId);
+
+        // Generate summary after first message exchange (when no history yet)
+        if (!history || history.length === 0) {
+          // Don't await - generate in background to not slow down response
+          regenerateSummary(sessionId).catch(err => {
+            console.error('⚠️ Failed to generate session summary:', err);
+          });
+        }
+      } catch (dbError) {
+        console.error('⚠️ Failed to save assistant message:', dbError);
+        // Continue even if save fails
+      }
+    }
+
+    // 5. Send Final Response
     res.json({ response: finalResponse });
 
   } catch (error) {

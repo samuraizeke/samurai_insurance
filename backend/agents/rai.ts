@@ -58,13 +58,18 @@ Review the draft against the context and return your final approved answer (eith
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
       generationConfig: {
         temperature: 0.1, // Very low temp = strict adherence to facts
-        maxOutputTokens: 2048,
+        maxOutputTokens: 4096,
       },
     });
 
-    const finalAnswer = result.response.candidates?.[0]?.content?.parts?.[0]?.text || uriDraft;
+    const candidate = result.response.candidates?.[0];
+    const finishReason = candidate?.finishReason;
+    const finalAnswer = candidate?.content?.parts?.[0]?.text || uriDraft;
 
-    console.log("✅ Rai: Review complete");
+    if (finishReason && finishReason !== 'STOP') {
+      console.warn(`⚠️ [Rai] Generation stopped with reason: ${finishReason}`);
+    }
+    console.log(`✅ Rai: Review complete (${finalAnswer.length} chars)`);
 
     return finalAnswer;
 

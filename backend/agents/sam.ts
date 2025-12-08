@@ -3,7 +3,11 @@ import { VertexAI } from '@google-cloud/vertexai';
 import dotenv from 'dotenv';
 import { handleUriChat } from './uri';
 import { handleRaiReview } from './rai';
-import { getLatestPolicyAnalysis } from '../services/document-upload';
+import {
+    getPolicyForQuery,
+    getUserPolicyTypes,
+    PolicyType
+} from '../services/document-upload';
 
 dotenv.config();
 
@@ -19,8 +23,8 @@ const model = vertexAI.getGenerativeModel({
     model: 'gemini-2.5-flash',
 });
 
-// Helper to clean AI responses
-function cleanResponse(text: string, maxSentences: number = 8): string {
+// Helper to clean AI responses (removes markdown formatting only, no truncation)
+function cleanResponse(text: string): string {
     // Remove markdown formatting
     let cleaned = text
         .replace(/\*\*([^*]+)\*\*/g, '$1')  // Remove bold **text**
@@ -29,13 +33,110 @@ function cleanResponse(text: string, maxSentences: number = 8): string {
         .replace(/`([^`]+)`/g, '$1')        // Remove code blocks
         .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1'); // Remove links but keep text
 
-    // Limit sentences (default 8 for more complete responses)
-    const sentences = cleaned.split(/[.!?]+/).filter(s => s.trim().length > 0);
-    if (sentences.length > maxSentences) {
-        cleaned = sentences.slice(0, maxSentences).join('. ') + '.';
+    return cleaned.trim();
+}
+
+// Helper to log finish reason and detect truncation
+function logGenerationResult(result: any, context: string): void {
+    const candidate = result.response.candidates?.[0];
+    const finishReason = candidate?.finishReason;
+    const text = candidate?.content?.parts?.[0]?.text || '';
+
+    if (finishReason && finishReason !== 'STOP') {
+        console.warn(`⚠️ [${context}] Generation stopped with reason: ${finishReason}`);
+        console.warn(`   Response length: ${text.length} chars`);
+        if (finishReason === 'MAX_TOKENS') {
+            console.warn(`   Response may be truncated! Last 50 chars: "...${text.slice(-50)}"`);
+        }
+    } else {
+        console.log(`✅ [${context}] Generation completed normally (${text.length} chars)`);
+    }
+}
+
+// Detect what policy type the user is asking about based on their query
+function detectNeededPolicyType(query: string): PolicyType | null {
+    const lowerQuery = query.toLowerCase();
+
+    if (lowerQuery.includes('auto') || lowerQuery.includes('car') ||
+        lowerQuery.includes('vehicle') || lowerQuery.includes('driving') ||
+        lowerQuery.includes('collision') || lowerQuery.includes('comprehensive')) {
+        return 'auto';
+    }
+    if (lowerQuery.includes('home') || lowerQuery.includes('house') ||
+        lowerQuery.includes('property') || lowerQuery.includes('dwelling') ||
+        lowerQuery.includes('homeowner')) {
+        return 'home';
+    }
+    if (lowerQuery.includes('rent') || lowerQuery.includes('apartment') ||
+        lowerQuery.includes('tenant')) {
+        return 'renters';
+    }
+    if (lowerQuery.includes('umbrella') || lowerQuery.includes('excess liability')) {
+        return 'umbrella';
+    }
+    if (lowerQuery.includes('life')) {
+        return 'life';
+    }
+    if (lowerQuery.includes('health') || lowerQuery.includes('medical')) {
+        return 'health';
     }
 
-    return cleaned.trim();
+    // No specific policy type detected
+    return null;
+}
+
+// Format policy type for display
+function formatPolicyType(policyType: PolicyType): string {
+    const names: Record<PolicyType, string> = {
+        'auto': 'auto',
+        'home': 'homeowners',
+        'renters': 'renters',
+        'umbrella': 'umbrella',
+        'life': 'life',
+        'health': 'health',
+        'other': 'insurance'
+    };
+    return names[policyType] || policyType;
+}
+
+// Prompt user to upload a specific policy type when they have other policies but not the one needed
+async function promptSpecificPolicyUpload(
+    userQuery: string,
+    neededType: PolicyType,
+    existingTypes: PolicyType[]
+): Promise<string> {
+    const formattedNeeded = formatPolicyType(neededType);
+    const formattedExisting = existingTypes.map(formatPolicyType).join(', ');
+
+    const prompt = `You are Sam, a friendly insurance advisor. The user asked about their ${formattedNeeded} policy, but they've only uploaded their ${formattedExisting} policy/policies.
+
+**Guidelines**:
+- Acknowledge you have their ${formattedExisting} policy on file
+- Explain you'll need their ${formattedNeeded} policy to answer this question
+- Keep it SHORT (1-2 sentences)
+- Be friendly and helpful
+- Use plain text - NO markdown, NO asterisks, NO bold formatting
+
+User asked: "${userQuery}"
+
+Respond asking them to upload their ${formattedNeeded} policy:`;
+
+    const result = await model.generateContent({
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 512,
+        },
+    });
+
+    logGenerationResult(result, 'promptSpecificPolicyUpload');
+    let response = result.response.candidates?.[0]?.content?.parts?.[0]?.text ||
+        `I have your ${formattedExisting} policy on file, but I'll need your ${formattedNeeded} policy to help with that question.`;
+
+    // Remove any URLs that might have been included
+    response = response.replace(/https?:\/\/[^\s]+/g, '').trim();
+
+    return response + "\n\n[UPLOAD_POLICY]";
 }
 
 export async function handleSamChat(userQuery: string, history: any[], userId?: string) {
@@ -58,20 +159,39 @@ export async function handleSamChat(userQuery: string, history: any[], userId?: 
             return "I'm doing great, thanks for asking! How can I help with your insurance needs?";
         }
 
-        // Check if we have policy data available
-        const policyData = getLatestPolicyAnalysis();
-
-        // Check if user needs to upload their policy
+        // Check if user needs to reference their policy
         const needsPolicyUpload = await checkIfNeedsPolicyUpload(userQuery, history);
 
         if (needsPolicyUpload) {
-            // If we already have policy data, use it to answer
-            if (policyData) {
-                console.log("📄 Sam: Using existing policy data to answer...");
-                const policyResponse = await answerWithPolicyData(userQuery, policyData, history);
-                return policyResponse;
+            // Determine what policy type the user is asking about
+            const neededPolicyType = detectNeededPolicyType(userQuery);
+            const storageKey = userId || 'anonymous';
+
+            // Check if we have the specific policy type they need
+            const matchingPolicy = getPolicyForQuery(storageKey, userQuery);
+            const uploadedTypes = getUserPolicyTypes(storageKey);
+
+            console.log(`📋 User has uploaded: [${uploadedTypes.join(', ') || 'none'}]`);
+            console.log(`🔍 Query needs: ${neededPolicyType || 'any policy'}`);
+
+            if (matchingPolicy) {
+                // Check if the matching policy is the right type
+                if (!neededPolicyType || matchingPolicy.policyType === neededPolicyType) {
+                    console.log(`✅ Found matching ${matchingPolicy.policyType} policy from ${matchingPolicy.carrier}`);
+                    const policyResponse = await answerWithPolicyData(
+                        userQuery,
+                        { analysis: matchingPolicy.analysis, rawData: matchingPolicy.rawData },
+                        history
+                    );
+                    return policyResponse;
+                } else {
+                    // User has a policy but it's the wrong type
+                    console.log(`⚠️ User has ${matchingPolicy.policyType} but needs ${neededPolicyType}`);
+                    return await promptSpecificPolicyUpload(userQuery, neededPolicyType, uploadedTypes);
+                }
             }
 
+            // No policy at all - prompt for upload
             console.log("📄 Sam: User needs to upload their policy document...");
             const uploadResponse = await promptDocumentUpload(userQuery);
             return uploadResponse;
@@ -120,7 +240,7 @@ export async function handleSamChat(userQuery: string, history: any[], userId?: 
 }
 
 // Check if user needs to upload their policy document
-async function checkIfNeedsPolicyUpload(userQuery: string, history: any[]): Promise<boolean> {
+async function checkIfNeedsPolicyUpload(userQuery: string, _history: any[]): Promise<boolean> {
     const lowerQuery = userQuery.toLowerCase();
 
     // ========================================
@@ -240,10 +360,11 @@ User question: "${userQuery}"`;
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
         generationConfig: {
             temperature: 0.1,
-            maxOutputTokens: 10,
+            maxOutputTokens: 20,
         },
     });
 
+    logGenerationResult(result, 'checkIfNeedsPolicyUpload');
     const decision = result.response.candidates?.[0]?.content?.parts?.[0]?.text?.trim().toUpperCase();
     console.log(`🤔 Policy upload check AI decision: ${decision}`);
     return decision === "YES";
@@ -283,10 +404,11 @@ Answer using their specific policy information:`;
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
         generationConfig: {
             temperature: 0.7,
-            maxOutputTokens: 512,
+            maxOutputTokens: 2048,
         },
     });
 
+    logGenerationResult(result, 'answerWithPolicyData');
     const response = result.response.candidates?.[0]?.content?.parts?.[0]?.text ||
         "I have your policy data but couldn't generate a response. Please try asking again.";
 
@@ -316,10 +438,11 @@ Create a brief response asking them to upload their policy documents.`;
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
         generationConfig: {
             temperature: 0.7,
-            maxOutputTokens: 256,
+            maxOutputTokens: 512,
         },
     });
 
+    logGenerationResult(result, 'promptDocumentUpload');
     let response = result.response.candidates?.[0]?.content?.parts?.[0]?.text ||
         "To review your specific policy, please upload your insurance documents.";
 
@@ -331,7 +454,7 @@ Create a brief response asking them to upload their policy documents.`;
 }
 
 // Determine if Uri's analysis is needed
-async function shouldCallUri(userQuery: string, history: any[]): Promise<boolean> {
+async function shouldCallUri(userQuery: string, _history: any[]): Promise<boolean> {
     const prompt = `You are a decision-making assistant. Determine if the user's question needs detailed insurance analysis from Uri.
 
 **IMPORTANT**: This function should ONLY return YES for general insurance education questions that don't require the user's specific policy.
@@ -362,10 +485,11 @@ User question: "${userQuery}"`;
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
         generationConfig: {
             temperature: 0.1,
-            maxOutputTokens: 10,
+            maxOutputTokens: 20,
         },
     });
 
+    logGenerationResult(result, 'shouldCallUri');
     const decision = result.response.candidates?.[0]?.content?.parts?.[0]?.text?.trim().toUpperCase();
     return decision === "YES";
 }
@@ -410,10 +534,11 @@ Respond briefly and naturally:`;
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
         generationConfig: {
             temperature: 0.7,
-            maxOutputTokens: 512,
+            maxOutputTokens: 2048,
         },
     });
 
+    logGenerationResult(result, 'handleDirectly');
     const response = result.response.candidates?.[0]?.content?.parts?.[0]?.text ||
         "I'm here to help! What can I assist you with today?";
 
@@ -421,7 +546,7 @@ Respond briefly and naturally:`;
 }
 
 // Present final analysis in a friendly way
-async function presentFinalAnalysis(originalQuery: string, finalAnswer: string, history: any[]): Promise<string> {
+async function presentFinalAnalysis(originalQuery: string, finalAnswer: string, _history: any[]): Promise<string> {
     const prompt = `You are Sam, a friendly insurance advisor. Present the analysis in a SHORT, conversational way.
 
 **Rules**:
@@ -445,10 +570,11 @@ Present this to the user in a friendly, clear way:`;
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
         generationConfig: {
             temperature: 0.7,
-            maxOutputTokens: 512,
+            maxOutputTokens: 2048,
         },
     });
 
+    logGenerationResult(result, 'presentFinalAnalysis');
     const response = result.response.candidates?.[0]?.content?.parts?.[0]?.text || finalAnswer;
     return cleanResponse(response);
 }
