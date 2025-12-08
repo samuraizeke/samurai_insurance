@@ -1,59 +1,63 @@
 // backend/agents/uri.ts
 import { SearchServiceClient } from '@google-cloud/discoveryengine';
-import OpenAI from 'openai';
+import { VertexAI } from '@google-cloud/vertexai';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
 // --- CONFIGURATION ---
 const PROJECT_ID = process.env.GOOGLE_PROJECT_ID;
-const LOCATION = 'us'; // Location from Google Cloud Console
-const APP_ID = 'samurai-insurance_1764794177586'; // App ID from Google Cloud Console
+const DATA_STORE_ID = process.env.GOOGLE_DATA_STORE_ID;
 
-// Initialize Google Search Client with regional endpoint for US location
+// Initialize Google Search Client for GLOBAL location
 const searchClient = new SearchServiceClient({
-    apiEndpoint: 'us-discoveryengine.googleapis.com',
+    apiEndpoint: 'discoveryengine.googleapis.com',
 });
 
-// Initialize DeepSeek (Using OpenAI SDK)
-const deepseek = new OpenAI({
-    baseURL: 'https://api.deepseek.com',
-    apiKey: process.env.DEEPSEEK_API_KEY,
+// Initialize Vertex AI for US-CENTRAL1 with Gemini 2.5 Flash
+const vertexAI = new VertexAI({
+    project: PROJECT_ID!,
+    location: 'us-central1',
+});
+
+const model = vertexAI.getGenerativeModel({
+    model: 'gemini-2.5-flash',
 });
 
 export async function handleUriChat(userQuery: string, history: any[]) {
     try {
         // 1. Check if config is present
-        if (!PROJECT_ID || !APP_ID) {
-            console.error("Missing Google Cloud Config (Project ID or App ID)");
+        if (!PROJECT_ID || !DATA_STORE_ID) {
+            console.error("Missing Google Cloud Config (Project ID or Data Store ID)");
             return "I am having trouble accessing the policy database. Please check server logs.";
         }
 
-        console.log(`Agent Uri Searching for: "${userQuery}"...`);
+        console.log(`\n🔍 Agent Uri: Searching for "${userQuery}"...`);
 
-        // 2. Build the Google Search Request
-        // This path tells Google exactly which App to query
-        const servingConfig = searchClient.projectLocationCollectionEngineServingConfigPath(
-            PROJECT_ID,
-            LOCATION,
-            'default_collection',
-            APP_ID,
-            'default_config'
-        );
+        // 2. Build the Google Data Store Search Request
+        // Construct the serving config path directly (without collections)
+        const servingConfig = `projects/${PROJECT_ID}/locations/global/dataStores/${DATA_STORE_ID}/servingConfigs/default_config`;
 
         const request = {
             servingConfig,
             query: userQuery,
             pageSize: 5, // Fetch top 5 most relevant snippets
-            queryExpansionSpec: { condition: 'AUTO' as const }, // Helps with synonyms
-            spellCorrectionSpec: { mode: 'AUTO' as const }, // Fixes typos
+            queryExpansionSpec: { condition: 'AUTO' as const },
+            spellCorrectionSpec: { mode: 'AUTO' as const },
+            contentSearchSpec: {
+                snippetSpec: {
+                    returnSnippet: true,
+                },
+                extractiveContentSpec: {
+                    maxExtractiveAnswerCount: 3,
+                },
+            },
         };
 
         // 3. Execute Search
         const [response] = await searchClient.search(request);
 
-        // 4. Parse Results (The Tricky Part)
-        // Google returns a deep nested object. We need to extract the text.
+        // 4. Parse Results
         let contextText = "";
 
         if (response && Array.isArray(response)) {
@@ -61,14 +65,11 @@ export async function handleUriChat(userQuery: string, history: any[]) {
             for (const result of response) {
                 const data = result.document?.derivedStructData as any;
 
-                // Google puts text in different places depending on the file type.
-                // We try 'snippets' first, then 'extractive_answers'.
                 const snippet =
                     data?.snippets?.[0]?.snippet ||
                     data?.extractive_answers?.[0]?.content;
 
                 if (snippet) {
-                    // Clean up newlines to save tokens
                     contextText += `- ${snippet.replace(/\n/g, " ")}\n`;
                 }
             }
@@ -77,32 +78,27 @@ export async function handleUriChat(userQuery: string, history: any[]) {
             for (const result of (response as any).results) {
                 const data = result.document?.derivedStructData as any;
 
-                // Google puts text in different places depending on the file type.
-                // We try 'snippets' first, then 'extractive_answers'.
                 const snippet =
                     data?.snippets?.[0]?.snippet ||
                     data?.extractive_answers?.[0]?.content;
 
                 if (snippet) {
-                    // Clean up newlines to save tokens
                     contextText += `- ${snippet.replace(/\n/g, " ")}\n`;
                 }
             }
         }
 
         if (!contextText) {
-            console.log("No relevant documents found.");
+            console.log("⚠️ No relevant documents found.");
             contextText = "No specific policy documents matched the query.";
         }
 
-        // 5. Send to DeepSeek for Reasoning
-        console.log("Sending context to DeepSeek...");
+        console.log(`✅ Found context (${contextText.length} chars)`);
 
-        const completion = await deepseek.chat.completions.create({
-            messages: [
-                {
-                    role: "system",
-                    content: `You are Uri, an insurance expert. Answer questions BRIEFLY using the CONTEXT provided.
+        // 5. Send to Gemini for Reasoning
+        console.log("🤖 Sending context to Gemini 2.5 Flash (us-central1)...");
+
+        const prompt = `You are Uri, an insurance expert. Answer questions BRIEFLY using the CONTEXT provided.
 
 **Rules**:
 - Keep answers to 2-3 sentences MAX
@@ -112,27 +108,34 @@ export async function handleUriChat(userQuery: string, history: any[]) {
 - Be accurate but concise
 - Skip long explanations
 
-Answer the user's question directly and briefly.`
-                },
-                {
-                    role: "user",
-                    content: `CONTEXT FROM POLICY DATABASE:\n${contextText}\n\nUSER QUESTION: ${userQuery}`
-                }
-            ],
-            model: "deepseek-chat", // Use "deepseek-reasoner" if you want the R1 model
-            temperature: 0.3, // Low temperature for factual accuracy
+CONTEXT FROM POLICY DATABASE:
+${contextText}
+
+USER QUESTION: ${userQuery}
+
+Answer the user's question directly and briefly.`;
+
+        const result = await model.generateContent({
+            contents: [{ role: 'user', parts: [{ text: prompt }] }],
+            generationConfig: {
+                temperature: 0.3,
+                maxOutputTokens: 1024,
+            },
         });
 
-        const answer = completion.choices[0].message.content || "I couldn't generate a response.";
+        const answer = result.response.candidates?.[0]?.content?.parts?.[0]?.text ||
+            "I couldn't generate a response.";
 
-        // RETURN AN OBJECT INSTEAD OF JUST STRING
+        console.log("✅ Uri completed analysis");
+
+        // RETURN AN OBJECT (required for Rai's review)
         return {
             answer: answer,
             context: contextText
         };
 
     } catch (error) {
-        console.error("Error in Agent Uri:", error);
+        console.error("❌ Error in Agent Uri:", error);
         return "I encountered an error while analyzing the policy. Please try again later.";
     }
 }

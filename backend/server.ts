@@ -2,10 +2,9 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import multer from 'multer';
 import { handleSamChat } from './agents/sam';
-import { handleUriChat } from './agents/uri';
-import { handleRaiReview } from './agents/rai';
-import { handleCanopyWebhook, verifyCanopySignature, parseCanopySignature } from './webhooks/canopy';
+import { handleDocumentUpload, getPendingPolicyResponse } from './services/document-upload';
 
 // Load environment variables
 dotenv.config();
@@ -13,6 +12,32 @@ dotenv.config();
 const app = express();
 // Google Cloud Run sets PORT to 8080 automatically
 const port = process.env.PORT || 8080;
+
+// Configure multer for file uploads (store in memory)
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 20 * 1024 * 1024, // 20MB max file size
+  },
+  fileFilter: (req, file, cb) => {
+    // Accept images and PDFs
+    const allowedMimes = [
+      'image/jpeg',
+      'image/jpg',
+      'image/png',
+      'image/heic',
+      'image/heif',
+      'image/webp',
+      'application/pdf'
+    ];
+
+    if (allowedMimes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file type. Please upload a PDF or image (JPG, PNG, HEIC, WebP).'));
+    }
+  }
+});
 
 // Middleware to enable CORS (allow frontend to communicate with backend)
 app.use(cors({
@@ -30,11 +55,72 @@ app.get('/', (req, res) => {
   res.send('Samurai Insurance Backend is active and healthy 🥷');
 });
 
-// --- 2. CHAT ENDPOINT ---
+// --- 2. DOCUMENT UPLOAD ENDPOINT ---
+// Handles policy document uploads with OCR/parsing
+app.post('/api/upload-policy', upload.single('document'), async (req, res) => {
+  try {
+    console.log('\n📤 Incoming document upload...');
+
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    const { buffer, originalname, mimetype } = req.file;
+    const sessionId = req.body.sessionId || `session_${Date.now()}`;
+    const userId = req.body.userId;
+
+    console.log(`📄 File: ${originalname} (${mimetype})`);
+    console.log(`📋 Session: ${sessionId}`);
+    if (userId) {
+      console.log(`👤 User ID: ${userId}`);
+    }
+
+    const result = await handleDocumentUpload(buffer, originalname, mimetype, sessionId, userId);
+
+    if (result.success) {
+      res.json({
+        success: true,
+        message: "Great news! I've analyzed your policy document. Here's what I found:\n\n" + result.analysis,
+        analysis: result.analysis
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        error: result.error
+      });
+    }
+
+  } catch (error) {
+    console.error('❌ Error in upload endpoint:', error);
+    res.status(500).json({
+      error: 'Document processing failed',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+// --- 3. POLICY STATUS ENDPOINT ---
+// Frontend can poll this to check if policy analysis is ready
+app.get('/api/policy-status', (req, res) => {
+  const pending = getPendingPolicyResponse();
+
+  if (pending) {
+    console.log('📄 Delivering pending policy analysis to frontend');
+    res.json({
+      ready: true,
+      analysis: pending.analysis,
+      message: "Great news! I've analyzed your policy. Here's what I found:\n\n" + pending.analysis
+    });
+  } else {
+    res.json({ ready: false });
+  }
+});
+
+// --- 4. CHAT ENDPOINT ---
 // The main entry point for the Agent Logic
 app.post('/chat', async (req, res) => {
   try {
-    const { message, history } = req.body;
+    const { message, history, userId } = req.body;
 
     // 1. Basic Validation
     if (!message) {
@@ -42,11 +128,14 @@ app.post('/chat', async (req, res) => {
     }
 
     console.log(`\n💬 Received User Message: "${message}"`);
+    if (userId) {
+      console.log(`👤 User ID: ${userId}`);
+    }
 
     // 2. Call Agent Sam (The Customer-Facing Advisor)
     // Sam decides if this needs Uri's analysis or can be handled directly
     console.log("👉 Routing to Agent Sam...");
-    const finalResponse = await handleSamChat(message, history || []);
+    const finalResponse = await handleSamChat(message, history || [], userId);
 
     console.log("✅ Sam completed. Sending final response.");
 
@@ -62,72 +151,25 @@ app.post('/chat', async (req, res) => {
   }
 });
 
-// --- 3. CANOPY WEBHOOK ENDPOINT ---
-// Receives webhook events from Canopy Connect when policy documents are ready
-app.post('/api/canopy-webhook', express.raw({ type: 'application/json' }), async (req, res) => {
-  try {
-    console.log('\n🪝 Incoming Canopy webhook...');
+// Global error handlers to prevent server from crashing
+process.on('uncaughtException', (error) => {
+  console.error('❌ Uncaught Exception:', error);
+  // Don't exit - keep server running
+});
 
-    // 1. Get the signature from headers
-    const signatureHeader = req.headers['canopy-signature'] as string;
-
-    if (!signatureHeader) {
-      console.warn('⚠️ No signature header found');
-      return res.status(401).json({ error: 'No signature header' });
-    }
-
-    // 2. Parse the signature
-    const sigData = parseCanopySignature(signatureHeader);
-
-    if (!sigData) {
-      console.warn('⚠️ Invalid signature format');
-      return res.status(401).json({ error: 'Invalid signature format' });
-    }
-
-    // 3. Verify the signature
-    const rawBody = req.body.toString('utf8');
-
-    // Debug logging
-    console.log('📋 Debug Info:');
-    console.log('  - Timestamp:', sigData.timestamp);
-    console.log('  - Signature:', sigData.signature);
-    console.log('  - Body preview:', rawBody.substring(0, 100) + '...');
-    console.log('  - Secret configured:', process.env.CANOPY_WEBHOOK_SECRET ? 'Yes' : 'No');
-
-    const isValid = verifyCanopySignature(
-      sigData.signature,
-      sigData.timestamp,
-      rawBody,
-      process.env.CANOPY_WEBHOOK_SECRET || ''
-    );
-
-    if (!isValid) {
-      console.warn('⚠️ Invalid signature');
-      return res.status(401).json({ error: 'Invalid signature' });
-    }
-
-    console.log('✅ Signature verified');
-
-    // 4. Parse the webhook payload
-    const payload = JSON.parse(rawBody);
-    const eventType = payload.event_type || payload.type;
-
-    // 5. Process the webhook
-    await handleCanopyWebhook(eventType, payload);
-
-    // 6. Respond with success
-    res.status(200).json({ received: true });
-
-  } catch (error) {
-    console.error('❌ Error in webhook endpoint:', error);
-    res.status(500).json({
-      error: 'Webhook processing failed',
-      details: error instanceof Error ? error.message : 'Unknown error'
-    });
-  }
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+  // Don't exit - keep server running
 });
 
 // Start the server
-app.listen(port, () => {
+const server = app.listen(port, () => {
   console.log(`🚀 Server listening on port ${port}`);
 });
+
+server.on('error', (error) => {
+  console.error('❌ Server error:', error);
+});
+
+// Keep the process alive
+process.stdin.resume();

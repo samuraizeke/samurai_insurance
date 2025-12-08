@@ -1,12 +1,26 @@
 // backend/agents/sam.ts
-import OpenAI from 'openai';
+import { VertexAI } from '@google-cloud/vertexai';
 import dotenv from 'dotenv';
 import { handleUriChat } from './uri';
+import { handleRaiReview } from './rai';
+import { getLatestPolicyAnalysis } from '../services/document-upload';
 
 dotenv.config();
 
+const PROJECT_ID = process.env.GOOGLE_PROJECT_ID;
+
+// Initialize Vertex AI for US-CENTRAL1 with Gemini 2.5 Flash
+const vertexAI = new VertexAI({
+    project: PROJECT_ID!,
+    location: 'us-central1',
+});
+
+const model = vertexAI.getGenerativeModel({
+    model: 'gemini-2.5-flash',
+});
+
 // Helper to clean AI responses
-function cleanResponse(text: string): string {
+function cleanResponse(text: string, maxSentences: number = 8): string {
     // Remove markdown formatting
     let cleaned = text
         .replace(/\*\*([^*]+)\*\*/g, '$1')  // Remove bold **text**
@@ -15,24 +29,21 @@ function cleanResponse(text: string): string {
         .replace(/`([^`]+)`/g, '$1')        // Remove code blocks
         .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1'); // Remove links but keep text
 
-    // Limit to ~3 sentences (split on . ! ?)
+    // Limit sentences (default 8 for more complete responses)
     const sentences = cleaned.split(/[.!?]+/).filter(s => s.trim().length > 0);
-    if (sentences.length > 3) {
-        cleaned = sentences.slice(0, 3).join('. ') + '.';
+    if (sentences.length > maxSentences) {
+        cleaned = sentences.slice(0, maxSentences).join('. ') + '.';
     }
 
     return cleaned.trim();
 }
 
-// Initialize DeepSeek for Sam
-const deepseek = new OpenAI({
-    baseURL: 'https://api.deepseek.com',
-    apiKey: process.env.DEEPSEEK_API_KEY,
-});
-
-export async function handleSamChat(userQuery: string, history: any[]) {
+export async function handleSamChat(userQuery: string, history: any[], userId?: string) {
     try {
         console.log(`\n💬 Sam received message: "${userQuery}"`);
+        if (userId) {
+            console.log(`👤 Processing for user: ${userId}`);
+        }
 
         // Quick responses for common queries (no AI needed)
         const lowerQuery = userQuery.toLowerCase().trim();
@@ -47,13 +58,23 @@ export async function handleSamChat(userQuery: string, history: any[]) {
             return "I'm doing great, thanks for asking! How can I help with your insurance needs?";
         }
 
+        // Check if we have policy data available
+        const policyData = getLatestPolicyAnalysis();
+
         // Check if user needs to upload their policy
         const needsPolicyUpload = await checkIfNeedsPolicyUpload(userQuery, history);
 
         if (needsPolicyUpload) {
-            console.log("📄 Sam: User needs to upload their policy via Canopy...");
-            const canopyResponse = await promptCanopyUpload(userQuery);
-            return canopyResponse;
+            // If we already have policy data, use it to answer
+            if (policyData) {
+                console.log("📄 Sam: Using existing policy data to answer...");
+                const policyResponse = await answerWithPolicyData(userQuery, policyData, history);
+                return policyResponse;
+            }
+
+            console.log("📄 Sam: User needs to upload their policy document...");
+            const uploadResponse = await promptDocumentUpload(userQuery);
+            return uploadResponse;
         }
 
         // First, let Sam decide if this needs Uri's analysis
@@ -67,15 +88,23 @@ export async function handleSamChat(userQuery: string, history: any[]) {
 
             // Uri returns either a string (error) or an object {answer, context}
             let uriResponse: string;
+            let sourceContext: string;
+
             if (typeof uriResult === 'string') {
-                uriResponse = uriResult;
+                // Error case - return directly
+                return uriResult;
             } else {
                 uriResponse = uriResult.answer;
+                sourceContext = uriResult.context;
             }
 
-            // Sam now presents Uri's analysis in a friendly way
-            console.log("✅ Sam: Presenting Uri's analysis to user...");
-            const finalResponse = await presentUriAnalysis(userQuery, uriResponse, history);
+            // Call Rai to review Uri's draft
+            console.log("🔍 Sam: Sending to Rai for review...");
+            const raiApprovedAnswer = await handleRaiReview(userQuery, uriResponse, sourceContext);
+
+            // Sam now presents Rai's approved analysis in a friendly way
+            console.log("✅ Sam: Presenting final answer to user...");
+            const finalResponse = await presentFinalAnalysis(userQuery, raiApprovedAnswer, history);
             return finalResponse;
         } else {
             // Simple query - Sam can handle it directly
@@ -85,130 +114,279 @@ export async function handleSamChat(userQuery: string, history: any[]) {
         }
 
     } catch (error) {
-        console.error("Error in Agent Sam:", error);
+        console.error("❌ Error in Agent Sam:", error);
         return "I apologize, but I encountered an error. Please try again or let me know if you need help with something else!";
     }
 }
 
-// Check if user needs to upload their policy via Canopy
+// Check if user needs to upload their policy document
 async function checkIfNeedsPolicyUpload(userQuery: string, history: any[]): Promise<boolean> {
-    const completion = await deepseek.chat.completions.create({
-        messages: [
-            {
-                role: "system",
-                content: `You are a decision-making assistant. Determine if the user needs to upload their current insurance policy to get accurate help.
+    const lowerQuery = userQuery.toLowerCase();
+
+    // ========================================
+    // CATEGORY 1: EXPLICIT POLICY REFERENCES
+    // ========================================
+    const explicitPolicyKeywords = [
+        'my policy', 'my coverage', 'my current', 'my plan', 'my insurance',
+        'check my', 'view my', 'see my', 'review my', 'analyze my',
+        'what do i have', 'what am i', 'am i covered', 'do i have',
+        'my limits', 'my deductible', 'my premium', 'my carrier',
+        'in my policy', 'on my policy', 'in my coverage',
+        'i have coverage', 'i have insurance', 'i have a policy'
+    ];
+
+    if (explicitPolicyKeywords.some(keyword => lowerQuery.includes(keyword))) {
+        console.log(`✅ POLICY UPLOAD REQUIRED: Explicit policy reference detected`);
+        return true;
+    }
+
+    // ========================================
+    // CATEGORY 2: QUOTE & PRICING REQUESTS
+    // ========================================
+    const quoteKeywords = [
+        'quote', 'quotes', 'pricing', 'price', 'cost', 'how much',
+        'give me a quote', 'get a quote', 'need a quote',
+        'what would it cost', 'how much would', 'how much does',
+        'save money', 'cheaper', 'lower my', 'reduce my',
+        'switch', 'compare', 'comparison'
+    ];
+
+    if (quoteKeywords.some(keyword => lowerQuery.includes(keyword))) {
+        // Check if it's a personalized request (not just "what is the average cost of insurance?")
+        const isPersonalized =
+            lowerQuery.includes('my') ||
+            lowerQuery.includes('i ') ||
+            lowerQuery.includes('me ') ||
+            lowerQuery.includes('can you') ||
+            lowerQuery.includes('could you') ||
+            lowerQuery.includes('give') ||
+            lowerQuery.includes('get') ||
+            lowerQuery.includes('need');
+
+        if (isPersonalized) {
+            console.log(`✅ POLICY UPLOAD REQUIRED: Quote/pricing request detected`);
+            return true;
+        }
+    }
+
+    // ========================================
+    // CATEGORY 3: COVERAGE ANALYSIS & GAP DETECTION
+    // ========================================
+    const analysisKeywords = [
+        'gap', 'gaps', 'missing', 'underinsured', 'enough coverage',
+        'sufficient coverage', 'adequate coverage', 'protected',
+        'what am i missing', 'what should i add', 'what do i need',
+        'recommend', 'recommendation', 'suggestions',
+        'enough protection', 'adequately covered'
+    ];
+
+    if (analysisKeywords.some(keyword => lowerQuery.includes(keyword))) {
+        // These require personalization - need to see their current policy
+        const needsPersonalization =
+            lowerQuery.includes('my') ||
+            lowerQuery.includes('i ') ||
+            lowerQuery.includes('am i') ||
+            lowerQuery.includes('do i');
+
+        if (needsPersonalization) {
+            console.log(`✅ POLICY UPLOAD REQUIRED: Coverage analysis/gap detection request`);
+            return true;
+        }
+    }
+
+    // ========================================
+    // CATEGORY 4: SMART DETECTION (policy/coverage + possessive)
+    // ========================================
+    const hasPolicyRef = lowerQuery.includes('policy') || lowerQuery.includes('coverage') || lowerQuery.includes('insurance');
+    const hasPossessive =
+        lowerQuery.includes('my ') ||
+        lowerQuery.includes('mine') ||
+        lowerQuery.includes('i have') ||
+        lowerQuery.includes('i\'m') ||
+        lowerQuery.includes('i am') ||
+        lowerQuery.includes('do i');
+
+    if (hasPolicyRef && hasPossessive) {
+        console.log(`✅ POLICY UPLOAD REQUIRED: Policy reference + possessive detected`);
+        return true;
+    }
+
+    const prompt = `You are a decision-making assistant. Determine if the user needs to upload their current insurance policy to get accurate help.
 
 Questions that NEED policy upload (return "YES"):
-- Specific questions about "my policy" or "my coverage"
-- Requests for quotes or comparisons with current coverage
+- ANY questions about "my policy", "my coverage", "my insurance", or "my current" coverage
+- ANY quote, pricing, or cost requests ("give me a quote", "how much would it cost", "can I save money")
+- Coverage gap analysis ("what gaps do I have", "am I underinsured", "what am I missing")
+- Personalized recommendations ("what should I add to MY coverage", "do I have enough")
 - Questions like "what does my policy cover", "what are my limits", "am I covered for X"
-- Requests to review or analyze their specific policy
-- Questions about filing a claim on their policy
+- Requests to review, analyze, or compare their specific policy
+- Questions about switching carriers or comparing their current policy
+- Claims questions about their specific policy
 
 Questions that DON'T need policy upload (return "NO"):
-- General insurance education questions
-- Questions about insurance concepts or how insurance works
-- Hypothetical scenarios
-- General recommendations without reference to a specific policy
+- Pure education questions with NO personalization ("what is umbrella insurance", "how does a deductible work")
+- Hypothetical scenarios about someone else ("what if someone got into an accident")
+- General questions about averages or typical coverage ("what's the average home insurance cost")
 - Greetings or small talk
+- Questions about insurance concepts in the abstract
 
-Reply with ONLY "YES" or "NO".`
-            },
-            {
-                role: "user",
-                content: `User question: "${userQuery}"`
-            }
-        ],
-        model: "deepseek-chat",
-        temperature: 0.1,
+**IMPORTANT**: When in doubt, return "YES". It's better to ask for policy upload when not needed than to skip it when needed.
+
+Reply with ONLY "YES" or "NO".
+
+User question: "${userQuery}"`;
+
+    const result = await model.generateContent({
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        generationConfig: {
+            temperature: 0.1,
+            maxOutputTokens: 10,
+        },
     });
 
-    const decision = completion.choices[0].message.content?.trim().toUpperCase();
+    const decision = result.response.candidates?.[0]?.content?.parts?.[0]?.text?.trim().toUpperCase();
+    console.log(`🤔 Policy upload check AI decision: ${decision}`);
     return decision === "YES";
 }
 
-// Prompt user to upload policy via Canopy Connect
-async function promptCanopyUpload(userQuery: string): Promise<string> {
-    const completion = await deepseek.chat.completions.create({
-        messages: [
-            {
-                role: "system",
-                content: `You are Sam, a friendly insurance advisor. The user asked about their specific policy.
+// Answer questions using the customer's policy data
+async function answerWithPolicyData(
+    userQuery: string,
+    policyData: { analysis: string; rawData: any },
+    history: any[]
+): Promise<string> {
+    console.log("🔍 Answering with policy data...");
 
-Your task: Briefly explain they need to connect their insurance carrier so you can review their policy.
+    const prompt = `You are Sam, a friendly insurance advisor. The customer has uploaded their insurance policy and you now have access to their coverage details.
+
+CUSTOMER'S POLICY ANALYSIS:
+${policyData.analysis}
+
+RAW POLICY DATA:
+${JSON.stringify(policyData.rawData, null, 2)}
+
+**Guidelines**:
+- Answer their question using the ACTUAL data from their policy
+- Be specific - reference their actual coverage limits, deductibles, carrier, etc.
+- Keep responses concise (2-3 sentences)
+- Use plain text - NO markdown, NO asterisks, NO bold formatting
+- If you notice gaps or concerns, mention them briefly
+- Be helpful and friendly
+
+${history.length > 0 ? `Previous conversation:\n${history.map(msg => `${msg.role}: ${msg.content}`).join('\n')}\n\n` : ''}
+
+Customer's question: "${userQuery}"
+
+Answer using their specific policy information:`;
+
+    const result = await model.generateContent({
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 512,
+        },
+    });
+
+    const response = result.response.candidates?.[0]?.content?.parts?.[0]?.text ||
+        "I have your policy data but couldn't generate a response. Please try asking again.";
+
+    return cleanResponse(response);
+}
+
+// Prompt user to upload their policy document
+async function promptDocumentUpload(userQuery: string): Promise<string> {
+    const prompt = `You are Sam, a friendly insurance advisor. The user asked about their specific policy.
+
+Your task: Briefly explain they need to upload their insurance documents so you can review their coverage.
 
 **Guidelines**:
 - Keep it SHORT (1-2 sentences)
-- Explain they'll connect their carrier (not upload files)
-- It's secure and takes seconds
+- Explain they can upload a photo of their insurance card, declarations page, or policy PDF
+- It's quick and secure
 - Use plain text - NO markdown, NO asterisks, NO bold formatting
-- Do NOT include any URLs - the button appears automatically
+- Do NOT include any URLs - the upload button appears automatically
 
-Example: "To review your specific coverage, I'll need you to connect your insurance carrier. It's secure and only takes a few seconds!"`
-            },
-            {
-                role: "user",
-                content: `User asked: "${userQuery}"\n\nCreate a brief response asking them to connect their carrier.`
-            }
-        ],
-        model: "deepseek-chat",
-        temperature: 0.7,
+Example: "To review your specific coverage, I'll need you to upload your policy documents. You can take a photo of your insurance card or upload your declarations page - it only takes a moment!"
+
+User asked: "${userQuery}"
+
+Create a brief response asking them to upload their policy documents.`;
+
+    const result = await model.generateContent({
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 256,
+        },
     });
 
-    let response = completion.choices[0].message.content ||
-        "To review your specific policy, please connect your insurance carrier.";
+    let response = result.response.candidates?.[0]?.content?.parts?.[0]?.text ||
+        "To review your specific policy, please upload your insurance documents.";
 
     // Remove any URLs that might have been included
     response = response.replace(/https?:\/\/[^\s]+/g, '').trim();
 
-    // Add a special marker for the frontend to detect and render the Canopy button
-    return response + "\n\n[CANOPY_CONNECT]";
+    // Add a special marker for the frontend to detect and render the upload button
+    return response + "\n\n[UPLOAD_POLICY]";
 }
 
 // Determine if Uri's analysis is needed
 async function shouldCallUri(userQuery: string, history: any[]): Promise<boolean> {
-    const completion = await deepseek.chat.completions.create({
-        messages: [
-            {
-                role: "system",
-                content: `You are a decision-making assistant. Determine if the user's question needs detailed insurance analysis.
+    const prompt = `You are a decision-making assistant. Determine if the user's question needs detailed insurance analysis from Uri.
 
-Questions that NEED analysis (return "YES"):
-- Coverage recommendations or quotes
-- Policy comparisons or calculations
-- TIE (Total Insurable Estate) assessments
-- Questions about specific coverages, limits, or endorsements
-- Risk assessments or protection planning
-- Questions requiring state-specific insurance knowledge
+**IMPORTANT**: This function should ONLY return YES for general insurance education questions that don't require the user's specific policy.
 
-Questions that DON'T need analysis (return "NO"):
+Questions that NEED Uri analysis (return "YES"):
+- General insurance education questions ("what is umbrella insurance", "how does coinsurance work")
+- Hypothetical coverage scenarios ("what would happen if someone...")
+- General state insurance regulations ("what are the minimum requirements in CA")
+- Insurance concept explanations ("difference between replacement cost and ACV")
+- Non-personalized general recommendations ("what coverage should someone with a $500k home consider")
+
+Questions that DON'T need Uri (return "NO"):
 - Simple greetings (hi, hello, how are you)
-- General insurance education questions (what is insurance, how does it work)
 - Small talk or casual conversation
 - Questions about you or your capabilities
+- **ANY questions about the user's CURRENT/EXISTING policy** (these should have been caught by policy upload check)
+- **ANY quote or pricing requests** (these should have been caught by policy upload check)
+- **ANY personalized recommendations** (these should have been caught by policy upload check)
+- Questions with "my", "I have", "am I", "do I" combined with policy/coverage/insurance
 
-Reply with ONLY "YES" or "NO".`
-            },
-            {
-                role: "user",
-                content: `User question: "${userQuery}"`
-            }
-        ],
-        model: "deepseek-chat",
-        temperature: 0.1,
+**Critical**: If this is a personalized question that slipped through, return "NO" (it will be handled as a general question by Sam).
+
+Reply with ONLY "YES" or "NO".
+
+User question: "${userQuery}"`;
+
+    const result = await model.generateContent({
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        generationConfig: {
+            temperature: 0.1,
+            maxOutputTokens: 10,
+        },
     });
 
-    const decision = completion.choices[0].message.content?.trim().toUpperCase();
+    const decision = result.response.candidates?.[0]?.content?.parts?.[0]?.text?.trim().toUpperCase();
     return decision === "YES";
 }
 
 // Handle simple queries directly
 async function handleDirectly(userQuery: string, history: any[]): Promise<string> {
-    const completion = await deepseek.chat.completions.create({
-        messages: [
-            {
-                role: "system",
-                content: `You are Sam, a friendly insurance advisor. Keep responses SHORT and conversational—2-3 sentences max.
+    // FINAL SAFETY NET: Catch any policy/quote queries that slipped through
+    const lowerQuery = userQuery.toLowerCase();
+
+    // Check for policy/coverage + possessive (last line of defense)
+    const hasPolicyRef = lowerQuery.includes('policy') || lowerQuery.includes('coverage') || lowerQuery.includes('insurance');
+    const hasPossessive = lowerQuery.includes('my ') || lowerQuery.includes('i have') || lowerQuery.includes('am i') || lowerQuery.includes('do i');
+    const hasQuoteRef = lowerQuery.includes('quote') || lowerQuery.includes('price') || lowerQuery.includes('cost');
+
+    if ((hasPolicyRef && hasPossessive) || hasQuoteRef) {
+        console.log(`🚨 SAFETY NET: handleDirectly caught policy/quote query that slipped through!`);
+        console.log(`   Query: "${userQuery}"`);
+        return "To help you with that, I'll need you to upload your policy documents first. You can take a photo of your insurance card or upload your declarations page!\n\n[UPLOAD_POLICY]";
+    }
+
+    const prompt = `You are Sam, a friendly insurance advisor. Keep responses SHORT and conversational—2-3 sentences max.
 
 **Style**:
 - Talk like a helpful friend, not a textbook
@@ -222,29 +400,29 @@ async function handleDirectly(userQuery: string, history: any[]): Promise<string
 - Use analogies when helpful
 - Define terms simply if needed
 
-Be warm, concise, and helpful.`
-            },
-            ...history.map(msg => ({ role: msg.role, content: msg.content })),
-            {
-                role: "user",
-                content: userQuery
-            }
-        ],
-        model: "deepseek-chat",
-        temperature: 0.7,
+Be warm, concise, and helpful.
+
+${history.length > 0 ? `Previous conversation:\n${history.map(msg => `${msg.role}: ${msg.content}`).join('\n')}\n\n` : ''}User: ${userQuery}
+
+Respond briefly and naturally:`;
+
+    const result = await model.generateContent({
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 512,
+        },
     });
 
-    const response = completion.choices[0].message.content || "I'm here to help! What can I assist you with today?";
+    const response = result.response.candidates?.[0]?.content?.parts?.[0]?.text ||
+        "I'm here to help! What can I assist you with today?";
+
     return cleanResponse(response);
 }
 
-// Present Uri's analysis in a friendly way
-async function presentUriAnalysis(originalQuery: string, uriResponse: string, history: any[]): Promise<string> {
-    const completion = await deepseek.chat.completions.create({
-        messages: [
-            {
-                role: "system",
-                content: `You are Sam, a friendly insurance advisor. Present Uri's analysis in a SHORT, conversational way.
+// Present final analysis in a friendly way
+async function presentFinalAnalysis(originalQuery: string, finalAnswer: string, history: any[]): Promise<string> {
+    const prompt = `You are Sam, a friendly insurance advisor. Present the analysis in a SHORT, conversational way.
 
 **Rules**:
 - Keep it to 2-3 sentences max
@@ -252,24 +430,25 @@ async function presentUriAnalysis(originalQuery: string, uriResponse: string, hi
 - Use plain text - NO markdown, NO asterisks, NO bold formatting
 - Use simple language
 - End with a quick question or next step
-- Don't say "Uri said" - speak as one voice
+- Don't say "Uri said" or "Rai said" - speak as one voice
 
-Be warm but BRIEF.`
-            },
-            {
-                role: "user",
-                content: `User asked: "${originalQuery}"
+Be warm but BRIEF.
 
-Uri's analysis:
-${uriResponse}
+User asked: "${originalQuery}"
 
-Present this to the user in a friendly, clear way:`
-            }
-        ],
-        model: "deepseek-chat",
-        temperature: 0.7,
+Analysis result:
+${finalAnswer}
+
+Present this to the user in a friendly, clear way:`;
+
+    const result = await model.generateContent({
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 512,
+        },
     });
 
-    const response = completion.choices[0].message.content || uriResponse;
+    const response = result.response.candidates?.[0]?.content?.parts?.[0]?.text || finalAnswer;
     return cleanResponse(response);
 }

@@ -11,7 +11,7 @@ import {
 
 export function SiteFooter() {
   return (
-    <footer className="pt-8 pb-28 sm:pb-8">
+    <footer className="pt-8 pb-8">
       <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-4 px-8 text-center sm:flex-row sm:justify-between sm:text-left">
         <div className="flex flex-col items-center sm:items-start gap-2">
           <p className={`${workSans.className} text-sm text-[#333333]/80`}>

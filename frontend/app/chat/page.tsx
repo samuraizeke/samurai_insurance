@@ -1,3 +1,5 @@
+"use client";
+
 import ChatWidget from '@/app/components/ChatWidget';
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { DashboardSidebar } from "@/components/sidebar-02/app-sidebar";

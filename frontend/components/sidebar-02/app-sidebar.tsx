@@ -16,7 +16,7 @@ import { Logo } from "@/components/sidebar-02/logo";
 import type { Route } from "./nav-main";
 import DashboardNavigation from "@/components/sidebar-02/nav-main";
 import { NotificationsPopover } from "@/components/sidebar-02/nav-notifications";
-import { TeamSwitcher } from "@/components/sidebar-02/team-switcher";
+import { UserMenu } from "@/components/sidebar-02/user-menu";
 
 const sampleNotifications = [
   {
@@ -71,9 +71,6 @@ const chatRoutes: Route[] = [
   },
 ];
 
-const teams = [
-  { id: "1", name: "Samurai Insurance", logo: Logo, plan: "Premium" },
-];
 
 export function DashboardSidebar() {
   const { state } = useSidebar();
@@ -111,7 +108,7 @@ export function DashboardSidebar() {
         <DashboardNavigation routes={chatRoutes} />
       </SidebarContent>
       <SidebarFooter className="px-2">
-        <TeamSwitcher teams={teams} />
+        <UserMenu />
       </SidebarFooter>
     </Sidebar>
   );

@@ -6,7 +6,7 @@ export default function PressPage() {
     return (
         <div className="min-h-screen flex flex-col bg-[var(--background)]">
             {/* Dark Header Section */}
-            <div className="bg-[var(--foreground)] text-[var(--background)] pb-96 relative overflow-hidden">
+            <div className="bg-[#333333] text-[#f7f6f3] pb-96 relative overflow-hidden">
                 {/* Custom Header with Inverted Logo */}
                 <header className="sticky top-0 z-40 w-full bg-transparent backdrop-blur-sm">
                     <div className="flex w-full flex-col items-center gap-4 px-6 py-8 text-center sm:flex-row sm:items-center sm:justify-between sm:gap-0 sm:px-16 sm:py-10 sm:text-left">

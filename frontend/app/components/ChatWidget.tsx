@@ -20,18 +20,20 @@ import {
     faPlusCircle,
     faClipboard,
     faHistory,
-    faLink,
     faPaperclip,
     faPlay,
     faPlus,
     faMagic,
     faFileLines,
     faXmark,
+    faCamera,
+    faUpload,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
-import { sendChatMessage } from "@/lib/api";
+import { sendChatMessage, uploadPolicyDocument } from "@/lib/api";
+import { useAuth } from "@/lib/auth-context";
 
 interface AttachedFile {
     id: string;
@@ -48,14 +50,18 @@ interface Message {
 }
 
 export default function ChatWidget() {
+    const { user } = useAuth();
     const [prompt, setPrompt] = useState("");
     const [isDragOver, setIsDragOver] = useState(false);
     const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
     const [messages, setMessages] = useState<Message[]>([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [isUploadingPolicy, setIsUploadingPolicy] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [showCanopyModal, setShowCanopyModal] = useState(false);
+    const [showUploadModal, setShowUploadModal] = useState(false);
+    const [sessionId] = useState(() => `session_${Date.now()}_${Math.random().toString(36).substring(7)}`);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const policyFileInputRef = useRef<HTMLInputElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const [settings, setSettings] = useState({
@@ -66,13 +72,67 @@ export default function ChatWidget() {
 
     const generateFileId = () => Math.random().toString(36).substring(7);
 
-    // Check if message contains Canopy Connect marker
-    const hasCanopyMarker = (content: string) => content.includes('[CANOPY_CONNECT]');
-    const removeCanopyMarker = (content: string) => content.replace('[CANOPY_CONNECT]', '').trim();
+    // Check if message contains upload policy marker
+    const hasUploadMarker = (content: string) => content.includes('[UPLOAD_POLICY]');
+    const removeUploadMarker = (content: string) => content.replace('[UPLOAD_POLICY]', '').trim();
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
+
+    // Handle policy document upload
+    const handlePolicyUpload = async (file: File) => {
+        console.log('📤 Uploading policy document:', file.name);
+
+        setShowUploadModal(false);
+        setIsLoading(true);
+        setIsUploadingPolicy(true);
+
+        try {
+            const result = await uploadPolicyDocument(file, sessionId, user?.id);
+
+            if (result.success && result.message) {
+                const assistantMessage: Message = {
+                    id: generateFileId(),
+                    content: result.message,
+                    role: "assistant",
+                    timestamp: new Date(),
+                };
+                setMessages((prev) => [...prev, assistantMessage]);
+            } else {
+                const errorMessage: Message = {
+                    id: generateFileId(),
+                    content: result.error || "I had trouble processing your document. Please try uploading again or use a clearer image.",
+                    role: "assistant",
+                    timestamp: new Date(),
+                };
+                setMessages((prev) => [...prev, errorMessage]);
+            }
+        } catch (error) {
+            console.error("Error uploading policy:", error);
+            const errorMessage: Message = {
+                id: generateFileId(),
+                content: "I encountered an error processing your document. Please try again.",
+                role: "assistant",
+                timestamp: new Date(),
+            };
+            setMessages((prev) => [...prev, errorMessage]);
+        } finally {
+            setIsLoading(false);
+            setIsUploadingPolicy(false);
+        }
+    };
+
+    // Handle file selection for policy upload
+    const handlePolicyFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (files && files.length > 0) {
+            handlePolicyUpload(files[0]);
+        }
+        if (policyFileInputRef.current) {
+            policyFileInputRef.current.value = "";
+        }
+    };
 
     const processFiles = (files: File[]) => {
         for (const file of files) {
@@ -125,7 +185,7 @@ export default function ChatWidget() {
                 }));
 
                 // Call the backend API
-                const response = await sendChatMessage(userMessageContent, history);
+                const response = await sendChatMessage(userMessageContent, history, user?.id);
 
                 // Add assistant response
                 const assistantMessage: Message = {
@@ -215,10 +275,10 @@ export default function ChatWidget() {
                     </h2>
                 </>
             ) : (
-                <div className="flex-1 overflow-y-auto pb-4 space-y-4 max-w-2xl w-full mx-auto">
+                <div className="flex-1 overflow-y-auto pb-4 space-y-4 max-w-2xl w-full mx-auto scrollbar-hide">
                     {messages.map((message) => {
-                        const showCanopyButton = hasCanopyMarker(message.content);
-                        const displayContent = showCanopyButton ? removeCanopyMarker(message.content) : message.content;
+                        const showUploadButton = hasUploadMarker(message.content);
+                        const displayContent = showUploadButton ? removeUploadMarker(message.content) : message.content;
 
                         return (
                             <div
@@ -243,12 +303,13 @@ export default function ChatWidget() {
                                 )}
                                 <div className="flex flex-col gap-2 w-full">
                                     <p className="text-sm whitespace-pre-wrap">{displayContent}</p>
-                                    {showCanopyButton && (
+                                    {showUploadButton && (
                                         <Button
-                                            onClick={() => setShowCanopyModal(true)}
+                                            onClick={() => setShowUploadModal(true)}
                                             className="mt-2 bg-[#de5e48] hover:bg-[#de5e48]/90 text-white"
                                         >
-                                            Connect to Carrier
+                                            <FontAwesomeIcon icon={faUpload} className="mr-2 size-4" />
+                                            Upload Policy Document
                                         </Button>
                                     )}
                                 </div>
@@ -267,11 +328,24 @@ export default function ChatWidget() {
                                 />
                             </div>
                             <div className="flex flex-col gap-1 justify-center">
-                                <div className="flex gap-1">
-                                    <span className="animate-bounce text-sm" style={{ animationDelay: "0ms" }}>●</span>
-                                    <span className="animate-bounce text-sm" style={{ animationDelay: "150ms" }}>●</span>
-                                    <span className="animate-bounce text-sm" style={{ animationDelay: "300ms" }}>●</span>
-                                </div>
+                                {isUploadingPolicy ? (
+                                    <div className="flex flex-col gap-1">
+                                        <p className="text-sm text-muted-foreground animate-pulse">
+                                            Analyzing your policy document...
+                                        </p>
+                                        <div className="flex gap-1">
+                                            <span className="animate-bounce text-xs text-[#de5e48]" style={{ animationDelay: "0ms" }}>●</span>
+                                            <span className="animate-bounce text-xs text-[#de5e48]" style={{ animationDelay: "150ms" }}>●</span>
+                                            <span className="animate-bounce text-xs text-[#de5e48]" style={{ animationDelay: "300ms" }}>●</span>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="flex gap-1">
+                                        <span className="animate-bounce text-sm" style={{ animationDelay: "0ms" }}>●</span>
+                                        <span className="animate-bounce text-sm" style={{ animationDelay: "150ms" }}>●</span>
+                                        <span className="animate-bounce text-sm" style={{ animationDelay: "300ms" }}>●</span>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}
@@ -363,6 +437,15 @@ export default function ChatWidget() {
                                     <DropdownMenuGroup className="space-y-1">
                                         <DropdownMenuItem
                                             className="rounded-[calc(1rem-6px)] text-xs"
+                                            onClick={() => setShowUploadModal(true)}
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                <FontAwesomeIcon icon={faUpload} className="text-[#de5e48] size-4" />
+                                                <span>Upload Policy Document</span>
+                                            </div>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                            className="rounded-[calc(1rem-6px)] text-xs"
                                             onClick={() => fileInputRef.current?.click()}
                                         >
                                             <div className="flex items-center gap-2">
@@ -372,20 +455,8 @@ export default function ChatWidget() {
                                         </DropdownMenuItem>
                                         <DropdownMenuItem className="rounded-[calc(1rem-6px)] text-xs">
                                             <div className="flex items-center gap-2">
-                                                <FontAwesomeIcon icon={faLink} className="text-[#de5e48] size-4" />
-                                                <span>Import from URL</span>
-                                            </div>
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem className="rounded-[calc(1rem-6px)] text-xs">
-                                            <div className="flex items-center gap-2">
                                                 <FontAwesomeIcon icon={faClipboard} className="text-[#de5e48] size-4" />
                                                 <span>Paste from Clipboard</span>
-                                            </div>
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem className="rounded-[calc(1rem-6px)] text-xs">
-                                            <div className="flex items-center gap-2">
-                                                <FontAwesomeIcon icon={faFileLines} className="text-[#de5e48] size-4" />
-                                                <span>Use Template</span>
                                             </div>
                                         </DropdownMenuItem>
                                     </DropdownMenuGroup>
@@ -481,27 +552,89 @@ export default function ChatWidget() {
                 </form>
             </div>
 
-            {/* Canopy Connect Modal */}
-            {showCanopyModal && (
+            {/* Hidden file input for policy upload */}
+            <input
+                className="sr-only"
+                accept="image/*,application/pdf"
+                onChange={handlePolicyFileSelect}
+                ref={policyFileInputRef}
+                type="file"
+            />
+
+            {/* Policy Upload Modal */}
+            {showUploadModal && (
                 <div
                     className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-                    onClick={() => setShowCanopyModal(false)}
+                    onClick={() => setShowUploadModal(false)}
                 >
                     <div
-                        className="relative w-full max-w-4xl h-[80vh] bg-white rounded-lg shadow-lg"
+                        className="relative w-full max-w-lg bg-white rounded-lg shadow-lg p-6"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <button
-                            onClick={() => setShowCanopyModal(false)}
-                            className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white/90 hover:bg-white shadow-md"
+                            onClick={() => setShowUploadModal(false)}
+                            className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100"
                         >
                             <FontAwesomeIcon icon={faXmark} className="size-5" />
                         </button>
-                        <iframe
-                            src="https://app.usecanopy.com/c/samurai-insurance"
-                            className="w-full h-full rounded-lg"
-                            title="Canopy Connect"
-                        />
+
+                        <h2 className="text-xl font-semibold mb-2">Upload Policy Document</h2>
+                        <p className="text-muted-foreground text-sm mb-6">
+                            Upload your insurance documents so I can review your coverage. You can upload:
+                        </p>
+
+                        <div className="space-y-3 mb-6">
+                            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                                <FontAwesomeIcon icon={faCamera} className="text-[#de5e48] size-5" />
+                                <div>
+                                    <p className="font-medium text-sm">Photo of Insurance Card</p>
+                                    <p className="text-xs text-muted-foreground">Take a photo of your insurance ID card</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                                <FontAwesomeIcon icon={faFileLines} className="text-[#de5e48] size-5" />
+                                <div>
+                                    <p className="font-medium text-sm">Declarations Page</p>
+                                    <p className="text-xs text-muted-foreground">The summary page of your policy</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                                <FontAwesomeIcon icon={faPaperclip} className="text-[#de5e48] size-5" />
+                                <div>
+                                    <p className="font-medium text-sm">Policy PDF</p>
+                                    <p className="text-xs text-muted-foreground">Your full policy document</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div
+                            className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-[#de5e48] transition-colors cursor-pointer"
+                            onClick={() => policyFileInputRef.current?.click()}
+                            onDragOver={(e) => {
+                                e.preventDefault();
+                                e.currentTarget.classList.add('border-[#de5e48]', 'bg-[#de5e48]/5');
+                            }}
+                            onDragLeave={(e) => {
+                                e.preventDefault();
+                                e.currentTarget.classList.remove('border-[#de5e48]', 'bg-[#de5e48]/5');
+                            }}
+                            onDrop={(e) => {
+                                e.preventDefault();
+                                e.currentTarget.classList.remove('border-[#de5e48]', 'bg-[#de5e48]/5');
+                                const files = e.dataTransfer.files;
+                                if (files && files.length > 0) {
+                                    handlePolicyUpload(files[0]);
+                                }
+                            }}
+                        >
+                            <FontAwesomeIcon icon={faUpload} className="text-[#de5e48] size-8 mb-3" />
+                            <p className="font-medium">Click to upload or drag and drop</p>
+                            <p className="text-sm text-muted-foreground mt-1">PDF, JPG, PNG, or HEIC (max 20MB)</p>
+                        </div>
+
+                        <p className="text-xs text-center text-muted-foreground mt-4">
+                            Your documents are processed securely and used only to analyze your coverage.
+                        </p>
                     </div>
                 </div>
             )}

@@ -1,27 +1,30 @@
 // backend/agents/rai.ts
-import OpenAI from 'openai';
+import { VertexAI } from '@google-cloud/vertexai';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-const deepseek = new OpenAI({
-  baseURL: 'https://api.deepseek.com',
-  apiKey: process.env.DEEPSEEK_API_KEY,
+const PROJECT_ID = process.env.GOOGLE_PROJECT_ID;
+
+// Initialize Vertex AI for US-CENTRAL1 with Gemini 2.5 Pro
+const vertexAI = new VertexAI({
+  project: PROJECT_ID!,
+  location: 'us-central1',
+});
+
+const model = vertexAI.getGenerativeModel({
+  model: 'gemini-2.5-pro',
 });
 
 export async function handleRaiReview(
-  userQuery: string, 
-  uriDraft: string, 
+  userQuery: string,
+  uriDraft: string,
   sourceContext: string
 ) {
   try {
-    console.log("🕵️ Rai is reviewing the draft...");
+    console.log("\n🕵️ Rai: Reviewing Uri's draft for accuracy...");
 
-    const completion = await deepseek.chat.completions.create({
-      messages: [
-        {
-          role: "system",
-          content: `You are Rai, a hyper-critical and meticulous insurance auditor specializing in personal lines. Your sole focus is reviewing Uri's work for accuracy, completeness, state compliance, and potential errors, ensuring the highest quality before Sam delivers to the user.
+    const prompt = `You are Rai, a hyper-critical and meticulous insurance auditor specializing in personal lines. Your sole focus is reviewing Uri's work for accuracy, completeness, state compliance, and potential errors, ensuring the highest quality before Sam delivers to the user.
 
 **Core Knowledge**:
 
@@ -39,27 +42,34 @@ export async function handleRaiReview(
 
 Your role is quality gatekeeper—be rigorous to protect users and maintain standards.
 
-**IMPORTANT**: You will be given Uri's draft answer and the source context. Verify every claim against the context. Rewrite if needed, approve if accurate.`
-        },
-        { 
-          role: "user", 
-          content: `USER QUESTION: ${userQuery}
-          
-          SOURCE CONTEXT:
-          ${sourceContext}
-          
-          URI'S DRAFT ANSWER:
-          ${uriDraft}` 
-        }
-      ],
-      model: "deepseek-chat", // or "deepseek-reasoner" for higher logic
-      temperature: 0.1, // Very low temp = strict adherence to facts
+**IMPORTANT**: You will be given Uri's draft answer and the source context. Verify every claim against the context. Rewrite if needed, approve if accurate.
+
+USER QUESTION: ${userQuery}
+
+SOURCE CONTEXT:
+${sourceContext}
+
+URI'S DRAFT ANSWER:
+${uriDraft}
+
+Review the draft against the context and return your final approved answer (either Uri's original if accurate, or your corrected version):`;
+
+    const result = await model.generateContent({
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      generationConfig: {
+        temperature: 0.1, // Very low temp = strict adherence to facts
+        maxOutputTokens: 2048,
+      },
     });
 
-    return completion.choices[0].message.content || uriDraft;
+    const finalAnswer = result.response.candidates?.[0]?.content?.parts?.[0]?.text || uriDraft;
+
+    console.log("✅ Rai: Review complete");
+
+    return finalAnswer;
 
   } catch (error) {
-    console.error("Error in Rai Review:", error);
+    console.error("❌ Error in Rai Review:", error);
     // If Rai crashes, fallback to Uri's answer so the user still gets a response
     return uriDraft;
   }
