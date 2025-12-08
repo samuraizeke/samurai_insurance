@@ -1,0 +1,102 @@
+"use client";
+
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  useSidebar,
+} from "@/components/ui/sidebar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAuth } from "@/lib/auth-context";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faSort, faGear, faRightFromBracket, faUser } from "@fortawesome/free-solid-svg-icons";
+
+export function UserMenu() {
+  const { isMobile } = useSidebar();
+  const { user, signOut, isLoading } = useAuth();
+
+  if (isLoading || !user) {
+    return null;
+  }
+
+  const userInitials = user.user_metadata?.full_name
+    ? user.user_metadata.full_name
+        .split(" ")
+        .map((n: string) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2)
+    : user.email?.slice(0, 2).toUpperCase() || "U";
+
+  const displayName = user.user_metadata?.full_name || user.email?.split("@")[0] || "User";
+  const displayEmail = user.email || "";
+
+  return (
+    <SidebarMenu>
+      <SidebarMenuItem>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <SidebarMenuButton
+              size="lg"
+              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+            >
+              <Avatar className="h-8 w-8">
+                <AvatarImage src={user.user_metadata?.avatar_url} alt={displayName} />
+                <AvatarFallback className="bg-[#de5e48] text-white text-sm">
+                  {userInitials}
+                </AvatarFallback>
+              </Avatar>
+              <div className="grid flex-1 text-left text-sm leading-tight">
+                <span className="truncate font-semibold font-[family-name:var(--font-work-sans)]">
+                  {displayName}
+                </span>
+                <span className="truncate text-xs text-muted-foreground font-[family-name:var(--font-work-sans)]">
+                  {displayEmail}
+                </span>
+              </div>
+              <FontAwesomeIcon icon={faSort} className="ml-auto size-4" />
+            </SidebarMenuButton>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg mb-4"
+            align="start"
+            side={isMobile ? "bottom" : "right"}
+            sideOffset={4}
+          >
+            <DropdownMenuLabel className="font-[family-name:var(--font-work-sans)]">
+              <div className="flex flex-col space-y-1">
+                <p className="text-sm font-medium leading-none">{displayName}</p>
+                <p className="text-xs leading-none text-muted-foreground">{displayEmail}</p>
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="gap-2 p-2 cursor-pointer">
+              <FontAwesomeIcon icon={faUser} className="size-4" />
+              <span className="font-[family-name:var(--font-work-sans)]">Profile</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem className="gap-2 p-2 cursor-pointer">
+              <FontAwesomeIcon icon={faGear} className="size-4" />
+              <span className="font-[family-name:var(--font-work-sans)]">Settings</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className="gap-2 p-2 cursor-pointer text-destructive focus:text-destructive"
+              onClick={() => signOut()}
+            >
+              <FontAwesomeIcon icon={faRightFromBracket} className="size-4" />
+              <span className="font-[family-name:var(--font-work-sans)]">Sign out</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </SidebarMenuItem>
+    </SidebarMenu>
+  );
+}

@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { alteHaasGrotesk, workSans, leagueGothic } from "@/lib/fonts";
 import Script from "next/script";
 import "./globals.css";
-import CustomCursor from "./components/CustomCursor";
 import { Analytics } from '@vercel/analytics/next';
+import { AuthProvider } from "@/lib/auth-context";
 
 export const metadata: Metadata = {
   title: "Samurai Insurance",
@@ -18,12 +18,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${alteHaasGrotesk.variable} ${workSans.variable} ${leagueGothic.variable} antialiased`}
+        suppressHydrationWarning
       >
-        <CustomCursor />
-        {children}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
         {process.env.NEXT_PUBLIC_VERCEL_ANALYTICS_ID ? (
           <Script
             src="https://va.vercel-scripts.com/v1/script.js"
