@@ -1,9 +1,21 @@
 // backend/server.ts
 import express from 'express';
 import dotenv from 'dotenv';
-import { handleUriChat } from './agents/uri';
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
 
 dotenv.config();
+
+// Decode base64 credentials and write to temp file for Google SDK
+if (process.env.GOOGLE_CREDENTIALS_BASE64) {
+    const credentials = Buffer.from(process.env.GOOGLE_CREDENTIALS_BASE64, 'base64').toString('utf-8');
+    const credentialsPath = path.join(os.tmpdir(), 'gcp-credentials.json');
+    fs.writeFileSync(credentialsPath, credentials);
+    process.env.GOOGLE_APPLICATION_CREDENTIALS = credentialsPath;
+}
+
+import { handleUriChat } from './agents/uri';
 
 const app = express();
 // Google Cloud Run automatically sets the PORT env var to 8080
