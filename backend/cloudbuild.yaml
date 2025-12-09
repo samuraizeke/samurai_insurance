@@ -1,12 +1,12 @@
 steps:
   # Build the container image
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/samurai-backend:$COMMIT_SHA', '.']
+    args: ['build', '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/samurai-backend:$COMMIT_SHA', '.']
     dir: 'backend'
 
-  # Push the container image to Container Registry
+  # Push the container image to Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/$PROJECT_ID/samurai-backend:$COMMIT_SHA']
+    args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/samurai-backend:$COMMIT_SHA']
 
   # Deploy container image to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
@@ -16,15 +16,15 @@ steps:
       - 'deploy'
       - 'samurai-insurance'
       - '--image'
-      - 'gcr.io/$PROJECT_ID/samurai-backend:$COMMIT_SHA'
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/samurai-backend:$COMMIT_SHA'
       - '--region'
-      - 'us-central1'  # Change to your region
+      - 'us-central1'
       - '--platform'
       - 'managed'
       - '--allow-unauthenticated'
 
 images:
-  - 'gcr.io/$PROJECT_ID/samurai-backend:$COMMIT_SHA'
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/samurai-backend:$COMMIT_SHA'
 
 options:
   logging: CLOUD_LOGGING_ONLY
