@@ -77,9 +77,6 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
 }));
 
-// Handle preflight OPTIONS requests
-app.options('*', cors());
-
 // Middleware to parse JSON bodies
 app.use(express.json());
 
