@@ -10,21 +10,15 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
-    faSliders,
     faArrowUp,
     faPlusCircle,
     faClipboard,
-    faHistory,
     faPaperclip,
-    faPlay,
     faPlus,
-    faMagic,
     faFileLines,
     faXmark,
     faCamera,
@@ -39,7 +33,9 @@ import {
     createChatSession,
     getStoredSessionId,
     getChatHistory,
-    clearStoredSession
+    clearStoredSession,
+    getUserPolicies,
+    UserPolicy
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { useChatContext } from "@/app/context/ChatContext";
@@ -72,16 +68,14 @@ export default function ChatWidget() {
     const [sessionId, setSessionId] = useState<string>(() => `session_${Date.now()}_${Math.random().toString(36).substring(7)}`);
     const [dbSessionId, setDbSessionId] = useState<number | null>(null);
     const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+    const [userPolicies, setUserPolicies] = useState<UserPolicy[]>([]);
+    const [selectedPolicy, setSelectedPolicy] = useState<UserPolicy | null>(null);
+    const [isLoadingPolicies, setIsLoadingPolicies] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const policyFileInputRef = useRef<HTMLInputElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
     const sessionInitialized = useRef(false);
-
-    const [settings, setSettings] = useState({
-        autoComplete: true,
-        streaming: false,
-        showHistory: false,
-    });
 
     // Get time-based greeting
     const getTimeBasedGreeting = () => {
@@ -282,6 +276,8 @@ export default function ChatWidget() {
                     timestamp: new Date(),
                 };
                 setMessages((prev) => [...prev, assistantMessage]);
+                // Refresh policies list to show newly uploaded policy
+                loadUserPolicies();
             } else {
                 const errorMessage: Message = {
                     id: generateFileId(),
@@ -346,7 +342,14 @@ export default function ChatWidget() {
         if (prompt.trim() && !isLoading) {
             const userMessageContent = prompt;
 
-            // Add user message
+            // Build message with policy context if selected
+            let messageToSend = userMessageContent;
+            if (selectedPolicy) {
+                const policyContext = `[Using ${getPolicyDisplayName(selectedPolicy.policyType)} from ${selectedPolicy.carrier} as context]\n\nPolicy Details:\n${selectedPolicy.analysis}\n\n---\n\nUser Question: `;
+                messageToSend = policyContext + userMessageContent;
+            }
+
+            // Add user message (show original message to user, not the one with context)
             const userMessage: Message = {
                 id: generateFileId(),
                 content: userMessageContent,
@@ -356,6 +359,9 @@ export default function ChatWidget() {
 
             setMessages((prev) => [...prev, userMessage]);
             setPrompt("");
+            if (textareaRef.current) {
+                textareaRef.current.style.height = 'auto';
+            }
             setAttachedFiles([]);
             setIsLoading(true);
             setError(null);
@@ -380,9 +386,9 @@ export default function ChatWidget() {
                     content: msg.content,
                 }));
 
-                // Call the backend API with session tracking
+                // Call the backend API with session tracking (send message with policy context)
                 const response = await sendChatMessage(
-                    userMessageContent,
+                    messageToSend,
                     history,
                     user?.id,
                     currentDbSessionId ?? undefined
@@ -419,8 +425,42 @@ export default function ChatWidget() {
             }
         }
     };
-    const updateSetting = (key: keyof typeof settings, value: boolean) => {
-        setSettings((prev) => ({ ...prev, [key]: value }));
+    // Load user policies
+    const loadUserPolicies = useCallback(async () => {
+        // Only run on client-side
+        if (typeof window === 'undefined') return;
+        if (!user?.id) return;
+
+        setIsLoadingPolicies(true);
+        try {
+            const policies = await getUserPolicies(user.id);
+            setUserPolicies(policies);
+        } catch (err) {
+            console.error('Failed to load policies:', err);
+        } finally {
+            setIsLoadingPolicies(false);
+        }
+    }, [user?.id]);
+
+    // Load policies on mount and when user changes
+    useEffect(() => {
+        // Only run on client-side after mount
+        if (typeof window === 'undefined') return;
+        loadUserPolicies();
+    }, [loadUserPolicies]);
+
+    // Get display name for policy type
+    const getPolicyDisplayName = (policyType: string) => {
+        const names: Record<string, string> = {
+            'auto': 'Auto Insurance',
+            'home': 'Home Insurance',
+            'renters': 'Renters Insurance',
+            'umbrella': 'Umbrella Policy',
+            'life': 'Life Insurance',
+            'health': 'Health Insurance',
+            'other': 'Other Policy'
+        };
+        return names[policyType] || policyType;
     };
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -445,6 +485,13 @@ export default function ChatWidget() {
     };
     const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         setPrompt(e.target.value);
+
+        // Auto-resize textarea
+        const textarea = textareaRef.current;
+        if (textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = `${textarea.scrollHeight}px`;
+        }
     };
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === "Enter" && !e.shiftKey) {
@@ -464,6 +511,33 @@ export default function ChatWidget() {
 
     const handleRemoveFile = (fileId: string) => {
         setAttachedFiles((prev) => prev.filter((file) => file.id !== fileId));
+    };
+
+    const handlePasteFromClipboard = async () => {
+        try {
+            const clipboardItems = await navigator.clipboard.read();
+
+            for (const item of clipboardItems) {
+                // Check for image types
+                const imageType = item.types.find(type => type.startsWith('image/'));
+                if (imageType) {
+                    const blob = await item.getType(imageType);
+                    const file = new File([blob], `clipboard-image-${Date.now()}.png`, { type: imageType });
+                    processFiles([file]);
+                    return;
+                }
+
+                // Check for text
+                if (item.types.includes('text/plain')) {
+                    const blob = await item.getType('text/plain');
+                    const text = await blob.text();
+                    setPrompt(prev => prev + text);
+                    return;
+                }
+            }
+        } catch (err) {
+            console.error('Failed to read clipboard:', err);
+        }
     };
 
     return (
@@ -536,9 +610,9 @@ export default function ChatWidget() {
                                 </div>
                                 {message.role === "user" && (
                                     <div className="shrink-0">
-                                        <Avatar className="h-8 w-8">
+                                        <Avatar className="h-6 w-6">
                                             <AvatarImage src={user?.user_metadata?.avatar_url} alt="User" />
-                                            <AvatarFallback className="bg-[#de5e48] text-white text-sm">
+                                            <AvatarFallback className="bg-[#de5e48] text-white text-xs">
                                                 {getUserInitials()}
                                             </AvatarFallback>
                                         </Avatar>
@@ -633,6 +707,7 @@ export default function ChatWidget() {
                         </div>
                     )}
                     <Textarea
+                        ref={textareaRef}
                         className="max-h-50 min-h-14 resize-none rounded-none border-none bg-transparent! p-0 pl-2 pt-1 text-base shadow-none focus-visible:border-transparent focus-visible:ring-0 font-[family-name:var(--font-work-sans)] placeholder:text-base"
                         onChange={handleTextareaChange}
                         onKeyDown={handleKeyDown}
@@ -684,7 +759,10 @@ export default function ChatWidget() {
                                                 <span>Attach Files</span>
                                             </div>
                                         </DropdownMenuItem>
-                                        <DropdownMenuItem className="rounded-lg text-xs hover:bg-[#333333]/5 focus:bg-[#333333]/5 cursor-pointer">
+                                        <DropdownMenuItem
+                                            className="rounded-lg text-xs hover:bg-[#333333]/5 focus:bg-[#333333]/5 cursor-pointer"
+                                            onClick={handlePasteFromClipboard}
+                                        >
                                             <div className="flex items-center gap-2">
                                                 <FontAwesomeIcon icon={faClipboard} className="text-[#de5e48] size-4" />
                                                 <span>Paste from Clipboard</span>
@@ -697,60 +775,88 @@ export default function ChatWidget() {
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button
-                                        className="size-7 rounded-md hover:bg-[#333333]/5 transition-colors"
-                                        size="icon"
+                                        className={cn(
+                                            "h-7 rounded-md hover:bg-[#333333]/5 transition-colors px-2 gap-1.5",
+                                            selectedPolicy && "bg-[#de5e48]/10"
+                                        )}
+                                        size="sm"
                                         type="button"
                                         variant="ghost"
                                     >
-                                        <FontAwesomeIcon icon={faSliders} className="text-[#de5e48] size-4" />
+                                        <FontAwesomeIcon icon={faFileLines} className="text-[#de5e48] size-4" />
+                                        {selectedPolicy ? (
+                                            <span className="text-xs font-medium truncate max-w-[100px]">
+                                                {getPolicyDisplayName(selectedPolicy.policyType)}
+                                            </span>
+                                        ) : (
+                                            <span className="text-xs text-muted-foreground hidden sm:inline">
+                                                Select Policy
+                                            </span>
+                                        )}
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent
                                     align="start"
-                                    className="w-48 rounded-2xl p-3 border-[#333333]/10 shadow-lg bg-[hsl(0_0%_98%)] font-[family-name:var(--font-work-sans)]"
+                                    className="w-56 rounded-2xl p-2 border-[#333333]/10 shadow-lg bg-[hsl(0_0%_98%)] font-[family-name:var(--font-work-sans)]"
                                 >
-                                    <DropdownMenuGroup className="space-y-3">
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-2">
-                                                <FontAwesomeIcon icon={faMagic} className="text-[#de5e48] size-4" />
-                                                <Label className="text-xs">Auto-complete</Label>
+                                    <div className="px-2 py-1.5 mb-1">
+                                        <p className="text-xs font-medium text-muted-foreground">
+                                            Select a policy for context
+                                        </p>
+                                    </div>
+                                    <DropdownMenuGroup className="space-y-1">
+                                        {isLoadingPolicies ? (
+                                            <div className="px-2 py-3 text-center">
+                                                <span className="text-xs text-muted-foreground">Loading policies...</span>
                                             </div>
-                                            <Switch
-                                                checked={settings.autoComplete}
-                                                className="scale-75"
-                                                onCheckedChange={(value) =>
-                                                    updateSetting("autoComplete", value)
-                                                }
-                                            />
-                                        </div>
-
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-2">
-                                                <FontAwesomeIcon icon={faPlay} className="text-[#de5e48] size-4" />
-                                                <Label className="text-xs">Streaming</Label>
+                                        ) : userPolicies.length === 0 ? (
+                                            <div className="px-2 py-3 text-center">
+                                                <p className="text-xs text-muted-foreground mb-2">No policies uploaded yet</p>
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    className="text-xs h-7"
+                                                    onClick={() => setShowUploadModal(true)}
+                                                >
+                                                    <FontAwesomeIcon icon={faUpload} className="mr-1.5 size-3" />
+                                                    Upload Policy
+                                                </Button>
                                             </div>
-                                            <Switch
-                                                checked={settings.streaming}
-                                                className="scale-75"
-                                                onCheckedChange={(value) =>
-                                                    updateSetting("streaming", value)
-                                                }
-                                            />
-                                        </div>
-
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-2">
-                                                <FontAwesomeIcon icon={faHistory} className="text-[#de5e48] size-4" />
-                                                <Label className="text-xs">Show History</Label>
-                                            </div>
-                                            <Switch
-                                                checked={settings.showHistory}
-                                                className="scale-75"
-                                                onCheckedChange={(value) =>
-                                                    updateSetting("showHistory", value)
-                                                }
-                                            />
-                                        </div>
+                                        ) : (
+                                            <>
+                                                {selectedPolicy && (
+                                                    <DropdownMenuItem
+                                                        className="rounded-lg text-xs hover:bg-[#333333]/5 focus:bg-[#333333]/5 cursor-pointer"
+                                                        onClick={() => setSelectedPolicy(null)}
+                                                    >
+                                                        <div className="flex items-center gap-2 text-muted-foreground">
+                                                            <FontAwesomeIcon icon={faXmark} className="size-3" />
+                                                            <span>Clear selection</span>
+                                                        </div>
+                                                    </DropdownMenuItem>
+                                                )}
+                                                {userPolicies.map((policy) => (
+                                                    <DropdownMenuItem
+                                                        key={policy.policyType}
+                                                        className={cn(
+                                                            "rounded-lg text-xs hover:bg-[#333333]/5 focus:bg-[#333333]/5 cursor-pointer",
+                                                            selectedPolicy?.policyType === policy.policyType && "bg-[#de5e48]/10"
+                                                        )}
+                                                        onClick={() => setSelectedPolicy(policy)}
+                                                    >
+                                                        <div className="flex flex-col gap-0.5 w-full">
+                                                            <div className="flex items-center gap-2">
+                                                                <FontAwesomeIcon icon={faFileLines} className="text-[#de5e48] size-3" />
+                                                                <span className="font-medium">{getPolicyDisplayName(policy.policyType)}</span>
+                                                            </div>
+                                                            <span className="text-[10px] text-muted-foreground pl-5 truncate">
+                                                                {policy.carrier}
+                                                            </span>
+                                                        </div>
+                                                    </DropdownMenuItem>
+                                                ))}
+                                            </>
+                                        )}
                                     </DropdownMenuGroup>
                                 </DropdownMenuContent>
                             </DropdownMenu>

@@ -21,7 +21,7 @@ if (process.env.GOOGLE_CREDENTIALS_BASE64) {
 }
 
 import { handleSamChat } from './agents/sam';
-import { handleDocumentUpload, getPendingPolicyResponse } from './services/document-upload';
+import { handleDocumentUpload, getPendingPolicyResponse, getUserPolicies, PolicyType, StoredPolicy } from './services/document-upload';
 import { generateSessionSummary, regenerateSummary } from './services/session-summary';
 
 const app = express();
@@ -55,8 +55,22 @@ const upload = multer({
 });
 
 // Middleware to enable CORS (allow frontend to communicate with backend)
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://joinsamurai.com',
+  'https://www.joinsamurai.com',
+  process.env.FRONTEND_URL,
+].filter(Boolean);
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
 }));
 
@@ -128,6 +142,54 @@ app.get('/api/policy-status', (req, res) => {
     });
   } else {
     res.json({ ready: false });
+  }
+});
+
+// --- 3.5. USER POLICIES ENDPOINT ---
+// Get all uploaded policies for a user
+app.get('/api/users/:userId/policies', async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    if (!userId) {
+      return res.status(400).json({ error: 'userId is required' });
+    }
+
+    // Get policies from in-memory store (keyed by external userId)
+    const policiesMap = getUserPolicies(userId);
+
+    if (!policiesMap || policiesMap.size === 0) {
+      return res.json({ policies: [] });
+    }
+
+    // Convert Map to array format for frontend
+    const policies: Array<{
+      policyType: PolicyType;
+      carrier: string;
+      analysis: string;
+      uploadedAt: string;
+      fileName: string;
+    }> = [];
+
+    policiesMap.forEach((policy: StoredPolicy, policyType: PolicyType) => {
+      policies.push({
+        policyType,
+        carrier: policy.carrier,
+        analysis: policy.analysis,
+        uploadedAt: policy.rawData?.uploadedAt || new Date(policy.timestamp).toISOString(),
+        fileName: policy.rawData?.fileName || 'Unknown'
+      });
+    });
+
+    // Sort by most recent first
+    policies.sort((a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime());
+
+    console.log(`📋 Returning ${policies.length} policies for user ${userId}`);
+    res.json({ policies });
+
+  } catch (error) {
+    console.error('❌ Error fetching user policies:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 

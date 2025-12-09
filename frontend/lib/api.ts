@@ -23,6 +23,16 @@ export interface UploadResponse {
     error?: string;
 }
 
+export type PolicyType = 'auto' | 'home' | 'renters' | 'umbrella' | 'life' | 'health' | 'other';
+
+export interface UserPolicy {
+    policyType: PolicyType;
+    carrier: string;
+    analysis: string;
+    uploadedAt: string;
+    fileName: string;
+}
+
 export interface ChatSession {
     id: number;
     session_uuid: string;
@@ -45,6 +55,12 @@ export interface StoredMessage {
 }
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
+
+// Debug: Log the backend URL on load
+if (typeof window !== 'undefined') {
+    console.log('🔧 API: BACKEND_URL =', BACKEND_URL);
+    console.log('🔧 API: ENV value =', process.env.NEXT_PUBLIC_BACKEND_URL);
+}
 
 // Session storage keys
 const SESSION_ID_KEY = 'samurai_chat_session_id';
@@ -122,8 +138,12 @@ export async function getChatHistory(sessionId: number): Promise<StoredMessage[]
  * Get user's recent chat sessions
  */
 export async function getUserSessions(userId: string, limit: number = 10): Promise<ChatSession[]> {
+    const url = `${BACKEND_URL}/api/users/${userId}/chat-sessions?limit=${limit}`;
+    console.log('🔧 getUserSessions: Fetching from', url);
+
     try {
-        const response = await fetch(`${BACKEND_URL}/api/users/${userId}/chat-sessions?limit=${limit}`);
+        const response = await fetch(url);
+        console.log('🔧 getUserSessions: Response status', response.status);
 
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -132,7 +152,12 @@ export async function getUserSessions(userId: string, limit: number = 10): Promi
         const data = await response.json();
         return data.sessions || [];
     } catch (error) {
-        console.error("Error fetching user sessions:", error);
+        console.error("🔧 getUserSessions: Error details:", {
+            error,
+            message: error instanceof Error ? error.message : 'Unknown',
+            url,
+            backendUrl: BACKEND_URL
+        });
         return [];
     }
 }
@@ -264,5 +289,34 @@ export async function uploadPolicyDocument(
             success: false,
             error: error instanceof Error ? error.message : "Failed to upload document"
         };
+    }
+}
+
+/**
+ * Get all uploaded policies for a user
+ */
+export async function getUserPolicies(userId: string): Promise<UserPolicy[]> {
+    const url = `${BACKEND_URL}/api/users/${userId}/policies`;
+    console.log('🔧 getUserPolicies: Fetching from', url);
+
+    try {
+        const response = await fetch(url);
+        console.log('🔧 getUserPolicies: Response status', response.status);
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('🔧 getUserPolicies: Got data', data);
+        return data.policies || [];
+    } catch (error) {
+        console.error("🔧 getUserPolicies: Error details:", {
+            error,
+            message: error instanceof Error ? error.message : 'Unknown',
+            url,
+            backendUrl: BACKEND_URL
+        });
+        return [];
     }
 }
