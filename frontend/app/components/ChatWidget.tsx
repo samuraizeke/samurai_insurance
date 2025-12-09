@@ -666,7 +666,7 @@ export default function ChatWidget() {
                                     {showUploadButton && (
                                         <Button
                                             onClick={() => setShowUploadModal(true)}
-                                            className="mt-2 bg-[#de5e48] hover:bg-[#de5e48]/90 text-white"
+                                            className="mt-2 bg-[#de5e48] hover:bg-[#de5e48]/90 text-white font-[family-name:var(--font-work-sans)]"
                                         >
                                             <FontAwesomeIcon icon={faUpload} className="mr-2 size-4" />
                                             Upload Policy Document
@@ -905,8 +905,7 @@ export default function ChatWidget() {
                                             <p className="text-xs text-muted-foreground mb-2">No policies uploaded yet</p>
                                             <Button
                                                 size="sm"
-                                                variant="outline"
-                                                className="text-xs h-7"
+                                                className="text-xs h-7 bg-[#de5e48] hover:bg-[#de5e48]/90 text-white"
                                                 onClick={() => setShowUploadModal(true)}
                                             >
                                                 <FontAwesomeIcon icon={faUpload} className="mr-1.5 size-3" />
