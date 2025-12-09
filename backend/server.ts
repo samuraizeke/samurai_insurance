@@ -60,7 +60,9 @@ const allowedOrigins = [
   'https://joinsamurai.com',
   'https://www.joinsamurai.com',
   process.env.FRONTEND_URL,
-].filter(Boolean);
+].filter(Boolean) as string[];
+
+console.log('🔒 CORS allowed origins:', allowedOrigins);
 
 app.use(cors({
   origin: (origin, callback) => {
@@ -69,10 +71,17 @@ app.use(cors({
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
-    return callback(new Error('Not allowed by CORS'));
+    // For disallowed origins, return false instead of error to avoid breaking CORS
+    console.warn(`⚠️ CORS blocked request from origin: ${origin}`);
+    return callback(null, false);
   },
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
 }));
+
+// Explicit OPTIONS handling for preflight requests
+app.options('*', cors());
 
 // Middleware to parse JSON bodies
 app.use(express.json());
