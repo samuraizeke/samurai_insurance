@@ -6,11 +6,11 @@ import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
     DropdownMenuContent,
-    DropdownMenuGroup,
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Textarea } from "@/components/ui/textarea";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -27,6 +27,7 @@ import {
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
 import {
     sendChatMessage,
     uploadPolicyDocument,
@@ -47,11 +48,17 @@ interface AttachedFile {
     preview?: string;
 }
 
+interface AttachedPolicy {
+    policyType: string;
+    carrier: string;
+}
+
 interface Message {
     id: string;
     content: string;
     role: "user" | "assistant";
     timestamp: Date;
+    attachedPolicy?: AttachedPolicy;
 }
 
 export default function ChatWidget() {
@@ -179,32 +186,18 @@ export default function ChatWidget() {
         initializeSession();
     }, [user?.id, setCurrentSessionId]);
 
-    // Function to start a new conversation
-    const startNewConversation = useCallback(async () => {
-        if (!user?.id) return;
-
-        // Clear current session
+    // Function to start a new chat (just clears state, session created on first message)
+    const startNewConversation = useCallback(() => {
+        // Clear current session - new session will be created when first message is sent
         clearStoredSession();
         setMessages([]);
         setDbSessionId(null);
         setCurrentSessionId(null);
-
-        // Create new session
-        const session = await createChatSession(user.id);
-        if (session) {
-            setDbSessionId(session.sessionId);
-            setCurrentSessionId(session.sessionId);
-            setSessionId(`session_${Date.now()}_${Math.random().toString(36).substring(7)}`);
-            sessionInitialized.current = true; // Mark as initialized with new session
-            console.log('🆕 Started new conversation:', session.sessionId);
-            // Refresh recent sessions in sidebar
-            loadRecentSessions(user.id);
-        } else {
-            // If session creation failed, allow re-initialization on next attempt
-            sessionInitialized.current = false;
-            console.error('Failed to create new conversation');
-        }
-    }, [user?.id, setCurrentSessionId, loadRecentSessions]);
+        setSelectedPolicy(null); // Clear policy selection for new chat
+        setSessionId(`session_${Date.now()}_${Math.random().toString(36).substring(7)}`);
+        sessionInitialized.current = false; // Allow session creation on first message
+        console.log('🆕 Ready for new chat');
+    }, [setCurrentSessionId]);
 
     // Function to load a specific session (called from sidebar)
     const loadSession = useCallback(async (targetSessionId: number) => {
@@ -355,6 +348,10 @@ export default function ChatWidget() {
                 content: userMessageContent,
                 role: "user",
                 timestamp: new Date(),
+                attachedPolicy: selectedPolicy ? {
+                    policyType: selectedPolicy.policyType,
+                    carrier: selectedPolicy.carrier,
+                } : undefined,
             };
 
             setMessages((prev) => [...prev, userMessage]);
@@ -363,6 +360,7 @@ export default function ChatWidget() {
                 textareaRef.current.style.height = 'auto';
             }
             setAttachedFiles([]);
+            setSelectedPolicy(null); // Clear policy selection after sending
             setIsLoading(true);
             setError(null);
 
@@ -552,25 +550,48 @@ export default function ChatWidget() {
                         <span className="animate-bounce text-2xl text-[#de5e48]" style={{ animationDelay: "150ms" }}>●</span>
                         <span className="animate-bounce text-2xl text-[#de5e48]" style={{ animationDelay: "300ms" }}>●</span>
                     </div>
-                    <p className="text-muted-foreground font-[family-name:var(--font-work-sans)]">Loading your conversation...</p>
+                    <p className="text-muted-foreground font-[family-name:var(--font-work-sans)]">Loading your chat...</p>
                 </div>
-            ) : messages.length === 0 ? (
-                <div className="flex items-center justify-center gap-4 mb-6 max-w-2xl w-full mx-auto">
+            ) : messages.length === 0 && !isUploadingPolicy ? (
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-6 max-w-2xl w-full mx-auto px-4">
                     <Image
                         src="/sam-body-logo.png"
                         alt="Sam"
                         width={56}
                         height={56}
-                        className="object-contain"
+                        className="object-contain shrink-0"
                     />
-                    <h1 className="text-pretty text-center font-heading font-semibold text-[29px] text-foreground tracking-tighter sm:text-[32px] md:text-[46px]">
+                    <h1 className="text-pretty text-center font-heading font-semibold text-[24px] text-foreground tracking-tighter sm:text-[32px] md:text-[46px]">
                         {getUserFirstName()
                             ? `${getTimeBasedGreeting()}, ${getUserFirstName()}`
                             : "How can I help you today?"}
                     </h1>
                 </div>
+            ) : messages.length === 0 && isUploadingPolicy ? (
+                <div className="flex flex-col items-center justify-center gap-4 max-w-2xl w-full mx-auto">
+                    <Image
+                        src="/sam-body-logo.png"
+                        alt="Sam"
+                        width={64}
+                        height={64}
+                        className="object-contain"
+                    />
+                    <div className="flex flex-col items-center gap-2">
+                        <p className="text-lg font-medium text-foreground font-[family-name:var(--font-work-sans)]">
+                            Analyzing your policy document...
+                        </p>
+                        <p className="text-sm text-muted-foreground font-[family-name:var(--font-work-sans)]">
+                            This may take a moment
+                        </p>
+                        <div className="flex gap-1 mt-2">
+                            <span className="animate-bounce text-xl text-[#de5e48]" style={{ animationDelay: "0ms" }}>●</span>
+                            <span className="animate-bounce text-xl text-[#de5e48]" style={{ animationDelay: "150ms" }}>●</span>
+                            <span className="animate-bounce text-xl text-[#de5e48]" style={{ animationDelay: "300ms" }}>●</span>
+                        </div>
+                    </div>
+                </div>
             ) : (
-                <div className="flex-1 overflow-y-auto pb-4 space-y-4 max-w-2xl w-full mx-auto scrollbar-hide">
+                <div className="flex-1 overflow-y-auto pb-4 space-y-4 max-w-2xl w-full mx-auto scrollbar-hide px-2 sm:px-0">
                     {messages.map((message) => {
                         const showUploadButton = hasUploadMarker(message.content);
                         const displayContent = showUploadButton ? removeUploadMarker(message.content) : message.content;
@@ -579,7 +600,7 @@ export default function ChatWidget() {
                             <div
                                 key={message.id}
                                 className={cn(
-                                    "flex items-center gap-3 px-4 py-2 rounded-lg w-fit max-w-[80%]",
+                                    "flex items-start gap-2 sm:gap-3 px-3 sm:px-4 py-2 rounded-lg w-fit max-w-[90%] sm:max-w-[80%]",
                                     message.role === "user"
                                         ? "bg-[#de5e48]/10 ml-auto"
                                         : "bg-muted mr-auto"
@@ -597,7 +618,51 @@ export default function ChatWidget() {
                                     </div>
                                 )}
                                 <div className="flex flex-col gap-2">
-                                    <p className="text-base whitespace-pre-wrap font-[family-name:var(--font-work-sans)]">{displayContent}</p>
+                                    {message.attachedPolicy && (
+                                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-[family-name:var(--font-work-sans)]">
+                                            <FontAwesomeIcon icon={faFileLines} className="size-3 text-[#de5e48]" />
+                                            <span>Using {getPolicyDisplayName(message.attachedPolicy.policyType)}</span>
+                                        </div>
+                                    )}
+                                    {message.role === "assistant" ? (
+                                        <div className="text-base font-[family-name:var(--font-work-sans)] prose prose-sm max-w-none">
+                                            <ReactMarkdown
+                                                components={{
+                                                    h1: ({ children }) => (
+                                                        <h1 className="text-xl font-heading font-bold mt-4 mb-2 first:mt-0">{children}</h1>
+                                                    ),
+                                                    h2: ({ children }) => (
+                                                        <h2 className="text-lg font-heading font-bold mt-3 mb-2 first:mt-0">{children}</h2>
+                                                    ),
+                                                    h3: ({ children }) => (
+                                                        <h3 className="text-base font-heading font-bold mt-2 mb-1 first:mt-0">{children}</h3>
+                                                    ),
+                                                    h4: ({ children }) => (
+                                                        <h4 className="text-base font-heading font-bold mt-2 mb-1 first:mt-0">{children}</h4>
+                                                    ),
+                                                    strong: ({ children }) => (
+                                                        <strong className="font-bold">{children}</strong>
+                                                    ),
+                                                    p: ({ children }) => (
+                                                        <p className="mb-2 last:mb-0">{children}</p>
+                                                    ),
+                                                    ul: ({ children }) => (
+                                                        <ul className="list-disc pl-4 mb-2">{children}</ul>
+                                                    ),
+                                                    ol: ({ children }) => (
+                                                        <ol className="list-decimal pl-4 mb-2">{children}</ol>
+                                                    ),
+                                                    li: ({ children }) => (
+                                                        <li className="mb-1">{children}</li>
+                                                    ),
+                                                }}
+                                            >
+                                                {displayContent}
+                                            </ReactMarkdown>
+                                        </div>
+                                    ) : (
+                                        <p className="text-base whitespace-pre-wrap font-[family-name:var(--font-work-sans)]">{displayContent}</p>
+                                    )}
                                     {showUploadButton && (
                                         <Button
                                             onClick={() => setShowUploadModal(true)}
@@ -622,7 +687,7 @@ export default function ChatWidget() {
                         );
                     })}
                     {isLoading && (
-                        <div className="flex items-center gap-3 px-4 py-2 rounded-lg bg-muted mr-auto w-fit max-w-[80%]">
+                        <div className="flex items-start gap-2 sm:gap-3 px-3 sm:px-4 py-2 rounded-lg bg-muted mr-auto w-fit max-w-[90%] sm:max-w-[80%]">
                             <div className="shrink-0">
                                 <Image
                                     src="/sam-head-logo.png"
@@ -659,7 +724,7 @@ export default function ChatWidget() {
             )}
 
             <div className={cn(
-                "relative z-10 flex flex-col w-full mx-auto max-w-2xl content-center",
+                "relative z-10 flex flex-col w-full mx-auto max-w-2xl content-center px-2 sm:px-0",
                 messages.length > 0 && "mt-auto"
             )}>
                 <form
@@ -706,9 +771,31 @@ export default function ChatWidget() {
                             ))}
                         </div>
                     )}
+                    {selectedPolicy && (
+                        <div className="flex items-center gap-2 mb-2 px-2">
+                            <Badge
+                                variant="secondary"
+                                className="group relative h-7 cursor-pointer overflow-hidden text-xs transition-colors hover:bg-[#de5e48]/20 bg-[#de5e48]/10 border-[#de5e48]/20 pr-7 font-[family-name:var(--font-work-sans)]"
+                            >
+                                <span className="flex h-full items-center gap-1.5 overflow-hidden font-normal">
+                                    <FontAwesomeIcon icon={faFileLines} className="text-[#de5e48] size-3" />
+                                    <span className="text-foreground">
+                                        Using {getPolicyDisplayName(selectedPolicy.policyType)}
+                                    </span>
+                                </span>
+                                <button
+                                    className="absolute right-1.5 z-10 rounded-sm p-0.5 text-muted-foreground hover:text-foreground transition-colors"
+                                    onClick={() => setSelectedPolicy(null)}
+                                    type="button"
+                                >
+                                    <FontAwesomeIcon icon={faXmark} className="size-3" />
+                                </button>
+                            </Badge>
+                        </div>
+                    )}
                     <Textarea
                         ref={textareaRef}
-                        className="max-h-50 min-h-14 resize-none rounded-none border-none bg-transparent! p-0 pl-2 pt-1 text-base shadow-none focus-visible:border-transparent focus-visible:ring-0 font-[family-name:var(--font-work-sans)] placeholder:text-base"
+                        className="max-h-50 min-h-14 resize-none rounded-none border-none bg-transparent! p-0 pl-2 pt-1 text-base md:text-base shadow-none focus-visible:border-transparent focus-visible:ring-0 font-[family-name:var(--font-work-sans)] placeholder:text-base"
                         onChange={handleTextareaChange}
                         onKeyDown={handleKeyDown}
                         placeholder="What can I help you with?"
@@ -726,152 +813,164 @@ export default function ChatWidget() {
                             />
 
                             <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button
-                                        className="ml-[-2px] h-7 w-7 rounded-md hover:bg-[#333333]/5 transition-colors"
-                                        size="icon"
-                                        type="button"
-                                        variant="ghost"
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button
+                                                className="ml-[-2px] h-7 w-7 rounded-md hover:bg-[#333333]/5 transition-colors"
+                                                size="icon"
+                                                type="button"
+                                                variant="ghost"
+                                            >
+                                                <FontAwesomeIcon icon={faPlus} className="text-[#de5e48] size-4" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                    </TooltipTrigger>
+                                    <TooltipContent
+                                        side="top"
+                                        sideOffset={4}
+                                        className="bg-[#333333] text-[#f7f6f3] font-[family-name:var(--font-work-sans)]"
                                     >
-                                        <FontAwesomeIcon icon={faPlus} className="text-[#de5e48] size-4" />
-                                    </Button>
-                                </DropdownMenuTrigger>
+                                        Add
+                                    </TooltipContent>
+                                </Tooltip>
                                 <DropdownMenuContent
                                     align="start"
-                                    className="max-w-xs rounded-2xl p-1.5 border-[#333333]/10 shadow-lg bg-[hsl(0_0%_98%)] font-[family-name:var(--font-work-sans)]"
+                                    className="rounded-2xl p-1.5 border-[#333333]/10 shadow-lg bg-[hsl(0_0%_98%)] font-[family-name:var(--font-work-sans)]"
                                 >
-                                    <DropdownMenuGroup className="space-y-1">
-                                        <DropdownMenuItem
-                                            className="rounded-lg text-xs hover:bg-[#333333]/5 focus:bg-[#333333]/5 cursor-pointer"
-                                            onClick={() => setShowUploadModal(true)}
-                                        >
-                                            <div className="flex items-center gap-2">
-                                                <FontAwesomeIcon icon={faUpload} className="text-[#de5e48] size-4" />
-                                                <span>Upload Policy Document</span>
-                                            </div>
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem
-                                            className="rounded-lg text-xs hover:bg-[#333333]/5 focus:bg-[#333333]/5 cursor-pointer"
-                                            onClick={() => fileInputRef.current?.click()}
-                                        >
-                                            <div className="flex items-center gap-2">
-                                                <FontAwesomeIcon icon={faPaperclip} className="text-[#de5e48] size-4" />
-                                                <span>Attach Files</span>
-                                            </div>
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem
-                                            className="rounded-lg text-xs hover:bg-[#333333]/5 focus:bg-[#333333]/5 cursor-pointer"
-                                            onClick={handlePasteFromClipboard}
-                                        >
-                                            <div className="flex items-center gap-2">
-                                                <FontAwesomeIcon icon={faClipboard} className="text-[#de5e48] size-4" />
-                                                <span>Paste from Clipboard</span>
-                                            </div>
-                                        </DropdownMenuItem>
-                                    </DropdownMenuGroup>
+                                    <DropdownMenuItem
+                                        className="cursor-pointer hover:bg-[#333333]/5 focus:bg-[#333333]/5 rounded-lg"
+                                        onClick={() => setShowUploadModal(true)}
+                                    >
+                                        <FontAwesomeIcon icon={faUpload} className="text-[#de5e48] size-3 mr-2" />
+                                        Upload Policy Document
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                        className="cursor-pointer hover:bg-[#333333]/5 focus:bg-[#333333]/5 rounded-lg"
+                                        onClick={() => fileInputRef.current?.click()}
+                                    >
+                                        <FontAwesomeIcon icon={faPaperclip} className="text-[#de5e48] size-3 mr-2" />
+                                        Attach Files
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                        className="cursor-pointer hover:bg-[#333333]/5 focus:bg-[#333333]/5 rounded-lg"
+                                        onClick={handlePasteFromClipboard}
+                                    >
+                                        <FontAwesomeIcon icon={faClipboard} className="text-[#de5e48] size-3 mr-2" />
+                                        Paste from Clipboard
+                                    </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
 
                             <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button
-                                        className={cn(
-                                            "h-7 rounded-md hover:bg-[#333333]/5 transition-colors px-2 gap-1.5",
-                                            selectedPolicy && "bg-[#de5e48]/10"
-                                        )}
-                                        size="sm"
-                                        type="button"
-                                        variant="ghost"
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button
+                                                className={cn(
+                                                    "h-7 w-7 rounded-md hover:bg-[#333333]/5 transition-colors",
+                                                    selectedPolicy && "bg-[#de5e48]/10"
+                                                )}
+                                                size="icon"
+                                                type="button"
+                                                variant="ghost"
+                                            >
+                                                <FontAwesomeIcon icon={faFileLines} className="text-[#de5e48] size-4" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                    </TooltipTrigger>
+                                    <TooltipContent
+                                        side="top"
+                                        sideOffset={4}
+                                        className="bg-[#333333] text-[#f7f6f3] font-[family-name:var(--font-work-sans)]"
                                     >
-                                        <FontAwesomeIcon icon={faFileLines} className="text-[#de5e48] size-4" />
-                                        {selectedPolicy ? (
-                                            <span className="text-xs font-medium truncate max-w-[100px]">
-                                                {getPolicyDisplayName(selectedPolicy.policyType)}
-                                            </span>
-                                        ) : (
-                                            <span className="text-xs text-muted-foreground hidden sm:inline">
-                                                Select Policy
-                                            </span>
-                                        )}
-                                    </Button>
-                                </DropdownMenuTrigger>
+                                        {selectedPolicy
+                                            ? getPolicyDisplayName(selectedPolicy.policyType)
+                                            : "Select Policy"}
+                                    </TooltipContent>
+                                </Tooltip>
                                 <DropdownMenuContent
                                     align="start"
-                                    className="w-56 rounded-2xl p-2 border-[#333333]/10 shadow-lg bg-[hsl(0_0%_98%)] font-[family-name:var(--font-work-sans)]"
+                                    className="w-56 rounded-2xl p-1.5 border-[#333333]/10 shadow-lg bg-[hsl(0_0%_98%)] font-[family-name:var(--font-work-sans)]"
                                 >
-                                    <div className="px-2 py-1.5 mb-1">
-                                        <p className="text-xs font-medium text-muted-foreground">
-                                            Select a policy for context
-                                        </p>
+                                    <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
+                                        Select a policy for context
                                     </div>
-                                    <DropdownMenuGroup className="space-y-1">
-                                        {isLoadingPolicies ? (
-                                            <div className="px-2 py-3 text-center">
-                                                <span className="text-xs text-muted-foreground">Loading policies...</span>
-                                            </div>
-                                        ) : userPolicies.length === 0 ? (
-                                            <div className="px-2 py-3 text-center">
-                                                <p className="text-xs text-muted-foreground mb-2">No policies uploaded yet</p>
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    className="text-xs h-7"
-                                                    onClick={() => setShowUploadModal(true)}
+                                    {isLoadingPolicies ? (
+                                        <div className="px-2 py-3 text-center">
+                                            <span className="text-xs text-muted-foreground">Loading policies...</span>
+                                        </div>
+                                    ) : userPolicies.length === 0 ? (
+                                        <div className="px-2 py-3 text-center">
+                                            <p className="text-xs text-muted-foreground mb-2">No policies uploaded yet</p>
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                className="text-xs h-7"
+                                                onClick={() => setShowUploadModal(true)}
+                                            >
+                                                <FontAwesomeIcon icon={faUpload} className="mr-1.5 size-3" />
+                                                Upload Policy
+                                            </Button>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            {selectedPolicy && (
+                                                <DropdownMenuItem
+                                                    className="cursor-pointer hover:bg-[#333333]/5 focus:bg-[#333333]/5 rounded-lg text-muted-foreground"
+                                                    onClick={() => setSelectedPolicy(null)}
                                                 >
-                                                    <FontAwesomeIcon icon={faUpload} className="mr-1.5 size-3" />
-                                                    Upload Policy
-                                                </Button>
-                                            </div>
-                                        ) : (
-                                            <>
-                                                {selectedPolicy && (
-                                                    <DropdownMenuItem
-                                                        className="rounded-lg text-xs hover:bg-[#333333]/5 focus:bg-[#333333]/5 cursor-pointer"
-                                                        onClick={() => setSelectedPolicy(null)}
-                                                    >
-                                                        <div className="flex items-center gap-2 text-muted-foreground">
-                                                            <FontAwesomeIcon icon={faXmark} className="size-3" />
-                                                            <span>Clear selection</span>
+                                                    <FontAwesomeIcon icon={faXmark} className="size-3 mr-2" />
+                                                    Clear selection
+                                                </DropdownMenuItem>
+                                            )}
+                                            {userPolicies.map((policy) => (
+                                                <DropdownMenuItem
+                                                    key={policy.policyType}
+                                                    className={cn(
+                                                        "cursor-pointer hover:bg-[#333333]/5 focus:bg-[#333333]/5 rounded-lg",
+                                                        selectedPolicy?.policyType === policy.policyType && "bg-[#de5e48]/10"
+                                                    )}
+                                                    onClick={() => setSelectedPolicy(policy)}
+                                                >
+                                                    <div className="flex flex-col gap-0.5 w-full">
+                                                        <div className="flex items-center">
+                                                            <FontAwesomeIcon icon={faFileLines} className="text-[#de5e48] size-3 mr-2" />
+                                                            <span className="font-medium">{getPolicyDisplayName(policy.policyType)}</span>
                                                         </div>
-                                                    </DropdownMenuItem>
-                                                )}
-                                                {userPolicies.map((policy) => (
-                                                    <DropdownMenuItem
-                                                        key={policy.policyType}
-                                                        className={cn(
-                                                            "rounded-lg text-xs hover:bg-[#333333]/5 focus:bg-[#333333]/5 cursor-pointer",
-                                                            selectedPolicy?.policyType === policy.policyType && "bg-[#de5e48]/10"
-                                                        )}
-                                                        onClick={() => setSelectedPolicy(policy)}
-                                                    >
-                                                        <div className="flex flex-col gap-0.5 w-full">
-                                                            <div className="flex items-center gap-2">
-                                                                <FontAwesomeIcon icon={faFileLines} className="text-[#de5e48] size-3" />
-                                                                <span className="font-medium">{getPolicyDisplayName(policy.policyType)}</span>
-                                                            </div>
-                                                            <span className="text-[10px] text-muted-foreground pl-5 truncate">
-                                                                {policy.carrier}
-                                                            </span>
-                                                        </div>
-                                                    </DropdownMenuItem>
-                                                ))}
-                                            </>
-                                        )}
-                                    </DropdownMenuGroup>
+                                                        <span className="text-[10px] text-muted-foreground pl-5 truncate">
+                                                            {policy.carrier}
+                                                        </span>
+                                                    </div>
+                                                </DropdownMenuItem>
+                                            ))}
+                                        </>
+                                    )}
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         </div>
 
                         <div className="ml-auto flex items-center gap-0.5 sm:gap-1">
-                            <Button
-                                className="h-7 w-7 rounded-md bg-[#de5e48] hover:bg-[#de5e48]/90 disabled:opacity-50"
-                                disabled={!prompt.trim() || isLoading}
-                                size="icon"
-                                type="submit"
-                                variant="default"
-                            >
-                                <FontAwesomeIcon icon={faArrowUp} className="text-[#f7f6f3] size-4" />
-                            </Button>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        className="h-7 w-7 rounded-md bg-[#de5e48] hover:bg-[#de5e48]/90 disabled:opacity-50"
+                                        disabled={!prompt.trim() || isLoading}
+                                        size="icon"
+                                        type="submit"
+                                        variant="default"
+                                    >
+                                        <FontAwesomeIcon icon={faArrowUp} className="text-[#f7f6f3] size-4" />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent
+                                    side="top"
+                                    sideOffset={4}
+                                    className="bg-[#333333] text-[#f7f6f3] font-[family-name:var(--font-work-sans)]"
+                                >
+                                    Send
+                                </TooltipContent>
+                            </Tooltip>
                         </div>
                     </div>
 
@@ -901,11 +1000,11 @@ export default function ChatWidget() {
             {/* Policy Upload Modal */}
             {showUploadModal && (
                 <div
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
                     onClick={() => setShowUploadModal(false)}
                 >
                     <div
-                        className="relative w-full max-w-lg bg-white rounded-lg shadow-lg p-6"
+                        className="relative w-full max-w-lg bg-white rounded-lg shadow-lg p-4 sm:p-6 max-h-[90vh] overflow-y-auto"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <button

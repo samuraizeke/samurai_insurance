@@ -183,26 +183,45 @@ function Sidebar({
 
   if (isMobile) {
     return (
-      <Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
-        <SheetContent
-          data-sidebar="sidebar"
-          data-slot="sidebar"
-          data-mobile="true"
-          className="bg-sidebar text-sidebar-foreground w-(--sidebar-width) p-0 [&>button]:hidden"
+      <div
+        className="group peer text-sidebar-foreground"
+        data-state={openMobile ? "expanded" : "collapsed"}
+        data-collapsible="offcanvas"
+        data-variant={variant}
+        data-side={side}
+        data-slot="sidebar"
+        data-mobile="true"
+      >
+        <div
+          data-slot="sidebar-container"
+          className={cn(
+            "fixed inset-y-0 z-10 h-svh w-(--sidebar-width) transition-[left,right,width] duration-200 ease-linear flex",
+            side === "left"
+              ? openMobile ? "left-0" : "left-[calc(var(--sidebar-width)*-1)]"
+              : openMobile ? "right-0" : "right-[calc(var(--sidebar-width)*-1)]",
+            variant === "floating" || variant === "inset"
+              ? "p-2"
+              : "group-data-[side=left]:border-r group-data-[side=right]:border-l",
+            className
+          )}
           style={
             {
               "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
             } as React.CSSProperties
           }
-          side={side}
+          {...props}
         >
-          <SheetHeader className="sr-only">
-            <SheetTitle>Sidebar</SheetTitle>
-            <SheetDescription>Displays the mobile sidebar.</SheetDescription>
-          </SheetHeader>
-          <div className="flex h-full w-full flex-col">{children}</div>
-        </SheetContent>
-      </Sheet>
+          <div
+            data-sidebar="sidebar"
+            data-slot="sidebar-inner"
+            className={cn(
+              "bg-sidebar group-data-[variant=floating]:border-sidebar-border flex h-full w-full flex-col group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:shadow-sm"
+            )}
+          >
+            {children}
+          </div>
+        </div>
+      </div>
     )
   }
 
@@ -270,21 +289,32 @@ function SidebarTrigger({
   const { toggleSidebar } = useSidebar()
 
   return (
-    <Button
-      data-sidebar="trigger"
-      data-slot="sidebar-trigger"
-      variant="ghost"
-      size="icon"
-      className={cn("size-7 hover:bg-[#333333]/5 transition-colors", className)}
-      onClick={(event) => {
-        onClick?.(event)
-        toggleSidebar()
-      }}
-      {...props}
-    >
-      <FontAwesomeIcon icon={faBars} />
-      <span className="sr-only">Toggle Sidebar</span>
-    </Button>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          data-sidebar="trigger"
+          data-slot="sidebar-trigger"
+          variant="ghost"
+          size="icon"
+          className={cn("size-7 hover:bg-[#333333]/5 transition-colors", className)}
+          onClick={(event) => {
+            onClick?.(event)
+            toggleSidebar()
+          }}
+          {...props}
+        >
+          <FontAwesomeIcon icon={faBars} />
+          <span className="sr-only">Toggle Sidebar</span>
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent
+        side="bottom"
+        sideOffset={4}
+        className="bg-[#333333] text-[#f7f6f3] font-[family-name:var(--font-work-sans)]"
+      >
+        Toggle Sidebar
+      </TooltipContent>
+    </Tooltip>
   )
 }
 
@@ -314,14 +344,23 @@ function SidebarRail({ className, ...props }: React.ComponentProps<"button">) {
 }
 
 function SidebarInset({ className, ...props }: React.ComponentProps<"main">) {
+  const { openMobile, isMobile } = useSidebar()
+
   return (
     <main
       data-slot="sidebar-inset"
       className={cn(
-        "bg-background relative flex w-full flex-1 flex-col",
+        "bg-background relative flex w-full flex-1 flex-col transition-transform duration-200 ease-linear",
         "md:peer-data-[variant=inset]:m-2 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:rounded-xl md:peer-data-[variant=inset]:shadow-sm md:peer-data-[variant=inset]:peer-data-[state=collapsed]:ml-2",
         className
       )}
+      style={
+        isMobile
+          ? {
+              transform: openMobile ? `translateX(${SIDEBAR_WIDTH_MOBILE})` : "translateX(0)",
+            }
+          : undefined
+      }
       {...props}
     />
   )
@@ -548,6 +587,7 @@ function SidebarMenuButton({
         side="right"
         align="center"
         hidden={state !== "collapsed" || isMobile}
+        className="bg-[#333333] text-[#f7f6f3] font-[family-name:var(--font-work-sans)]"
         {...tooltip}
       />
     </Tooltip>

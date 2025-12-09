@@ -83,8 +83,8 @@ export function detectPolicyType(analysisText: string): PolicyType {
  * Extracts the carrier name from the analysis text
  */
 function extractCarrier(analysisText: string): string {
-    // Look for common patterns like "Carrier: XYZ" or "Insurance Company: XYZ"
-    const carrierMatch = analysisText.match(/(?:carrier|insurance company|insurer|underwritten by)[:\s]+([A-Za-z0-9\s&.,']+?)(?:\n|$|,|\.|Coverage)/i);
+    // Look for common patterns like "**Carrier**: XYZ" or "Carrier: XYZ"
+    const carrierMatch = analysisText.match(/\*{0,2}(?:carrier|insurance company|insurer|underwritten by)\*{0,2}[:\s]+([A-Za-z0-9\s&.,'()-]+?)(?:\n|$|,(?!\s*Inc)|\.(?!\s*[A-Z])|Coverage)/i);
     if (carrierMatch) {
         return carrierMatch[1].trim();
     }
@@ -324,13 +324,15 @@ ${extractedText}
 
 Please provide:
 1. **Policy Type**: What kind of insurance is this? (auto, home, renters, umbrella, etc.)
-2. **Carrier**: Who is the insurance company?
+2. **Carrier**: [Insurance company name only, e.g., "State Farm", "Allstate", "Progressive"]
 3. **Coverage Summary**: Key coverages included
 4. **Limits**: Important coverage limits (liability, property damage, etc.)
 5. **Deductibles**: Any deductibles mentioned
 6. **Premium**: Monthly/annual premium if shown
 7. **Effective Dates**: Policy period if mentioned
 8. **Notable Items**: Any special endorsements, exclusions, or concerns
+
+IMPORTANT: For the Carrier field (#2), output ONLY the insurance company name after the colon (e.g., "2. **Carrier**: State Farm"). Do not include extra text like "The carrier is..." - just the company name.
 
 If any information is unclear or missing, note that. Keep your response concise but comprehensive.`;
 

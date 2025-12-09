@@ -25,6 +25,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Dialog,
   DialogContent,
@@ -58,13 +59,20 @@ function getSessionPreview(session: { summary?: string; conversation_context?: s
       : session.first_message;
   }
   // Final fallback
-  return "New conversation";
+  return "New chat";
 }
 
 export function DashboardSidebar() {
-  const { state } = useSidebar();
+  const { state, isMobile, setOpenMobile } = useSidebar();
   const isCollapsed = state === "collapsed";
   const { user } = useAuth();
+
+  // Close mobile sidebar after navigation
+  const closeMobileSidebar = () => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
   const {
     hasMessages,
     triggerNewChat,
@@ -100,7 +108,7 @@ export function DashboardSidebar() {
       setDeleteDialogOpen(false);
       setSessionToDelete(null);
     } else {
-      alert("Failed to delete conversation. Please try again.");
+      alert("Failed to delete chat. Please try again.");
     }
   };
 
@@ -120,7 +128,7 @@ export function DashboardSidebar() {
       setSessionToRename(null);
       setNewSessionName("");
     } else {
-      alert("Failed to rename conversation. Please try again.");
+      alert("Failed to rename chat. Please try again.");
     }
   };
 
@@ -145,7 +153,12 @@ export function DashboardSidebar() {
           <Logo collapsed={isCollapsed} />
         </div>
 
-        {!isCollapsed && (
+        {/* Mobile: always show trigger in sidebar header when open */}
+        {isMobile && (
+          <SidebarTrigger className="size-10 text-[#de5e48] hover:text-[#de5e48]/80 hover:bg-transparent [&_svg]:size-10" />
+        )}
+        {/* Desktop: show trigger when expanded */}
+        {!isMobile && !isCollapsed && (
           <motion.div
             key="header-expanded"
             className="flex items-center gap-2"
@@ -163,7 +176,7 @@ export function DashboardSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton
               tooltip="New Chat"
-              onClick={hasMessages ? triggerNewChat : undefined}
+              onClick={hasMessages ? () => { triggerNewChat(); closeMobileSidebar(); } : undefined}
               className={cn(
                 "flex items-center rounded-lg px-2 transition-colors text-muted-foreground",
                 hasMessages ? "hover:bg-[#333333]/5 hover:text-foreground cursor-pointer" : "cursor-default",
@@ -193,7 +206,7 @@ export function DashboardSidebar() {
                 isCollapsed && "justify-center"
               )}
             >
-              <Link href="/chat/history">
+              <Link href="/chat/history" onClick={closeMobileSidebar}>
                 <span className="text-[#de5e48]">
                   <FontAwesomeIcon icon={faHistory} className="size-4" />
                 </span>
@@ -225,7 +238,7 @@ export function DashboardSidebar() {
                       <div className="flex items-center w-full rounded-lg hover:bg-[#333333]/5 transition-colors">
                         <SidebarMenuButton
                           tooltip={getSessionPreview(session)}
-                          onClick={() => selectSession(session.id)}
+                          onClick={() => { selectSession(session.id); closeMobileSidebar(); }}
                           className={cn(
                             "flex-1 flex items-center rounded-lg px-2 py-1.5 transition-colors text-muted-foreground hover:text-foreground",
                             currentSessionId === session.id && "bg-[#333333]/10 text-foreground"
@@ -236,14 +249,25 @@ export function DashboardSidebar() {
                           </p>
                         </SidebarMenuButton>
                         <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <button
-                              className="opacity-0 group-hover/item:opacity-100 data-[state=open]:opacity-100 p-1 text-muted-foreground hover:text-foreground transition-all rounded-md hover:bg-sidebar-muted"
-                              onClick={(e) => e.stopPropagation()}
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <DropdownMenuTrigger asChild>
+                                <button
+                                  className="opacity-100 md:opacity-0 md:group-hover/item:opacity-100 data-[state=open]:opacity-100 p-1 text-muted-foreground hover:text-foreground transition-all rounded-md hover:bg-sidebar-muted"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <FontAwesomeIcon icon={faEllipsisVertical} className="size-3" />
+                                </button>
+                              </DropdownMenuTrigger>
+                            </TooltipTrigger>
+                            <TooltipContent
+                              side="top"
+                              sideOffset={4}
+                              className="bg-[#333333] text-[#f7f6f3] font-[family-name:var(--font-work-sans)]"
                             >
-                              <FontAwesomeIcon icon={faEllipsisVertical} className="size-3" />
-                            </button>
-                          </DropdownMenuTrigger>
+                              More options
+                            </TooltipContent>
+                          </Tooltip>
                           <DropdownMenuContent align="end" side="bottom" className="rounded-2xl p-1.5 border-[#333333]/10 shadow-lg bg-[hsl(0_0%_98%)] font-[family-name:var(--font-work-sans)]">
                             <DropdownMenuItem
                               onClick={(e) => handleOpenRenameDialog(e, session.id, getSessionPreview(session))}
@@ -279,7 +303,7 @@ export function DashboardSidebar() {
       <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
         <DialogContent className="sm:max-w-lg rounded-2xl font-[family-name:var(--font-work-sans)] p-8">
           <DialogHeader className="pb-4">
-            <DialogTitle className="font-[family-name:var(--font-alte-haas)] text-xl">Rename conversation</DialogTitle>
+            <DialogTitle className="font-[family-name:var(--font-alte-haas)] text-xl">Rename chat</DialogTitle>
           </DialogHeader>
           <div className="py-2">
             <input
@@ -318,8 +342,8 @@ export function DashboardSidebar() {
       <ConfirmDialog
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
-        title="Delete conversation"
-        description={`Are you sure you want to delete "${sessionToDelete?.title || "this conversation"}"? This action will remove it from your history.`}
+        title="Delete chat"
+        description={`Are you sure you want to delete "${sessionToDelete?.title || "this chat"}"? This action will remove it from your history.`}
         confirmLabel="Delete"
         cancelLabel="Cancel"
         onConfirm={handleConfirmDelete}

@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { SidebarInset, SidebarProvider, SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
+import Image from "next/image";
 import { DashboardSidebar } from "@/components/sidebar-02/app-sidebar";
 import { ChatProvider, useChatContext } from "@/app/context/ChatContext";
 import { useAuth } from "@/lib/auth-context";
@@ -16,6 +17,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
     Dialog,
     DialogContent,
@@ -59,7 +61,7 @@ function getSessionTitle(session: ChatSession): string {
             ? session.first_message.substring(0, 40) + "..."
             : session.first_message;
     }
-    return "New conversation";
+    return "New chat";
 }
 
 function ChatHistoryContent() {
@@ -135,7 +137,7 @@ function ChatHistoryContent() {
             setDeleteDialogOpen(false);
             setSessionToDelete(null);
         } else {
-            alert("Failed to delete conversation. Please try again.");
+            alert("Failed to delete chat. Please try again.");
         }
     };
 
@@ -158,7 +160,7 @@ function ChatHistoryContent() {
             setSessionToRename(null);
             setNewSessionName("");
         } else {
-            alert("Failed to rename conversation. Please try again.");
+            alert("Failed to rename chat. Please try again.");
         }
     };
 
@@ -184,7 +186,7 @@ function ChatHistoryContent() {
     return (
         <div className="flex flex-col h-full w-full max-w-3xl mx-auto bg-background">
             {/* Header */}
-            <div className="flex items-center justify-between px-4 pt-12 pb-4">
+            <div className="flex items-center justify-between px-4 pt-4 md:pt-12 pb-4">
                 <h1 className="text-3xl font-bold font-[family-name:var(--font-alte-haas)] text-[#333333]">
                     Chat History
                 </h1>
@@ -204,7 +206,7 @@ function ChatHistoryContent() {
                         className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground"
                     />
                     <Input
-                        placeholder="Search conversations..."
+                        placeholder="Search chats..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="pl-10 text-base font-[family-name:var(--font-work-sans)] border-[#333333]/10 h-11 placeholder:text-base bg-[hsl(0_0%_98%)]"
@@ -215,7 +217,7 @@ function ChatHistoryContent() {
             {/* Chat Count */}
             <div className="px-6 py-4">
                 <p className="text-sm text-muted-foreground font-[family-name:var(--font-work-sans)]">
-                    {filteredSessions.length} {filteredSessions.length === 1 ? "conversation" : "conversations"} with Sam
+                    {filteredSessions.length} {filteredSessions.length === 1 ? "chat" : "chats"} with Sam
                     {searchQuery && ` matching "${searchQuery}"`}
                 </p>
             </div>
@@ -229,17 +231,17 @@ function ChatHistoryContent() {
                             <span className="animate-bounce text-lg text-[#de5e48]" style={{ animationDelay: "150ms" }}>●</span>
                             <span className="animate-bounce text-lg text-[#de5e48]" style={{ animationDelay: "300ms" }}>●</span>
                         </div>
-                        <p className="text-base text-muted-foreground">Loading conversations...</p>
+                        <p className="text-base text-muted-foreground">Loading chats...</p>
                     </div>
                 ) : filteredSessions.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-40 gap-2 p-4">
                         <FontAwesomeIcon icon={faMessage} className="size-8 text-muted-foreground/50" />
                         <p className="text-base text-muted-foreground text-center font-[family-name:var(--font-work-sans)]">
-                            {searchQuery ? "No conversations match your search" : "No conversations yet"}
+                            {searchQuery ? "No chats match your search" : "No chats yet"}
                         </p>
                         {!searchQuery && (
                             <Button asChild size="sm" className="mt-2 bg-[#de5e48] hover:bg-[#de5e48]/90">
-                                <Link href="/chat">Start a conversation</Link>
+                                <Link href="/chat">Start a chat</Link>
                             </Button>
                         )}
                     </div>
@@ -262,14 +264,25 @@ function ChatHistoryContent() {
                                     </span>
                                 </button>
                                 <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <button
-                                            className="opacity-0 group-hover:opacity-100 data-[state=open]:opacity-100 p-2 text-muted-foreground hover:text-foreground transition-all rounded-md hover:bg-muted"
-                                            onClick={(e) => e.stopPropagation()}
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <DropdownMenuTrigger asChild>
+                                                <button
+                                                    className="opacity-100 md:opacity-0 md:group-hover:opacity-100 data-[state=open]:opacity-100 p-2 text-muted-foreground hover:text-foreground transition-all rounded-md hover:bg-muted"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                >
+                                                    <FontAwesomeIcon icon={faEllipsisVertical} className="size-4" />
+                                                </button>
+                                            </DropdownMenuTrigger>
+                                        </TooltipTrigger>
+                                        <TooltipContent
+                                            side="top"
+                                            sideOffset={4}
+                                            className="bg-[#333333] text-[#f7f6f3] font-[family-name:var(--font-work-sans)]"
                                         >
-                                            <FontAwesomeIcon icon={faEllipsisVertical} className="size-4" />
-                                        </button>
-                                    </DropdownMenuTrigger>
+                                            More options
+                                        </TooltipContent>
+                                    </Tooltip>
                                     <DropdownMenuContent align="end" side="bottom" className="rounded-2xl p-1.5 border-[#333333]/10 shadow-lg bg-[hsl(0_0%_98%)] font-[family-name:var(--font-work-sans)]">
                                         <DropdownMenuItem
                                             onClick={(e) => handleOpenRenameDialog(e, session.id, getSessionTitle(session))}
@@ -297,7 +310,7 @@ function ChatHistoryContent() {
             <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
                 <DialogContent className="sm:max-w-lg rounded-2xl font-[family-name:var(--font-work-sans)] p-8">
                     <DialogHeader className="pb-4">
-                        <DialogTitle className="font-[family-name:var(--font-alte-haas)] text-xl">Rename conversation</DialogTitle>
+                        <DialogTitle className="font-[family-name:var(--font-alte-haas)] text-xl">Rename chat</DialogTitle>
                     </DialogHeader>
                     <div className="py-2">
                         <input
@@ -336,14 +349,35 @@ function ChatHistoryContent() {
             <ConfirmDialog
                 open={deleteDialogOpen}
                 onOpenChange={setDeleteDialogOpen}
-                title="Delete conversation"
-                description={`Are you sure you want to delete "${sessionToDelete?.title || "this conversation"}"? This action will remove it from your history.`}
+                title="Delete chat"
+                description={`Are you sure you want to delete "${sessionToDelete?.title || "this chat"}"? This action will remove it from your history.`}
                 confirmLabel="Delete"
                 cancelLabel="Cancel"
                 onConfirm={handleConfirmDelete}
                 variant="destructive"
             />
         </div>
+    );
+}
+
+function MobileHeader() {
+    const { openMobile } = useSidebar();
+
+    // Hide header when sidebar is open on mobile (trigger moves into sidebar)
+    if (openMobile) return null;
+
+    return (
+        <header className="flex md:hidden items-center justify-between h-14 px-4 pt-4 shrink-0">
+            <SidebarTrigger className="size-10 text-[#de5e48] hover:text-[#de5e48]/80 hover:bg-transparent [&_svg]:size-10" />
+            <Image
+                src="/wordmark-only-logo.png"
+                alt="Samurai Insurance"
+                width={180}
+                height={48}
+                className="h-12 w-auto object-contain"
+            />
+            <div className="size-10" /> {/* Spacer for centering */}
+        </header>
     );
 }
 
@@ -354,6 +388,7 @@ export default function ChatHistoryPage() {
                 <div className="relative flex h-screen w-full">
                     <DashboardSidebar />
                     <SidebarInset className="flex flex-col">
+                        <MobileHeader />
                         <ChatHistoryContent />
                     </SidebarInset>
                 </div>
