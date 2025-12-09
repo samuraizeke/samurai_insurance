@@ -23,6 +23,7 @@
         "@google-cloud/vision": "^4.3.2",
         "@supabase/supabase-js": "^2.86.0",
         "@types/cors": "^2.8.19",
+        "@types/hast": "^3.0.4",
         "cors": "^2.8.5",
         "dotenv": "^17.2.3",
         "express": "^5.2.1",
