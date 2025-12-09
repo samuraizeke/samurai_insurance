@@ -6,12 +6,19 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+const PROJECT_ID = process.env.GOOGLE_PROJECT_ID;
+
+if (!PROJECT_ID) {
+    console.error('❌ GOOGLE_PROJECT_ID environment variable is not set');
+    throw new Error('Missing GOOGLE_PROJECT_ID environment variable');
+}
+
 // Initialize Google Cloud clients
 const storage = new Storage();
 const visionClient = new vision.ImageAnnotatorClient();
 
 const vertexAI = new VertexAI({
-    project: process.env.GOOGLE_PROJECT_ID!,
+    project: PROJECT_ID,
     location: 'us-central1',
 });
 

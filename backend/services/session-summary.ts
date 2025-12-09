@@ -7,9 +7,14 @@ dotenv.config();
 
 const PROJECT_ID = process.env.GOOGLE_PROJECT_ID;
 
+if (!PROJECT_ID) {
+    console.error('❌ GOOGLE_PROJECT_ID environment variable is not set');
+    throw new Error('Missing GOOGLE_PROJECT_ID environment variable');
+}
+
 // Initialize Vertex AI with Gemini Flash for quick summaries
 const vertexAI = new VertexAI({
-    project: PROJECT_ID!,
+    project: PROJECT_ID,
     location: 'us-central1',
 });
 
