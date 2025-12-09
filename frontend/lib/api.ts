@@ -54,13 +54,8 @@ export interface StoredMessage {
     entities?: Record<string, unknown>;
 }
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
-
-// Debug: Log the backend URL on load
-if (typeof window !== 'undefined') {
-    console.log('🔧 API: BACKEND_URL =', BACKEND_URL);
-    console.log('🔧 API: ENV value =', process.env.NEXT_PUBLIC_BACKEND_URL);
-}
+// All API calls use relative paths - Next.js rewrites proxy them to the backend
+// This avoids CORS issues since the browser thinks it's talking to the same origin
 
 // Session storage keys
 const SESSION_ID_KEY = 'samurai_chat_session_id';
@@ -71,7 +66,7 @@ const SESSION_UUID_KEY = 'samurai_chat_session_uuid';
  */
 export async function createChatSession(userId: string): Promise<{ sessionId: number; sessionUuid: string } | null> {
     try {
-        const response = await fetch(`${BACKEND_URL}/api/chat-sessions`, {
+        const response = await fetch('/api/chat-sessions', {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -120,7 +115,7 @@ export function clearStoredSession(): void {
  */
 export async function getChatHistory(sessionId: number): Promise<StoredMessage[]> {
     try {
-        const response = await fetch(`${BACKEND_URL}/api/chat-sessions/${sessionId}/messages`);
+        const response = await fetch(`/api/chat-sessions/${sessionId}/messages`);
 
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -138,13 +133,10 @@ export async function getChatHistory(sessionId: number): Promise<StoredMessage[]
  * Get user's recent chat sessions
  */
 export async function getUserSessions(userId: string, limit: number = 10): Promise<ChatSession[]> {
-    const url = `${BACKEND_URL}/api/users/${userId}/chat-sessions?limit=${limit}`;
-    console.log('🔧 getUserSessions: Fetching from', url);
+    const url = `/api/users/${userId}/chat-sessions?limit=${limit}`;
 
     try {
         const response = await fetch(url);
-        console.log('🔧 getUserSessions: Response status', response.status);
-
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -152,12 +144,7 @@ export async function getUserSessions(userId: string, limit: number = 10): Promi
         const data = await response.json();
         return data.sessions || [];
     } catch (error) {
-        console.error("🔧 getUserSessions: Error details:", {
-            error,
-            message: error instanceof Error ? error.message : 'Unknown',
-            url,
-            backendUrl: BACKEND_URL
-        });
+        console.error("Error fetching user sessions:", error);
         return [];
     }
 }
@@ -167,7 +154,7 @@ export async function getUserSessions(userId: string, limit: number = 10): Promi
  */
 export async function renameSession(sessionId: number, userId: string, newName: string): Promise<boolean> {
     try {
-        const response = await fetch(`${BACKEND_URL}/api/chat-sessions/${sessionId}`, {
+        const response = await fetch(`/api/chat-sessions/${sessionId}`, {
             method: "PATCH",
             headers: {
                 "Content-Type": "application/json",
@@ -193,7 +180,7 @@ export async function renameSession(sessionId: number, userId: string, newName: 
  */
 export async function deleteSession(sessionId: number, userId: string): Promise<boolean> {
     try {
-        const response = await fetch(`${BACKEND_URL}/api/chat-sessions/${sessionId}`, {
+        const response = await fetch(`/api/chat-sessions/${sessionId}`, {
             method: "DELETE",
             headers: {
                 "Content-Type": "application/json",
@@ -224,7 +211,7 @@ export async function sendChatMessage(
     sessionId?: number
 ): Promise<string> {
     try {
-        const response = await fetch(`${BACKEND_URL}/chat`, {
+        const response = await fetch('/chat', {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -264,7 +251,7 @@ export async function uploadPolicyDocument(
             formData.append('userId', userId);
         }
 
-        const response = await fetch(`${BACKEND_URL}/api/upload-policy`, {
+        const response = await fetch('/api/upload-policy', {
             method: "POST",
             body: formData,
         });
@@ -296,27 +283,19 @@ export async function uploadPolicyDocument(
  * Get all uploaded policies for a user
  */
 export async function getUserPolicies(userId: string): Promise<UserPolicy[]> {
-    const url = `${BACKEND_URL}/api/users/${userId}/policies`;
-    console.log('🔧 getUserPolicies: Fetching from', url);
+    const url = `/api/users/${userId}/policies`;
 
     try {
         const response = await fetch(url);
-        console.log('🔧 getUserPolicies: Response status', response.status);
 
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
 
         const data = await response.json();
-        console.log('🔧 getUserPolicies: Got data', data);
         return data.policies || [];
     } catch (error) {
-        console.error("🔧 getUserPolicies: Error details:", {
-            error,
-            message: error instanceof Error ? error.message : 'Unknown',
-            url,
-            backendUrl: BACKEND_URL
-        });
+        console.error("Error fetching user policies:", error);
         return [];
     }
 }

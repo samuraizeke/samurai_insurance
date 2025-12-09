@@ -21,8 +21,8 @@ export function useAgentChat() {
         setError(null);
 
         try {
-            // 2. Call the Backend (Proxied via Next.js)
-            const res = await fetch('/api/agent/chat', {
+            // 2. Call the Backend (Proxied via Next.js rewrites)
+            const res = await fetch('/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
