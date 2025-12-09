@@ -10,17 +10,7 @@ import multer from 'multer';
 // Load environment variables
 dotenv.config();
 
-console.log('🚀 Starting Samurai Insurance Backend...');
-console.log('📋 Environment check:');
-console.log('  - PORT:', process.env.PORT || '8080 (default)');
-console.log('  - SUPABASE_URL:', process.env.SUPABASE_URL ? '✅ set' : '❌ missing');
-console.log('  - SUPABASE_SERVICE_ROLE_KEY:', process.env.SUPABASE_SERVICE_ROLE_KEY ? '✅ set' : '❌ missing');
-console.log('  - GOOGLE_PROJECT_ID:', process.env.GOOGLE_PROJECT_ID ? '✅ set' : '❌ missing');
-console.log('  - GOOGLE_CREDENTIALS_BASE64:', process.env.GOOGLE_CREDENTIALS_BASE64 ? '✅ set' : '❌ missing');
-console.log('  - GOOGLE_DATA_STORE_ID:', process.env.GOOGLE_DATA_STORE_ID ? '✅ set' : '⚠️ optional');
-
 import { supabase } from './lib/supabase';
-console.log('✅ Supabase client initialized');
 
 // Decode base64 credentials and write to temp file for Google SDK
 if (process.env.GOOGLE_CREDENTIALS_BASE64) {
@@ -28,17 +18,11 @@ if (process.env.GOOGLE_CREDENTIALS_BASE64) {
     const credentialsPath = path.join(os.tmpdir(), 'gcp-credentials.json');
     fs.writeFileSync(credentialsPath, credentials);
     process.env.GOOGLE_APPLICATION_CREDENTIALS = credentialsPath;
-    console.log('✅ Google credentials written to:', credentialsPath);
-} else {
-    console.warn('⚠️ GOOGLE_CREDENTIALS_BASE64 not set - Google Cloud services may not work');
 }
 
 import { handleSamChat } from './agents/sam';
-console.log('✅ Sam agent loaded');
 import { handleDocumentUpload, getPendingPolicyResponse, getUserPolicies, PolicyType, StoredPolicy } from './services/document-upload';
-console.log('✅ Document upload service loaded');
 import { generateSessionSummary, regenerateSummary } from './services/session-summary';
-console.log('✅ Session summary service loaded');
 
 const app = express();
 // Google Cloud Run sets PORT to 8080 automatically
@@ -76,9 +60,7 @@ const allowedOrigins = [
   'https://joinsamurai.com',
   'https://www.joinsamurai.com',
   process.env.FRONTEND_URL,
-].filter(Boolean) as string[];
-
-console.log('🔒 CORS allowed origins:', allowedOrigins);
+].filter(Boolean);
 
 app.use(cors({
   origin: (origin, callback) => {
@@ -87,8 +69,7 @@ app.use(cors({
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
-    // For disallowed origins, return false instead of error to avoid breaking CORS
-    console.warn(`⚠️ CORS blocked request from origin: ${origin}`);
+    // Return false instead of error to avoid breaking preflight requests
     return callback(null, false);
   },
   credentials: true,
@@ -96,7 +77,7 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
 }));
 
-// Explicit OPTIONS handling for preflight requests
+// Handle preflight OPTIONS requests
 app.options('*', cors());
 
 // Middleware to parse JSON bodies
@@ -617,3 +598,6 @@ const server = app.listen(port, () => {
 server.on('error', (error) => {
   console.error('❌ Server error:', error);
 });
+
+// Keep the process alive
+process.stdin.resume();
