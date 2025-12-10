@@ -486,7 +486,7 @@ app.get('/api/users/:userId/chat-sessions', async (req, res) => {
 
 // --- 5. CHAT ENDPOINT ---
 // The main entry point for the Agent Logic
-app.post('/chat', async (req, res) => {
+app.post('/api/chat', async (req, res) => {
   try {
     const { message, history, userId, sessionId } = req.body;
 

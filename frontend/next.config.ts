@@ -9,11 +9,6 @@ const nextConfig: NextConfig = {
         source: '/api/:path*',
         destination: `${BACKEND_URL}/api/:path*`,
       },
-      {
-        // For the /chat endpoint which is outside /api
-        source: '/chat',
-        destination: `${BACKEND_URL}/chat`,
-      },
     ];
   },
 };
