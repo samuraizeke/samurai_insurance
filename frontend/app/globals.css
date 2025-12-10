@@ -941,6 +941,12 @@ button:disabled {
   .mobile-safe-area-top {
     padding-top: env(safe-area-inset-top, 0px) !important;
   }
+
+  /* Apply safe area to sidebar-inset on mobile */
+  [data-slot="sidebar-inset"] {
+    padding-top: env(safe-area-inset-top, 0px) !important;
+    background-color: #f7f6f3 !important;
+  }
 }
 
 /* Ensure html/body extend to cover safe areas on iOS */
