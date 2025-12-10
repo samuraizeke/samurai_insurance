@@ -32,7 +32,7 @@ steps:
       - 'managed'
       # Use a dedicated service account with minimal permissions
       - '--service-account'
-      - 'samurai-backend@$PROJECT_ID.iam.gserviceaccount.com'
+      - 'si-app-backend-sa@$PROJECT_ID.iam.gserviceaccount.com'
       # Set environment to production
       - '--set-env-vars'
       - 'NODE_ENV=production'
