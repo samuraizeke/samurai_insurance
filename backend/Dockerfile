@@ -3,8 +3,9 @@
 
 # ============================================
 # Stage 1: Build
+# Pin to SHA digest for supply chain security
 # ============================================
-FROM node:20-alpine AS builder
+FROM node:20-alpine@sha256:643e7036aa985317ebfee460005e322aa550c6b6883000d01daefb58689a58e2 AS builder
 
 WORKDIR /app
 
@@ -22,8 +23,9 @@ RUN npm run build
 
 # ============================================
 # Stage 2: Production
+# Pin to SHA digest for supply chain security
 # ============================================
-FROM node:20-alpine
+FROM node:20-alpine@sha256:643e7036aa985317ebfee460005e322aa550c6b6883000d01daefb58689a58e2
 
 # Create non-root user for security (CIS Docker Benchmark 4.1)
 RUN addgroup -g 1001 -S nodejs && \

@@ -33,9 +33,13 @@ steps:
       # Use a dedicated service account with minimal permissions
       - '--service-account'
       - 'si-app-backend-sa@$PROJECT_ID.iam.gserviceaccount.com'
-      # Update environment variables (preserves existing secrets set in Cloud Run)
+      # Non-secret environment variables
       - '--update-env-vars'
       - 'NODE_ENV=production,GOOGLE_PROJECT_ID=$PROJECT_ID,GOOGLE_DATA_STORE_ID=si-data-connector_1764794221917_gcs_store,GCS_BUCKET_NAME=samurai-insurance-app'
+      # SECURITY: Reference secrets from Secret Manager (not plain text)
+      # These secrets must be created in Secret Manager before deployment
+      - '--update-secrets'
+      - 'SUPABASE_URL=supabase-url:latest,SUPABASE_SERVICE_ROLE_KEY=supabase-service-role-key:latest,SUPABASE_PUBLISHABLE_KEY=supabase-publishable-key:latest'
       # Memory and CPU limits
       - '--memory'
       - '512Mi'

@@ -10,6 +10,7 @@ import multer from 'multer';
 dotenv.config();
 
 import { supabase } from './lib/supabase';
+import { logger, requestLogger, setRequestContext } from './lib/logger';
 
 // Security middleware imports
 import { requireAuth, optionalAuth } from './middleware/auth';
@@ -44,7 +45,7 @@ if (process.env.NODE_ENV === 'development' && process.env.GOOGLE_CREDENTIALS_BAS
   const credentialsPath = path.join(os.tmpdir(), 'gcp-credentials.json');
   fs.writeFileSync(credentialsPath, credentials, { mode: 0o600 }); // Restrict file permissions
   process.env.GOOGLE_APPLICATION_CREDENTIALS = credentialsPath;
-  console.log('🔐 Development mode: Using credentials file');
+  logger.info('Development mode: Using credentials file');
 }
 
 import { handleSamChat } from './agents/sam';
@@ -105,7 +106,7 @@ app.use(cors({
       return callback(null, true);
     }
     // Log rejected origins for monitoring
-    console.warn(`⚠️ CORS rejected origin: ${origin}`);
+    logger.security(`CORS rejected origin: ${origin}`, { rejectedOrigin: origin });
     return callback(null, false);
   },
   credentials: true,
@@ -115,6 +116,9 @@ app.use(cors({
 
 // Parse JSON bodies
 app.use(express.json({ limit: '1mb' }));
+
+// Add request ID and structured logging middleware
+app.use(requestLogger);
 
 // Apply general rate limiter to all routes
 app.use(generalLimiter);
@@ -131,7 +135,7 @@ app.get('/', (req, res) => {
 // ============================================
 app.post('/api/upload-policy', uploadLimiter, requireAuth, upload.single('document'), async (req, res) => {
   try {
-    console.log('\n📤 Incoming document upload...');
+    logger.info('Incoming document upload');
 
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
@@ -148,10 +152,9 @@ app.post('/api/upload-policy', uploadLimiter, requireAuth, upload.single('docume
 
     // Use authenticated user ID (prevents IDOR)
     const userId = req.user!.id;
+    setRequestContext(req.requestId!, userId);
 
-    console.log(`📄 File: ${originalname} (${mimetype})`);
-    console.log(`📋 Session: ${sessionId}`);
-    console.log(`👤 Authenticated User: ${userId}`);
+    logger.info('Processing document upload', { fileName: originalname, mimeType: mimetype, sessionId });
 
     const result = await handleDocumentUpload(buffer, originalname, mimetype, sessionId, userId);
 
@@ -169,7 +172,7 @@ app.post('/api/upload-policy', uploadLimiter, requireAuth, upload.single('docume
     }
 
   } catch (error) {
-    console.error('❌ Error in upload endpoint:', error);
+    logger.error('Error in upload endpoint', error);
     res.status(500).json({
       error: 'Document processing failed. Please try again.'
     });
@@ -183,7 +186,7 @@ app.get('/api/policy-status', (req, res) => {
   const pending = getPendingPolicyResponse();
 
   if (pending) {
-    console.log('📄 Delivering pending policy analysis to frontend');
+    logger.info('Delivering pending policy analysis to frontend');
     res.json({
       ready: true,
       analysis: pending.analysis,
@@ -231,11 +234,11 @@ app.get('/api/users/:userId/policies', requireAuth, async (req, res) => {
     // Sort by most recent first
     policies.sort((a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime());
 
-    console.log(`📋 Returning ${policies.length} policies for user`);
+    logger.info('Returning user policies', { policyCount: policies.length });
     res.json({ policies });
 
   } catch (error) {
-    console.error('❌ Error fetching user policies:', error);
+    logger.error('Error fetching user policies', error);
     res.status(500).json({ error: 'Failed to fetch policies. Please try again.' });
   }
 });
@@ -270,7 +273,7 @@ app.post('/api/chat-sessions', sessionLimiter, requireAuth, async (req, res) => 
 
     // If user doesn't exist in our users table, create them
     if (!internalUserId) {
-      console.log(`📝 Creating user record for authenticated user`);
+      logger.info('Creating user record for authenticated user');
 
       // Get user info from Supabase auth
       const { data: authUser } = await supabase.auth.admin.getUserById(userId);
@@ -288,7 +291,7 @@ app.post('/api/chat-sessions', sessionLimiter, requireAuth, async (req, res) => 
         .single();
 
       if (createError) {
-        console.error('Failed to create user:', createError);
+        logger.error('Failed to create user', createError);
         return res.status(500).json({ error: 'Failed to create user record' });
       }
       internalUserId = newUser.id;
@@ -311,18 +314,18 @@ app.post('/api/chat-sessions', sessionLimiter, requireAuth, async (req, res) => 
       .single();
 
     if (sessionError) {
-      console.error('Failed to create chat session:', sessionError);
+      logger.error('Failed to create chat session', sessionError);
       return res.status(500).json({ error: 'Failed to create chat session' });
     }
 
-    console.log(`✅ Created chat session: ${session.session_uuid}`);
+    logger.info('Created chat session', { sessionUuid: session.session_uuid });
     res.json({
       sessionId: session.id,
       sessionUuid: session.session_uuid
     });
 
   } catch (error) {
-    console.error('❌ Error creating chat session:', error);
+    logger.error('Error creating chat session', error);
     res.status(500).json({ error: 'Failed to create session. Please try again.' });
   }
 });
@@ -362,7 +365,7 @@ app.get('/api/chat-sessions/:sessionId/messages', requireAuth, async (req, res) 
       .order('timestamp', { ascending: true });
 
     if (error) {
-      console.error('Failed to fetch chat history:', error);
+      logger.error('Failed to fetch chat history', error);
       return res.status(500).json({ error: 'Failed to fetch chat history' });
     }
 
@@ -379,7 +382,7 @@ app.get('/api/chat-sessions/:sessionId/messages', requireAuth, async (req, res) 
     res.json({ messages: formattedMessages });
 
   } catch (error) {
-    console.error('❌ Error fetching chat history:', error);
+    logger.error('Error fetching chat history', error);
     res.status(500).json({ error: 'Failed to fetch chat history. Please try again.' });
   }
 });
@@ -435,15 +438,15 @@ app.patch('/api/chat-sessions/:sessionId', requireAuth, async (req, res) => {
       .eq('id', sessionId);
 
     if (updateError) {
-      console.error('Failed to rename session:', updateError);
+      logger.error('Failed to rename session', updateError);
       return res.status(500).json({ error: 'Failed to rename session' });
     }
 
-    console.log(`✏️ Renamed chat session ${sessionId}`);
+    logger.info('Renamed chat session', { sessionId });
     res.json({ success: true, message: 'Session renamed successfully' });
 
   } catch (error) {
-    console.error('❌ Error renaming chat session:', error);
+    logger.error('Error renaming chat session', error);
     res.status(500).json({ error: 'Failed to rename session. Please try again.' });
   }
 });
@@ -498,15 +501,15 @@ app.delete('/api/chat-sessions/:sessionId', requireAuth, async (req, res) => {
       .eq('id', sessionId);
 
     if (deleteError) {
-      console.error('Failed to soft delete session:', deleteError);
+      logger.error('Failed to soft delete session', deleteError);
       return res.status(500).json({ error: 'Failed to delete session' });
     }
 
-    console.log(`🗑️ Soft deleted chat session: ${sessionId}`);
+    logger.info('Soft deleted chat session', { sessionId });
     res.json({ success: true, message: 'Session deleted successfully' });
 
   } catch (error) {
-    console.error('❌ Error deleting chat session:', error);
+    logger.error('Error deleting chat session', error);
     res.status(500).json({ error: 'Failed to delete session. Please try again.' });
   }
 });
@@ -542,7 +545,7 @@ app.get('/api/users/:userId/chat-sessions', requireAuth, async (req, res) => {
       .limit(limit);
 
     if (error) {
-      console.error('Failed to fetch user sessions:', error);
+      logger.error('Failed to fetch user sessions', error);
       return res.status(500).json({ error: 'Failed to fetch sessions' });
     }
 
@@ -572,7 +575,7 @@ app.get('/api/users/:userId/chat-sessions', requireAuth, async (req, res) => {
     res.json({ sessions: sessionsWithPreviews });
 
   } catch (error) {
-    console.error('❌ Error fetching user sessions:', error);
+    logger.error('Error fetching user sessions', error);
     res.status(500).json({ error: 'Failed to fetch sessions. Please try again.' });
   }
 });
@@ -593,14 +596,15 @@ app.post('/api/chat', chatLimiter, optionalAuth, async (req, res) => {
 
     // Use authenticated user ID if available, otherwise undefined
     const userId = req.user?.id;
-
-    console.log(`\n💬 Received User Message: "${message.substring(0, 100)}${message.length > 100 ? '...' : ''}"`);
     if (userId) {
-      console.log(`👤 Authenticated User`);
+      setRequestContext(req.requestId!, userId);
     }
-    if (sessionId) {
-      console.log(`📋 Session ID: ${sessionId}`);
-    }
+
+    logger.info('Received chat message', {
+      messagePreview: message.substring(0, 100),
+      authenticated: !!userId,
+      sessionId: sessionId || null
+    });
 
     // SECURITY: Require authentication for session persistence (prevents session injection)
     if (sessionId && !req.user) {
@@ -628,7 +632,7 @@ app.post('/api/chat', chatLimiter, optionalAuth, async (req, res) => {
         if (session && session.user_id === userData.id) {
           verifiedSessionId = sessionId;
         } else {
-          console.warn(`⚠️ Session ownership mismatch: user tried to write to session ${sessionId}`);
+          logger.security('Session ownership mismatch: user tried to write to unauthorized session', { attemptedSessionId: sessionId });
           return res.status(403).json({ error: 'Not authorized to write to this session' });
         }
       }
@@ -647,15 +651,15 @@ app.post('/api/chat', chatLimiter, optionalAuth, async (req, res) => {
             timestamp: new Date().toISOString()
           });
       } catch (dbError) {
-        console.error('⚠️ Failed to save user message:', dbError);
+        logger.warn('Failed to save user message', { error: dbError });
       }
     }
 
     // Call Agent Sam
-    console.log("👉 Routing to Agent Sam...");
+    logger.info('Routing to Agent Sam');
     const finalResponse = await handleSamChat(message, history || [], userId);
 
-    console.log("✅ Sam completed. Sending final response.");
+    logger.info('Sam completed, sending response');
 
     // Save assistant response to database (only if session ownership verified)
     if (verifiedSessionId) {
@@ -683,18 +687,18 @@ app.post('/api/chat', chatLimiter, optionalAuth, async (req, res) => {
         // Generate summary after first message exchange
         if (!history || history.length === 0) {
           regenerateSummary(verifiedSessionId).catch(err => {
-            console.error('⚠️ Failed to generate session summary:', err);
+            logger.warn('Failed to generate session summary', { error: err });
           });
         }
       } catch (dbError) {
-        console.error('⚠️ Failed to save assistant message:', dbError);
+        logger.warn('Failed to save assistant message', { error: dbError });
       }
     }
 
     res.json({ response: finalResponse });
 
   } catch (error) {
-    console.error('❌ Critical Error in /chat endpoint:', error);
+    logger.error('Critical error in /chat endpoint', error);
     // Never expose internal error details
     res.status(500).json({
       error: 'An unexpected error occurred. Please try again.'
@@ -707,8 +711,9 @@ app.post('/api/chat', chatLimiter, optionalAuth, async (req, res) => {
 // ============================================
 
 // Global error handler for uncaught errors in routes
-app.use((error: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error('❌ Unhandled error:', error);
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+app.use((error: Error, req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  logger.error('Unhandled route error', error, { path: req.path, method: req.method });
   res.status(500).json({
     error: 'An unexpected error occurred. Please try again.'
   });
@@ -718,21 +723,21 @@ app.use((error: Error, req: express.Request, res: express.Response, next: expres
 // In development, keep running for easier debugging
 if (isProduction) {
   process.on('uncaughtException', (error) => {
-    console.error('❌ Uncaught Exception:', error);
+    logger.critical('Uncaught Exception - exiting', error);
     process.exit(1); // Let container orchestrator restart
   });
 
-  process.on('unhandledRejection', (reason, promise) => {
-    console.error('❌ Unhandled Rejection:', reason);
+  process.on('unhandledRejection', (reason) => {
+    logger.critical('Unhandled Rejection - exiting', reason as Error);
     process.exit(1);
   });
 } else {
   process.on('uncaughtException', (error) => {
-    console.error('❌ Uncaught Exception (dev mode - continuing):', error);
+    logger.error('Uncaught Exception (dev mode - continuing)', error);
   });
 
-  process.on('unhandledRejection', (reason, promise) => {
-    console.error('❌ Unhandled Rejection (dev mode - continuing):', reason);
+  process.on('unhandledRejection', (reason) => {
+    logger.error('Unhandled Rejection (dev mode - continuing)', reason as Error);
   });
 }
 
@@ -740,11 +745,13 @@ if (isProduction) {
 // START SERVER
 // ============================================
 const server = app.listen(port, () => {
-  console.log(`🚀 Server listening on port ${port}`);
-  console.log(`🔒 Environment: ${isProduction ? 'Production' : 'Development'}`);
-  console.log(`🌐 Allowed origins: ${allowedOrigins.join(', ')}`);
+  logger.info('Server started', {
+    port,
+    environment: isProduction ? 'production' : 'development',
+    allowedOrigins
+  });
 });
 
 server.on('error', (error) => {
-  console.error('❌ Server error:', error);
+  logger.critical('Server error', error);
 });
