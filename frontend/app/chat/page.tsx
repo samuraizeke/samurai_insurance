@@ -1,12 +1,17 @@
 "use client";
 
 import ChatWidget from '@/app/components/ChatWidget';
-import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarInset, SidebarProvider, SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { DashboardSidebar } from "@/components/sidebar-02/app-sidebar";
 import { ChatProvider } from "@/app/context/ChatContext";
 import Image from "next/image";
 
 function MobileHeader() {
+    const { openMobile } = useSidebar();
+
+    // Hide trigger when sidebar is open (X is inside sidebar)
+    if (openMobile) return null;
+
     return (
         <header className="md:hidden shrink-0 bg-[#f7f6f3]">
             <div className="flex items-center justify-between h-14 px-4">

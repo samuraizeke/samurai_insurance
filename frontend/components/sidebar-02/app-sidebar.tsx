@@ -154,7 +154,7 @@ export function DashboardSidebar() {
     <Sidebar variant="inset" collapsible="icon">
       <SidebarHeader
         className={cn(
-          "flex md:pt-3.5 mobile-safe-area-top",
+          "flex md:pt-3.5 pt-4",
           isCollapsed
             ? "flex-row items-center justify-between gap-y-4 md:flex-col md:items-start md:justify-start"
             : "flex-row items-center justify-between"
@@ -164,10 +164,11 @@ export function DashboardSidebar() {
           <Logo collapsed={isCollapsed} isMobile={isMobileView} />
         </div>
 
-        {/* Mobile: always show trigger in sidebar header when open */}
+        {/* Mobile: show close trigger in sidebar header */}
         {isMobileView && (
           <SidebarTrigger className="h-7 w-7 bg-[#333333] hover:bg-[#333333]/90 text-[#f7f6f3] hover:text-[#f7f6f3] rounded-md [&_svg]:size-4" />
         )}
+
         {/* Desktop: show trigger when expanded */}
         {!isMobileView && !isCollapsed && (
           <motion.div

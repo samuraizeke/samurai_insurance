@@ -286,7 +286,7 @@ function Sidebar({
                 data-sidebar="sidebar"
                 data-slot="sidebar-inner"
                 className={cn(
-                  "flex h-full w-full flex-col mobile-safe-area-top",
+                  "flex h-full w-full flex-col",
                   variant === "floating" || variant === "inset"
                     ? "bg-sidebar rounded-lg shadow-sm"
                     : "bg-sidebar"

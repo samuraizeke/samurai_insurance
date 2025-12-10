@@ -937,14 +937,15 @@ button:disabled {
 }
 
 /* Mobile-only safe area padding - applies only on mobile screens */
+/* Uses 59px minimum to cover Dynamic Island iPhones (14 Pro, 15, 16 series) */
 @media (max-width: 767px) {
   .mobile-safe-area-top {
-    padding-top: env(safe-area-inset-top, 0px) !important;
+    padding-top: max(env(safe-area-inset-top, 0px), 59px) !important;
   }
 
   /* Apply safe area to sidebar-inset on mobile */
   [data-slot="sidebar-inset"] {
-    padding-top: env(safe-area-inset-top, 0px) !important;
+    padding-top: max(env(safe-area-inset-top, 0px), 59px) !important;
     background-color: #f7f6f3 !important;
   }
 }
