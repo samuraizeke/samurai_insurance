@@ -5,8 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { JSX, SVGProps, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import Link from "next/link";
@@ -35,33 +34,30 @@ const GoogleIcon = (
   </svg>
 );
 
+const MicrosoftIcon = (
+  props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>
+) => (
+  <svg viewBox="0 0 23 23" aria-hidden="true" {...props}>
+    <path fill="#f35325" d="M1 1h10v10H1z" />
+    <path fill="#81bc06" d="M12 1h10v10H12z" />
+    <path fill="#05a6f0" d="M1 12h10v10H1z" />
+    <path fill="#ffba08" d="M12 12h10v10H12z" />
+  </svg>
+);
+
 export default function SignupPage() {
-  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const { signUpWithEmail, signInWithGoogle } = useAuth();
+  const [isMicrosoftLoading, setIsMicrosoftLoading] = useState(false);
+  const { signInWithMagicLink, signInWithGoogle, signInWithMicrosoft } = useAuth();
 
-  const handleEmailSignUp = async (e: React.FormEvent) => {
+  const handleMagicLinkSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-
-    if (password !== confirmPassword) {
-      setError("Passwords do not match");
-      return;
-    }
-
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters");
-      return;
-    }
 
     if (!agreedToTerms) {
       setError("You must agree to the terms of use and privacy policy");
@@ -71,7 +67,7 @@ export default function SignupPage() {
     setIsLoading(true);
 
     try {
-      const { error } = await signUpWithEmail(email, password, name);
+      const { error } = await signInWithMagicLink(email);
       if (error) {
         setError(error.message);
       } else {
@@ -85,12 +81,32 @@ export default function SignupPage() {
   };
 
   const handleGoogleSignIn = async () => {
+    if (!agreedToTerms) {
+      setError("You must agree to the terms of use and privacy policy");
+      return;
+    }
+
     setIsGoogleLoading(true);
     try {
       await signInWithGoogle();
     } catch (err) {
       setError("Failed to sign in with Google");
       setIsGoogleLoading(false);
+    }
+  };
+
+  const handleMicrosoftSignIn = async () => {
+    if (!agreedToTerms) {
+      setError("You must agree to the terms of use and privacy policy");
+      return;
+    }
+
+    setIsMicrosoftLoading(true);
+    try {
+      await signInWithMicrosoft();
+    } catch (err) {
+      setError("Failed to sign in with Microsoft");
+      setIsMicrosoftLoading(false);
     }
   };
 
@@ -102,18 +118,20 @@ export default function SignupPage() {
             <CardContent className="pt-6 text-center space-y-4">
               <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
                 <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
               </div>
               <h2 className="text-xl font-semibold font-heading">Check your email</h2>
               <p className="text-muted-foreground font-[family-name:var(--font-work-sans)]">
-                We&apos;ve sent you a confirmation link at <strong>{email}</strong>. Click the link to verify your account.
+                We&apos;ve sent a magic link to <strong>{email}</strong>. Click the link to complete your registration.
               </p>
-              <Link href="/login">
-                <Button variant="outline" className="mt-4 font-[family-name:var(--font-work-sans)] border-[#333333]/10">
-                  Back to login
-                </Button>
-              </Link>
+              <Button
+                variant="outline"
+                className="mt-4 font-[family-name:var(--font-work-sans)] border-[#333333]/10"
+                onClick={() => setSuccess(false)}
+              >
+                Use a different email
+              </Button>
             </CardContent>
           </Card>
         </div>
@@ -141,7 +159,7 @@ export default function SignupPage() {
         <div className="space-y-6">
           <Button
             variant="outline"
-            className="w-full h-12 justify-center gap-3 text-base font-[family-name:var(--font-work-sans)] bg-[hsl(0_0%_98%)] border-[#333333]/10"
+            className="w-full h-12 justify-start gap-3 text-sm font-normal font-[family-name:var(--font-work-sans)] bg-[hsl(0_0%_98%)] border-[#333333]/10 rounded-full !ps-6"
             onClick={handleGoogleSignIn}
             disabled={isGoogleLoading}
           >
@@ -150,15 +168,29 @@ export default function SignupPage() {
             ) : (
               <GoogleIcon className="h-5 w-5" />
             )}
-            Sign up with Google
+            Continue with Google
+          </Button>
+
+          <Button
+            variant="outline"
+            className="w-full h-12 justify-start gap-3 text-sm font-normal font-[family-name:var(--font-work-sans)] bg-[hsl(0_0%_98%)] border-[#333333]/10 rounded-full !ps-6"
+            onClick={handleMicrosoftSignIn}
+            disabled={isMicrosoftLoading}
+          >
+            {isMicrosoftLoading ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : (
+              <MicrosoftIcon className="h-5 w-5" />
+            )}
+            Continue with Microsoft
           </Button>
 
           <div className="flex items-center gap-3">
-            <Separator className="flex-1" />
+            <div className="flex-1 h-px bg-[#333333]/20" />
             <span className="text-base text-muted-foreground font-[family-name:var(--font-work-sans)]">
-              or sign up with email
+              OR
             </span>
-            <Separator className="flex-1" />
+            <div className="flex-1 h-px bg-[#333333]/20" />
           </div>
 
           {error && (
@@ -170,89 +202,20 @@ export default function SignupPage() {
             </div>
           )}
 
-          <form onSubmit={handleEmailSignUp} className="space-y-6">
+          <form onSubmit={handleMagicLinkSignUp} className="space-y-6">
             <div>
-              <Label htmlFor="name" className="text-base font-[family-name:var(--font-work-sans)]">
-                Full Name
-              </Label>
-              <Input
-                type="text"
-                id="name"
-                placeholder="John Doe"
-                className="mt-3 h-12 text-base font-[family-name:var(--font-work-sans)] border-[#333333]/10 bg-[hsl(0_0%_98%)]"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="email" className="text-base font-[family-name:var(--font-work-sans)]">
-                Email
-              </Label>
               <Input
                 type="email"
                 id="email"
-                placeholder="you@example.com"
-                className="mt-3 h-12 text-base font-[family-name:var(--font-work-sans)] border-[#333333]/10 bg-[hsl(0_0%_98%)]"
+                placeholder="Enter your email"
+                className="h-12 text-base font-[family-name:var(--font-work-sans)] border-[#333333]/10 bg-[hsl(0_0%_98%)] rounded-full px-6"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
-            </div>
-
-            <div>
-              <Label htmlFor="password" className="text-base font-[family-name:var(--font-work-sans)]">
-                Password
-              </Label>
-              <div className="relative mt-3">
-                <Input
-                  type={showPassword ? "text" : "password"}
-                  id="password"
-                  placeholder="Create a password"
-                  className="pe-11 h-12 text-base font-[family-name:var(--font-work-sans)] border-[#333333]/10 bg-[hsl(0_0%_98%)]"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-                <button
-                  className="text-muted-foreground/80 hover:text-foreground focus-visible:border-ring focus-visible:ring-ring/50 absolute inset-y-0 end-0 flex h-full w-11 items-center justify-center rounded-e-md transition-[color,box-shadow] outline-none focus:z-10 focus-visible:ring-[3px]"
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                  aria-pressed={showPassword}
-                  aria-controls="password"
-                >
-                  {showPassword ? <EyeOff size={20} aria-hidden="true" /> : <Eye size={20} aria-hidden="true" />}
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <Label htmlFor="confirm-password" className="text-base font-[family-name:var(--font-work-sans)]">
-                Confirm Password
-              </Label>
-              <div className="relative mt-3">
-                <Input
-                  type={showConfirmPassword ? "text" : "password"}
-                  id="confirm-password"
-                  placeholder="Confirm your password"
-                  className="pe-11 h-12 text-base font-[family-name:var(--font-work-sans)] border-[#333333]/10 bg-[hsl(0_0%_98%)]"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                />
-                <button
-                  className="text-muted-foreground/80 hover:text-foreground focus-visible:border-ring focus-visible:ring-ring/50 absolute inset-y-0 end-0 flex h-full w-11 items-center justify-center rounded-e-md transition-[color,box-shadow] outline-none focus:z-10 focus-visible:ring-[3px]"
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
-                  aria-pressed={showConfirmPassword}
-                  aria-controls="confirm-password"
-                >
-                  {showConfirmPassword ? <EyeOff size={20} aria-hidden="true" /> : <Eye size={20} aria-hidden="true" />}
-                </button>
-              </div>
+              <p className="mt-2 text-sm text-muted-foreground font-[family-name:var(--font-work-sans)] text-center">
+                We&apos;ll send you a magic link to create your account.
+              </p>
             </div>
 
             <div className="flex items-start gap-2 pt-2">
@@ -264,11 +227,11 @@ export default function SignupPage() {
               />
               <Label htmlFor="terms" className="text-base leading-6 text-muted-foreground font-[family-name:var(--font-work-sans)]">
                 I agree to the{" "}
-                <Link href="/terms" className="text-[#de5e48] hover:underline">
+                <Link href="/terms" className="text-[#333333] underline">
                   Terms of Use
                 </Link>{" "}
                 and{" "}
-                <Link href="/privacy" className="text-[#de5e48] hover:underline">
+                <Link href="/privacy" className="text-[#333333] underline">
                   Privacy Policy
                 </Link>
               </Label>
@@ -276,20 +239,20 @@ export default function SignupPage() {
 
             <Button
               type="submit"
-              className="w-full h-12 text-base bg-[#de5e48] hover:bg-[#de5e48]/90 text-[#f7f6f3] font-bold font-[family-name:var(--font-work-sans)] border-[#333333]/10"
+              className="w-full h-12 text-base bg-[#333333] hover:bg-[#333333]/90 text-[#f7f6f3] font-bold font-[family-name:var(--font-work-sans)] border-[#333333]/10 rounded-full"
               disabled={isLoading}
             >
               {isLoading ? (
                 <Loader2 className="h-5 w-5 animate-spin" />
               ) : (
-                "Create account"
+                "Send magic link"
               )}
             </Button>
           </form>
 
           <div className="text-center text-base font-[family-name:var(--font-work-sans)]">
             Already have an account?{" "}
-            <Link href="/login" className="text-[#de5e48] font-medium hover:underline">
+            <Link href="/login" className="text-[#333333] underline">
               Sign in
             </Link>
           </div>

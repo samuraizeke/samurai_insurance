@@ -10,8 +10,8 @@ interface AuthContextType {
   session: Session | null;
   isLoading: boolean;
   signInWithGoogle: () => Promise<void>;
-  signInWithEmail: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signUpWithEmail: (email: string, password: string, name: string) => Promise<{ error: Error | null }>;
+  signInWithMicrosoft: () => Promise<void>;
+  signInWithMagicLink: (email: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
 }
 
@@ -70,28 +70,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const signInWithEmail = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
+  const signInWithMicrosoft = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "azure",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+        scopes: "email",
+      },
     });
 
     if (error) {
-      return { error };
+      console.error("Error signing in with Microsoft:", error.message);
+      throw error;
     }
-
-    router.push("/chat");
-    return { error: null };
   };
 
-  const signUpWithEmail = async (email: string, password: string, name: string) => {
-    const { error } = await supabase.auth.signUp({
+  const signInWithMagicLink = async (email: string) => {
+    const { error } = await supabase.auth.signInWithOtp({
       email,
-      password,
       options: {
-        data: {
-          full_name: name,
-        },
         emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
     });
@@ -119,8 +116,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         session,
         isLoading,
         signInWithGoogle,
-        signInWithEmail,
-        signUpWithEmail,
+        signInWithMicrosoft,
+        signInWithMagicLink,
         signOut,
       }}
     >
