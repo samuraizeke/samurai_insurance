@@ -1,40 +1,53 @@
 # backend/Dockerfile
-# Security-hardened container for Cloud Run
+# Security-hardened multi-stage container for Cloud Run
 
-# 1. Use an official Node.js runtime (Alpine for smaller attack surface)
-FROM node:18-alpine
+# ============================================
+# Stage 1: Build
+# ============================================
+FROM node:20-alpine AS builder
 
-# 2. Create non-root user for security (CIS Docker Benchmark 4.1)
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install ALL dependencies (including dev for TypeScript)
+RUN npm ci
+
+# Copy source code
+COPY . .
+
+# Build TypeScript
+RUN npm run build
+
+# ============================================
+# Stage 2: Production
+# ============================================
+FROM node:20-alpine
+
+# Create non-root user for security (CIS Docker Benchmark 4.1)
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001 -G nodejs
 
-# 3. Set the working directory inside the container
 WORKDIR /app
 
-# 4. Copy package files and install dependencies
-# Use --chown to avoid running as root later
+# Copy package files
 COPY --chown=nodejs:nodejs package*.json ./
 
 # Install production dependencies only
-RUN npm ci --only=production && npm cache clean --force
+RUN npm ci --omit=dev && npm cache clean --force
 
-# 5. Copy the rest of the backend code
-COPY --chown=nodejs:nodejs . .
+# Copy built files from builder stage
+COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
 
-# 6. Build the TypeScript code (outputs to /dist)
-RUN npm run build
-
-# 7. Remove dev dependencies and source files to reduce attack surface
-RUN rm -rf src/ *.ts tsconfig.json
-
-# 8. Switch to non-root user before running
+# Switch to non-root user
 USER nodejs
 
-# 9. Expose the port Google expects (8080)
+# Expose the port Google expects (8080)
 EXPOSE 8080
 
-# 10. Set production environment
+# Set production environment
 ENV NODE_ENV=production
 
-# 11. Start the app
+# Start the app
 CMD ["node", "dist/server.js"]
