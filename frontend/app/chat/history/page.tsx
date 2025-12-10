@@ -190,7 +190,7 @@ function ChatHistoryContent() {
                 <h1 className="text-3xl font-bold font-[family-name:var(--font-alte-haas)] text-[#333333]">
                     Chat History
                 </h1>
-                <Button asChild className="bg-[#333333] hover:bg-[#333333]/90 font-[family-name:var(--font-work-sans)] font-bold text-white">
+                <Button asChild className="bg-[#333333] hover:bg-[#333333]/90 font-[family-name:var(--font-work-sans)] font-bold text-white rounded-full">
                     <Link href="/chat">
                         <FontAwesomeIcon icon={faPlus} className="size-3 -mr-1" />
                         New Chat
@@ -209,7 +209,7 @@ function ChatHistoryContent() {
                         placeholder="Search chats..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-10 text-base font-[family-name:var(--font-work-sans)] border-[#333333]/10 h-11 placeholder:text-base bg-[hsl(0_0%_98%)]"
+                        className="pl-10 text-base font-[family-name:var(--font-work-sans)] border-[#333333]/10 h-11 placeholder:text-base bg-[hsl(0_0%_98%)] rounded-full"
                     />
                 </div>
             </div>

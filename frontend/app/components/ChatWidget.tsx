@@ -614,7 +614,7 @@ export default function ChatWidget() {
                             <div
                                 key={message.id}
                                 className={cn(
-                                    "flex items-start gap-2 sm:gap-3 px-3 sm:px-4 py-2 rounded-lg w-fit max-w-[90%] sm:max-w-[80%]",
+                                    "flex items-start gap-2 sm:gap-3 px-3 sm:px-4 py-2 rounded-3xl w-fit max-w-[90%] sm:max-w-[80%]",
                                     message.role === "user"
                                         ? "bg-[#dedddb] ml-auto"
                                         : "bg-muted mr-auto"
@@ -697,7 +697,7 @@ export default function ChatWidget() {
                                     {showUploadButton && (
                                         <Button
                                             onClick={() => setShowUploadModal(true)}
-                                            className="mt-2 bg-[#333333] hover:bg-[#333333]/90 font-bold text-[#f7f6f3] font-[family-name:var(--font-work-sans)]"
+                                            className="mt-2 bg-[#333333] hover:bg-[#333333]/90 font-bold text-[#f7f6f3] font-[family-name:var(--font-work-sans)] rounded-full"
                                         >
                                             <FontAwesomeIcon icon={faUpload} className="mr-2 size-4" />
                                             Upload Policy Document
@@ -705,7 +705,7 @@ export default function ChatWidget() {
                                     )}
                                 </div>
                                 {message.role === "user" && (
-                                    <div className="shrink-0">
+                                    <div className="shrink-0 -mr-2">
                                         <Avatar className="h-6 w-6">
                                             <AvatarImage src={user?.user_metadata?.avatar_url} alt="User" />
                                             <AvatarFallback className="bg-[#333333] text-white text-xs font-bold font-[family-name:var(--font-alte-haas)]">
@@ -719,7 +719,7 @@ export default function ChatWidget() {
                     })}
                     {isLoading && (
                         <div
-                            className="flex items-start gap-2 sm:gap-3 px-3 sm:px-4 py-2 rounded-lg bg-muted mr-auto w-fit max-w-[90%] sm:max-w-[80%]"
+                            className="flex items-start gap-2 sm:gap-3 px-3 sm:px-4 py-2 rounded-3xl bg-muted mr-auto w-fit max-w-[90%] sm:max-w-[80%]"
                             role="status"
                             aria-label={isUploadingPolicy ? "Analyzing your policy document" : "Sam is typing"}
                         >
@@ -856,7 +856,7 @@ export default function ChatWidget() {
                                     <TooltipTrigger asChild>
                                         <DropdownMenuTrigger asChild>
                                             <Button
-                                                className="ml-[-2px] h-7 w-7 rounded-md hover:bg-[#333333]/5 transition-colors"
+                                                className="ml-[-2px] h-7 w-7 rounded-full hover:bg-[#333333]/5 transition-colors"
                                                 size="icon"
                                                 type="button"
                                                 variant="ghost"
@@ -908,7 +908,7 @@ export default function ChatWidget() {
                                         <DropdownMenuTrigger asChild>
                                             <Button
                                                 className={cn(
-                                                    "h-7 w-7 rounded-md hover:bg-[#333333]/5 transition-colors",
+                                                    "h-7 w-7 rounded-full hover:bg-[#333333]/5 transition-colors",
                                                     selectedPolicy && "bg-[#de5e48]/10"
                                                 )}
                                                 size="icon"
@@ -946,7 +946,7 @@ export default function ChatWidget() {
                                             <p className="text-xs text-muted-foreground mb-2">No policies uploaded yet</p>
                                             <Button
                                                 size="sm"
-                                                className="text-xs h-7 bg-[#333333] hover:bg-[#333333]/90 text-[#f7f6f3] font-bold"
+                                                className="text-xs h-7 bg-[#333333] hover:bg-[#333333]/90 text-[#f7f6f3] font-bold rounded-full"
                                                 onClick={() => setShowUploadModal(true)}
                                             >
                                                 <FontAwesomeIcon icon={faUpload} className="mr-1.5 size-3" />
@@ -994,7 +994,7 @@ export default function ChatWidget() {
                             <Tooltip>
                                 <TooltipTrigger asChild>
                                     <Button
-                                        className="h-7 w-7 rounded-md bg-[#333333] hover:bg-[#333333]/90 disabled:opacity-50"
+                                        className="h-7 w-7 rounded-full bg-[#333333] hover:bg-[#333333]/90 disabled:opacity-50"
                                         disabled={!prompt.trim() || isLoading}
                                         size="icon"
                                         type="submit"

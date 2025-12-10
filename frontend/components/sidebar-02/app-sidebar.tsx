@@ -166,7 +166,7 @@ export function DashboardSidebar() {
 
         {/* Mobile: show close trigger in sidebar header */}
         {isMobileView && (
-          <SidebarTrigger className="h-7 w-7 bg-[#333333] hover:bg-[#333333]/90 text-[#f7f6f3] hover:text-[#f7f6f3] rounded-md [&_svg]:size-4" />
+          <SidebarTrigger className="h-7 w-7 bg-[#333333] hover:bg-[#333333]/90 text-[#f7f6f3] hover:text-[#f7f6f3] rounded-full [&_svg]:size-4" />
         )}
 
         {/* Desktop: show trigger when expanded */}
