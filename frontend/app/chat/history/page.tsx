@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { SidebarInset, SidebarProvider, SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import Image from "next/image";
 import { DashboardSidebar } from "@/components/sidebar-02/app-sidebar";
 import { ChatProvider, useChatContext } from "@/app/context/ChatContext";
@@ -361,11 +361,6 @@ function ChatHistoryContent() {
 }
 
 function MobileHeader() {
-    const { openMobile } = useSidebar();
-
-    // Hide header when sidebar is open on mobile (trigger moves into sidebar)
-    if (openMobile) return null;
-
     return (
         <header className="md:hidden shrink-0 bg-[#f7f6f3] sticky top-0 z-10">
             <div className="flex items-center justify-between h-14 px-4">
