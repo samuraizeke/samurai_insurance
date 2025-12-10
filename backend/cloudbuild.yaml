@@ -33,9 +33,9 @@ steps:
       # Use a dedicated service account with minimal permissions
       - '--service-account'
       - 'si-app-backend-sa@$PROJECT_ID.iam.gserviceaccount.com'
-      # Set environment to production
-      - '--set-env-vars'
-      - 'NODE_ENV=production'
+      # Update environment variables (preserves existing secrets set in Cloud Run)
+      - '--update-env-vars'
+      - 'NODE_ENV=production,GOOGLE_PROJECT_ID=$PROJECT_ID,GOOGLE_DATA_STORE_ID=si-data-connector_1764794221917_gcs_store,GCS_BUCKET_NAME=samurai-insurance-app'
       # Memory and CPU limits
       - '--memory'
       - '512Mi'
