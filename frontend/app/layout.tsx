@@ -23,6 +23,13 @@ export default function RootLayout({
         className={`${alteHaasGrotesk.variable} ${workSans.variable} ${leagueGothic.variable} antialiased`}
         suppressHydrationWarning
       >
+        {/* Skip navigation link for keyboard/screen reader users */}
+        <a
+          href="#main-content"
+          className="fixed left-4 top-4 z-[100] rounded-md bg-[#de5e48] px-4 py-2 text-white opacity-0 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-[#de5e48] focus:ring-offset-2 transition-opacity"
+        >
+          Skip to main content
+        </a>
         <AuthProvider>
           {children}
         </AuthProvider>

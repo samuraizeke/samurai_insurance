@@ -13,7 +13,7 @@ export default function PrivacyPage() {
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader />
-      <main className="flex-1">
+      <main id="main-content" className="flex-1">
         <div className="mx-auto max-w-4xl px-6 py-12 sm:px-8 lg:px-12">
           <article className={`${workSans.className} prose prose-slate max-w-none`}>
             <h1 className={`${alteHaasGrotesk.className} text-5xl sm:text-6xl font-bold text-[#333333] mb-4 text-center`}>Privacy Policy</h1>

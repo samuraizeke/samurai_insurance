@@ -14,7 +14,7 @@ import Image from "next/image";
 const GoogleIcon = (
   props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>
 ) => (
-  <svg viewBox="0 0 24 24" {...props}>
+  <svg viewBox="0 0 24 24" aria-hidden="true" {...props}>
     <path
       d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
       fill="#4285F4"
@@ -73,7 +73,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-[#f7f6f3]">
+    <main id="main-content" className="flex items-center justify-center min-h-screen bg-[#f7f6f3]">
       <div className="mx-auto w-full max-w-md space-y-8 px-4">
         <div className="space-y-3 text-center">
           <Image
@@ -113,7 +113,10 @@ export default function LoginPage() {
           </div>
 
           {error && (
-            <div className="p-4 rounded-md bg-destructive/10 text-destructive text-base font-[family-name:var(--font-work-sans)]">
+            <div
+              role="alert"
+              className="p-4 rounded-md bg-destructive/10 text-destructive text-base font-[family-name:var(--font-work-sans)]"
+            >
               {error}
             </div>
           )}
@@ -195,6 +198,6 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

@@ -35,9 +35,10 @@ export default function ChatPage() {
                     <DashboardSidebar />
                     <SidebarInset className="flex flex-col overflow-hidden">
                         <MobileHeader />
-                        <div className="flex flex-1 flex-col items-center justify-center p-4 overflow-hidden">
+                        <main id="main-content" className="flex flex-1 flex-col items-center justify-center p-4 overflow-hidden">
+                            <h1 className="sr-only">Chat with Sam - Insurance Assistant</h1>
                             <ChatWidget />
-                        </div>
+                        </main>
                     </SidebarInset>
                 </div>
             </SidebarProvider>

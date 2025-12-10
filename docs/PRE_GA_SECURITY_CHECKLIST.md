@@ -56,31 +56,6 @@ This document tracks security enhancements deferred during beta that **must be c
 
 ---
 
-### 3. GCP Alerting Policies
-
-**Status:** ⏸️ Deferred
-**Priority:** MEDIUM
-**Estimated Cost:** Free (included in GCP)
-**Implementation Time:** 30 minutes
-
-**Why Deferred:** Can be added incrementally; manual monitoring acceptable for beta.
-
-**Recommended Alerts:**
-
-| Alert | Condition | Notification |
-|-------|-----------|--------------|
-| High Error Rate | > 5% errors for 5 min | Email + Slack |
-| High Latency | p99 > 5s for 5 min | Email |
-| Near Max Instances | > 8 instances | Email |
-| Failed Deployments | Cloud Build failure | Email + Slack |
-
-**How to Configure:**
-1. GCP Console → Monitoring → Alerting → Create Policy
-2. Add conditions per table above
-3. Configure notification channels
-
----
-
 ## Completed Security Items (Beta)
 
 | Item | Status | Date |
@@ -95,6 +70,7 @@ This document tracks security enhancements deferred during beta that **must be c
 | Secret Rotation Playbook | ✅ Done | 2025-12-09 |
 | Supabase pg_audit Extension | ✅ Done | 2025-12-09 |
 | Region Alignment (Cloud Run + Supabase in Ohio) | ✅ Done | 2025-12-09 |
+| GCP Alerting Policies | ✅ Done | 2025-12-09 |
 
 ---
 
@@ -104,7 +80,7 @@ Before launching GA, verify:
 
 - [ ] Cloud Armor configured with WAF rules
 - [ ] PITR enabled in Supabase
-- [ ] GCP alerting policies active
+- [x] GCP alerting policies active
 - [x] pg_audit enabled and configured
 - [ ] Penetration test completed
 - [ ] SOC 2 Type I audit (if required)

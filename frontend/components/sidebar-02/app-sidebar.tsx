@@ -255,8 +255,9 @@ export function DashboardSidebar() {
                                 <button
                                   className="opacity-100 md:opacity-0 md:group-hover/item:opacity-100 data-[state=open]:opacity-100 p-1 text-muted-foreground hover:text-foreground transition-all rounded-md hover:bg-sidebar-muted"
                                   onClick={(e) => e.stopPropagation()}
+                                  aria-label="More options"
                                 >
-                                  <FontAwesomeIcon icon={faEllipsisVertical} className="size-3" />
+                                  <FontAwesomeIcon icon={faEllipsisVertical} className="size-3" aria-hidden="true" />
                                 </button>
                               </DropdownMenuTrigger>
                             </TooltipTrigger>

@@ -45,7 +45,7 @@ export default function Home() {
     <div className={`${alteHaasGrotesk.className} min-h-screen flex flex-col`}>
       <SiteHeader onSignUp={handleOpenModal} />
 
-      <main className="flex flex-1 flex-col">
+      <main id="main-content" className="flex flex-1 flex-col">
         <HeroSection onJoinWaitlist={handleOpenModal} />
         <ProcessSection />
         <StackedAgainstSection />

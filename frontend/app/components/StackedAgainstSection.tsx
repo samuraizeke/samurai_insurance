@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useState, type KeyboardEvent } from "react";
 import { alteHaasGrotesk, workSans } from "@/lib/fonts";
 
 type Option = {
@@ -85,6 +85,25 @@ export function StackedAgainstSection() {
     [totalSlides]
   );
 
+  const handleKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLDivElement>) => {
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        handlePrev();
+      } else if (event.key === "ArrowRight") {
+        event.preventDefault();
+        handleNext();
+      } else if (event.key === "Home") {
+        event.preventDefault();
+        setCurrentIndex(0);
+      } else if (event.key === "End") {
+        event.preventDefault();
+        setCurrentIndex(totalSlides - 1);
+      }
+    },
+    [handlePrev, handleNext, totalSlides]
+  );
+
   return (
     <section
       className={`${alteHaasGrotesk.className} relative w-full overflow-hidden px-6 py-24 sm:px-20 lg:px-40 xl:px-56`}
@@ -107,7 +126,14 @@ export function StackedAgainstSection() {
               You have four choices. None of them put you first.
             </p>
           </div>
-          <div className="relative w-full max-w-xl lg:max-w-none lg:flex-1">
+          <div
+            className="relative w-full max-w-xl lg:max-w-none lg:flex-1 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#de5e48] focus-visible:ring-offset-4"
+            role="region"
+            aria-roledescription="carousel"
+            aria-label="Insurance buying options. Use left and right arrow keys to navigate."
+            tabIndex={0}
+            onKeyDown={handleKeyDown}
+          >
             <div className="relative flex w-full items-center gap-3 px-1 sm:gap-5 sm:px-3">
               <button
                 type="button"

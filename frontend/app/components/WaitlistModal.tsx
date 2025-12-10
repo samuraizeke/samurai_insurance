@@ -576,15 +576,17 @@ export default function WaitlistModal({
               <input
                 type="text"
                 name="firstName"
+                id="waitlist-firstName"
                 className="h-12 rounded-full border border-transparent bg-[#b5b0ac] px-5 text-base font-normal text-[#333333] placeholder:text-[#333333] focus:border-[#de5e48] focus:outline-none focus:ring-2 focus:ring-[#de5e48]"
                 placeholder="Enter your first name"
                 value={formValues.firstName}
                 onChange={handleFirstNameChange}
                 required
                 aria-invalid={firstNameErrors.length > 0}
+                aria-describedby={firstNameErrors.length > 0 ? "waitlist-firstName-error" : undefined}
               />
               {firstNameErrors.length > 0 ? (
-                <span className="text-xs font-normal uppercase tracking-[0.1em] text-[#333333]">
+                <span id="waitlist-firstName-error" className="text-xs font-normal uppercase tracking-[0.1em] text-[#333333]" role="alert">
                   {firstNameErrors[0]}
                 </span>
               ) : null}
@@ -595,15 +597,17 @@ export default function WaitlistModal({
               <input
                 type="text"
                 name="lastName"
+                id="waitlist-lastName"
                 className="h-12 rounded-full border border-transparent bg-[#b5b0ac] px-5 text-base font-normal text-[#333333] placeholder:text-[#333333] focus:border-[#de5e48] focus:outline-none focus:ring-2 focus:ring-[#de5e48]"
                 placeholder="Enter your last name"
                 value={formValues.lastName}
                 onChange={handleLastNameChange}
                 required
                 aria-invalid={lastNameErrors.length > 0}
+                aria-describedby={lastNameErrors.length > 0 ? "waitlist-lastName-error" : undefined}
               />
               {lastNameErrors.length > 0 ? (
-                <span className="text-xs font-normal uppercase tracking-[0.1em] text-[#333333]">
+                <span id="waitlist-lastName-error" className="text-xs font-normal uppercase tracking-[0.1em] text-[#333333]" role="alert">
                   {lastNameErrors[0]}
                 </span>
               ) : null}
@@ -614,16 +618,18 @@ export default function WaitlistModal({
               <input
                 type="email"
                 name="email"
+                id="waitlist-email"
                 className="h-12 rounded-full border border-transparent bg-[#b5b0ac] px-5 text-base font-normal text-[#333333] placeholder:text-[#333333] focus:border-[#de5e48] focus:outline-none focus:ring-2 focus:ring-[#de5e48]"
                 placeholder="Enter your email"
                 value={formValues.email}
                 onChange={handleEmailChange}
                 onBlur={() => setEmailTouched(true)}
                 aria-invalid={Boolean(emailErrorMessage)}
+                aria-describedby={emailErrorMessage ? "waitlist-email-error" : undefined}
                 required
               />
               {emailErrorMessage ? (
-                <span className="text-xs font-normal uppercase tracking-[0.1em] text-[#de5e48]">
+                <span id="waitlist-email-error" className="text-xs font-normal uppercase tracking-[0.1em] text-[#de5e48]" role="alert">
                   {emailErrorMessage}
                 </span>
               ) : null}
@@ -633,16 +639,18 @@ export default function WaitlistModal({
               <input
                 type="checkbox"
                 name="marketingConsent"
+                id="waitlist-marketingConsent"
                 className="mt-[2px] h-5 w-5 rounded border border-[#9c9692] bg-[#d3cecb] text-[#333333] focus:ring-[#de5e48]"
                 checked={formValues.marketingConsent}
                 onChange={handleConsentChange}
                 required
                 aria-invalid={marketingConsentErrors.length > 0}
+                aria-describedby={marketingConsentErrors.length > 0 ? "waitlist-marketingConsent-error" : undefined}
               />
               I agree to receive future marketing emails from Samurai Insurance.
             </label>
             {marketingConsentErrors.length > 0 ? (
-              <span className="text-xs font-normal uppercase tracking-[0.1em] text-[#333333]">
+              <span id="waitlist-marketingConsent-error" className="text-xs font-normal uppercase tracking-[0.1em] text-[#333333]" role="alert">
                 {marketingConsentErrors[0]}
               </span>
             ) : null}

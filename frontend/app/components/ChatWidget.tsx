@@ -4,6 +4,13 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+} from "@/components/ui/dialog";
+import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
@@ -537,8 +544,12 @@ export default function ChatWidget() {
             (messages.length === 0 || isLoadingHistory) ? "justify-center gap-4" : "gap-4"
         )}>
             {isLoadingHistory ? (
-                <div className="flex flex-col items-center justify-center gap-4">
-                    <div className="flex gap-1">
+                <div
+                    className="flex flex-col items-center justify-center gap-4"
+                    role="status"
+                    aria-live="polite"
+                >
+                    <div className="flex gap-1" aria-hidden="true">
                         <span className="animate-bounce text-2xl text-[#de5e48]" style={{ animationDelay: "0ms" }}>●</span>
                         <span className="animate-bounce text-2xl text-[#de5e48]" style={{ animationDelay: "150ms" }}>●</span>
                         <span className="animate-bounce text-2xl text-[#de5e48]" style={{ animationDelay: "300ms" }}>●</span>
@@ -549,10 +560,11 @@ export default function ChatWidget() {
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-6 max-w-2xl w-full mx-auto px-4">
                     <Image
                         src="/sam-body-logo.png"
-                        alt="Sam"
+                        alt=""
                         width={56}
                         height={56}
                         className="object-contain shrink-0"
+                        aria-hidden="true"
                     />
                     <h1 className="text-pretty text-center font-heading font-semibold text-[24px] text-foreground tracking-tighter sm:text-[32px] md:text-[46px]">
                         {getUserFirstName()
@@ -561,13 +573,18 @@ export default function ChatWidget() {
                     </h1>
                 </div>
             ) : messages.length === 0 && isUploadingPolicy ? (
-                <div className="flex flex-col items-center justify-center gap-4 max-w-2xl w-full mx-auto">
+                <div
+                    className="flex flex-col items-center justify-center gap-4 max-w-2xl w-full mx-auto"
+                    role="status"
+                    aria-live="polite"
+                >
                     <Image
                         src="/sam-body-logo.png"
-                        alt="Sam"
+                        alt=""
                         width={64}
                         height={64}
                         className="object-contain"
+                        aria-hidden="true"
                     />
                     <div className="flex flex-col items-center gap-2">
                         <p className="text-lg font-medium text-foreground font-[family-name:var(--font-work-sans)]">
@@ -576,7 +593,7 @@ export default function ChatWidget() {
                         <p className="text-sm text-muted-foreground font-[family-name:var(--font-work-sans)]">
                             This may take a moment
                         </p>
-                        <div className="flex gap-1 mt-2">
+                        <div className="flex gap-1 mt-2" aria-hidden="true">
                             <span className="animate-bounce text-xl text-[#de5e48]" style={{ animationDelay: "0ms" }}>●</span>
                             <span className="animate-bounce text-xl text-[#de5e48]" style={{ animationDelay: "150ms" }}>●</span>
                             <span className="animate-bounce text-xl text-[#de5e48]" style={{ animationDelay: "300ms" }}>●</span>
@@ -584,7 +601,11 @@ export default function ChatWidget() {
                     </div>
                 </div>
             ) : (
-                <div className="flex-1 overflow-y-auto pb-4 space-y-4 max-w-2xl w-full mx-auto scrollbar-hide px-2 sm:px-0">
+                <div
+                    className="flex-1 overflow-y-auto pb-4 space-y-4 max-w-2xl w-full mx-auto scrollbar-hide px-2 sm:px-0"
+                    aria-live="polite"
+                    aria-label="Chat messages"
+                >
                     {messages.map((message) => {
                         const showUploadButton = hasUploadMarker(message.content);
                         const displayContent = showUploadButton ? removeUploadMarker(message.content) : message.content;
@@ -600,10 +621,10 @@ export default function ChatWidget() {
                                 )}
                             >
                                 {message.role === "assistant" && (
-                                    <div className="shrink-0">
+                                    <div className="shrink-0" aria-hidden="true">
                                         <Image
                                             src="/sam-head-logo.png"
-                                            alt="Sam"
+                                            alt=""
                                             width={32}
                                             height={32}
                                             className="rounded-full object-contain"
@@ -687,7 +708,7 @@ export default function ChatWidget() {
                                     <div className="shrink-0">
                                         <Avatar className="h-6 w-6">
                                             <AvatarImage src={user?.user_metadata?.avatar_url} alt="User" />
-                                            <AvatarFallback className="bg-[#de5e48] text-white text-xs">
+                                            <AvatarFallback className="bg-[#333333] text-[#f7f6f3] text-xs font-bold font-[family-name:var(--font-alte-haas)]">
                                                 {getUserInitials()}
                                             </AvatarFallback>
                                         </Avatar>
@@ -697,11 +718,15 @@ export default function ChatWidget() {
                         );
                     })}
                     {isLoading && (
-                        <div className="flex items-start gap-2 sm:gap-3 px-3 sm:px-4 py-2 rounded-lg bg-muted mr-auto w-fit max-w-[90%] sm:max-w-[80%]">
-                            <div className="shrink-0">
+                        <div
+                            className="flex items-start gap-2 sm:gap-3 px-3 sm:px-4 py-2 rounded-lg bg-muted mr-auto w-fit max-w-[90%] sm:max-w-[80%]"
+                            role="status"
+                            aria-label={isUploadingPolicy ? "Analyzing your policy document" : "Sam is typing"}
+                        >
+                            <div className="shrink-0" aria-hidden="true">
                                 <Image
                                     src="/sam-head-logo.png"
-                                    alt="Sam"
+                                    alt=""
                                     width={32}
                                     height={32}
                                     className="rounded-full object-contain"
@@ -713,14 +738,14 @@ export default function ChatWidget() {
                                         <p className="text-sm text-muted-foreground animate-pulse">
                                             Analyzing your policy document...
                                         </p>
-                                        <div className="flex gap-1">
+                                        <div className="flex gap-1" aria-hidden="true">
                                             <span className="animate-bounce text-xs text-[#de5e48]" style={{ animationDelay: "0ms" }}>●</span>
                                             <span className="animate-bounce text-xs text-[#de5e48]" style={{ animationDelay: "150ms" }}>●</span>
                                             <span className="animate-bounce text-xs text-[#de5e48]" style={{ animationDelay: "300ms" }}>●</span>
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="flex gap-1">
+                                    <div className="flex gap-1" aria-hidden="true">
                                         <span className="animate-bounce text-sm" style={{ animationDelay: "0ms" }}>●</span>
                                         <span className="animate-bounce text-sm" style={{ animationDelay: "150ms" }}>●</span>
                                         <span className="animate-bounce text-sm" style={{ animationDelay: "300ms" }}>●</span>
@@ -771,11 +796,12 @@ export default function ChatWidget() {
                                         </span>
                                     </span>
                                     <button
-                                        className="absolute right-1 z-10 rounded-sm p-0.5 text-muted-foreground opacity-0 focus-visible:bg-accent focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-background group-hover:opacity-100"
+                                        className="absolute right-0.5 z-10 flex items-center justify-center rounded-sm min-w-6 min-h-6 p-1 text-muted-foreground opacity-0 focus-visible:bg-accent focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-background group-hover:opacity-100"
                                         onClick={() => handleRemoveFile(file.id)}
                                         type="button"
+                                        aria-label={`Remove ${file.name}`}
                                     >
-                                        <FontAwesomeIcon icon={faXmark} className="size-3" />
+                                        <FontAwesomeIcon icon={faXmark} className="size-3" aria-hidden="true" />
                                     </button>
                                 </Badge>
                             ))}
@@ -794,22 +820,24 @@ export default function ChatWidget() {
                                     </span>
                                 </span>
                                 <button
-                                    className="absolute right-1.5 z-10 rounded-sm p-0.5 text-muted-foreground hover:text-foreground transition-colors"
+                                    className="absolute right-1 z-10 flex items-center justify-center rounded-sm min-w-6 min-h-6 p-1 text-muted-foreground hover:text-foreground transition-colors focus-visible:ring-2 focus-visible:ring-ring"
                                     onClick={() => setSelectedPolicy(null)}
                                     type="button"
+                                    aria-label="Clear policy selection"
                                 >
-                                    <FontAwesomeIcon icon={faXmark} className="size-3" />
+                                    <FontAwesomeIcon icon={faXmark} className="size-3" aria-hidden="true" />
                                 </button>
                             </Badge>
                         </div>
                     )}
                     <Textarea
                         ref={textareaRef}
-                        className="max-h-50 min-h-14 resize-none rounded-none border-none bg-transparent! p-0 pl-2 pt-1 text-base md:text-base shadow-none focus-visible:border-transparent focus-visible:ring-0 font-[family-name:var(--font-work-sans)] placeholder:text-base"
+                        className="max-h-50 min-h-14 resize-none rounded-none border-none bg-transparent! p-0 pl-2 pt-1 text-base md:text-base shadow-none focus-visible:border-transparent focus-visible:ring-0 font-[family-name:var(--font-work-sans)] placeholder:text-base placeholder:text-[#666666]"
                         onChange={handleTextareaChange}
                         onKeyDown={handleKeyDown}
                         placeholder="What can I help you with?"
                         value={prompt}
+                        aria-label="Chat message"
                     />
 
                     <div className="flex items-center gap-1">
@@ -820,6 +848,7 @@ export default function ChatWidget() {
                                 onChange={handleFileSelect}
                                 ref={fileInputRef}
                                 type="file"
+                                aria-label="Upload attachments"
                             />
 
                             <DropdownMenu>
@@ -831,8 +860,9 @@ export default function ChatWidget() {
                                                 size="icon"
                                                 type="button"
                                                 variant="ghost"
+                                                aria-label="Add attachment"
                                             >
-                                                <FontAwesomeIcon icon={faPlus} className="text-[#de5e48] size-4" />
+                                                <FontAwesomeIcon icon={faPlus} className="text-[#de5e48] size-4" aria-hidden="true" />
                                             </Button>
                                         </DropdownMenuTrigger>
                                     </TooltipTrigger>
@@ -884,8 +914,9 @@ export default function ChatWidget() {
                                                 size="icon"
                                                 type="button"
                                                 variant="ghost"
+                                                aria-label="Select policy"
                                             >
-                                                <FontAwesomeIcon icon={faFileLines} className="text-[#de5e48] size-4" />
+                                                <FontAwesomeIcon icon={faFileLines} className="text-[#de5e48] size-4" aria-hidden="true" />
                                             </Button>
                                         </DropdownMenuTrigger>
                                     </TooltipTrigger>
@@ -968,8 +999,9 @@ export default function ChatWidget() {
                                         size="icon"
                                         type="submit"
                                         variant="default"
+                                        aria-label="Send message"
                                     >
-                                        <FontAwesomeIcon icon={faArrowUp} className="text-[#f7f6f3] size-4" />
+                                        <FontAwesomeIcon icon={faArrowUp} className="text-[#f7f6f3] size-4" aria-hidden="true" />
                                     </Button>
                                 </TooltipTrigger>
                                 <TooltipContent
@@ -1004,85 +1036,82 @@ export default function ChatWidget() {
                 onChange={handlePolicyFileSelect}
                 ref={policyFileInputRef}
                 type="file"
+                aria-label="Upload policy document"
             />
 
-            {/* Policy Upload Modal */}
-            {showUploadModal && (
-                <div
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-                    onClick={() => setShowUploadModal(false)}
-                >
-                    <div
-                        className="relative w-full max-w-lg bg-white rounded-lg shadow-lg p-4 sm:p-6 max-h-[90vh] overflow-y-auto"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <button
-                            onClick={() => setShowUploadModal(false)}
-                            className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100"
-                        >
-                            <FontAwesomeIcon icon={faXmark} className="size-5" />
-                        </button>
-
-                        <h2 className="text-xl font-semibold mb-2">Upload Policy Document</h2>
-                        <p className="text-muted-foreground text-sm mb-6">
+            {/* Policy Upload Modal - Accessible Dialog */}
+            <Dialog open={showUploadModal} onOpenChange={setShowUploadModal}>
+                <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle className="text-xl font-semibold">Upload Policy Document</DialogTitle>
+                        <DialogDescription className="text-muted-foreground text-sm">
                             Upload your insurance documents so I can review your coverage. You can upload:
-                        </p>
+                        </DialogDescription>
+                    </DialogHeader>
 
-                        <div className="space-y-3 mb-6">
-                            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                                <FontAwesomeIcon icon={faCamera} className="text-[#de5e48] size-5" />
-                                <div>
-                                    <p className="font-medium text-sm">Photo of Insurance Card</p>
-                                    <p className="text-xs text-muted-foreground">Take a photo of your insurance ID card</p>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                                <FontAwesomeIcon icon={faFileLines} className="text-[#de5e48] size-5" />
-                                <div>
-                                    <p className="font-medium text-sm">Declarations Page</p>
-                                    <p className="text-xs text-muted-foreground">The summary page of your policy</p>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                                <FontAwesomeIcon icon={faPaperclip} className="text-[#de5e48] size-5" />
-                                <div>
-                                    <p className="font-medium text-sm">Policy PDF</p>
-                                    <p className="text-xs text-muted-foreground">Your full policy document</p>
-                                </div>
+                    <div className="space-y-3 mb-6">
+                        <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                            <FontAwesomeIcon icon={faCamera} className="text-[#de5e48] size-5" aria-hidden="true" />
+                            <div>
+                                <p className="font-medium text-sm">Photo of Insurance Card</p>
+                                <p className="text-xs text-muted-foreground">Take a photo of your insurance ID card</p>
                             </div>
                         </div>
-
-                        <div
-                            className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-[#de5e48] transition-colors cursor-pointer"
-                            onClick={() => policyFileInputRef.current?.click()}
-                            onDragOver={(e) => {
-                                e.preventDefault();
-                                e.currentTarget.classList.add('border-[#de5e48]', 'bg-[#de5e48]/5');
-                            }}
-                            onDragLeave={(e) => {
-                                e.preventDefault();
-                                e.currentTarget.classList.remove('border-[#de5e48]', 'bg-[#de5e48]/5');
-                            }}
-                            onDrop={(e) => {
-                                e.preventDefault();
-                                e.currentTarget.classList.remove('border-[#de5e48]', 'bg-[#de5e48]/5');
-                                const files = e.dataTransfer.files;
-                                if (files && files.length > 0) {
-                                    handlePolicyUpload(files[0]);
-                                }
-                            }}
-                        >
-                            <FontAwesomeIcon icon={faUpload} className="text-[#de5e48] size-8 mb-3" />
-                            <p className="font-medium">Click to upload or drag and drop</p>
-                            <p className="text-sm text-muted-foreground mt-1">PDF, JPG, PNG, or HEIC (max 20MB)</p>
+                        <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                            <FontAwesomeIcon icon={faFileLines} className="text-[#de5e48] size-5" aria-hidden="true" />
+                            <div>
+                                <p className="font-medium text-sm">Declarations Page</p>
+                                <p className="text-xs text-muted-foreground">The summary page of your policy</p>
+                            </div>
                         </div>
-
-                        <p className="text-xs text-center text-muted-foreground mt-4">
-                            Your documents are processed securely and used only to analyze your coverage.
-                        </p>
+                        <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                            <FontAwesomeIcon icon={faPaperclip} className="text-[#de5e48] size-5" aria-hidden="true" />
+                            <div>
+                                <p className="font-medium text-sm">Policy PDF</p>
+                                <p className="text-xs text-muted-foreground">Your full policy document</p>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            )}
+
+                    <div
+                        role="button"
+                        tabIndex={0}
+                        className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-[#de5e48] focus-visible:border-[#de5e48] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#de5e48] focus-visible:ring-offset-2 transition-colors cursor-pointer"
+                        onClick={() => policyFileInputRef.current?.click()}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                policyFileInputRef.current?.click();
+                            }
+                        }}
+                        onDragOver={(e) => {
+                            e.preventDefault();
+                            e.currentTarget.classList.add('border-[#de5e48]', 'bg-[#de5e48]/5');
+                        }}
+                        onDragLeave={(e) => {
+                            e.preventDefault();
+                            e.currentTarget.classList.remove('border-[#de5e48]', 'bg-[#de5e48]/5');
+                        }}
+                        onDrop={(e) => {
+                            e.preventDefault();
+                            e.currentTarget.classList.remove('border-[#de5e48]', 'bg-[#de5e48]/5');
+                            const files = e.dataTransfer.files;
+                            if (files && files.length > 0) {
+                                handlePolicyUpload(files[0]);
+                            }
+                        }}
+                        aria-label="Upload policy document. Click or press Enter to select a file, or drag and drop."
+                    >
+                        <FontAwesomeIcon icon={faUpload} className="text-[#de5e48] size-8 mb-3" aria-hidden="true" />
+                        <p className="font-medium">Click to upload or drag and drop</p>
+                        <p className="text-sm text-muted-foreground mt-1">PDF, JPG, PNG, or HEIC (max 20MB)</p>
+                    </div>
+
+                    <p className="text-xs text-center text-muted-foreground mt-4">
+                        Your documents are processed securely and used only to analyze your coverage.
+                    </p>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
