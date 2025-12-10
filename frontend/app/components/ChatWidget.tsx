@@ -616,7 +616,7 @@ export default function ChatWidget() {
                                 className={cn(
                                     "flex items-start gap-2 sm:gap-3 px-3 sm:px-4 py-2 rounded-lg w-fit max-w-[90%] sm:max-w-[80%]",
                                     message.role === "user"
-                                        ? "bg-[#de5e48]/10 ml-auto"
+                                        ? "bg-[#dedddb] ml-auto"
                                         : "bg-muted mr-auto"
                                 )}
                             >
@@ -697,7 +697,7 @@ export default function ChatWidget() {
                                     {showUploadButton && (
                                         <Button
                                             onClick={() => setShowUploadModal(true)}
-                                            className="mt-2 bg-[#de5e48] hover:bg-[#de5e48]/90 text-white font-[family-name:var(--font-work-sans)]"
+                                            className="mt-2 bg-[#333333] hover:bg-[#333333]/90 font-bold text-[#f7f6f3] font-[family-name:var(--font-work-sans)]"
                                         >
                                             <FontAwesomeIcon icon={faUpload} className="mr-2 size-4" />
                                             Upload Policy Document
@@ -708,7 +708,7 @@ export default function ChatWidget() {
                                     <div className="shrink-0">
                                         <Avatar className="h-6 w-6">
                                             <AvatarImage src={user?.user_metadata?.avatar_url} alt="User" />
-                                            <AvatarFallback className="bg-[#333333] text-[#f7f6f3] text-xs font-bold font-[family-name:var(--font-alte-haas)]">
+                                            <AvatarFallback className="bg-[#333333] text-white text-xs font-bold font-[family-name:var(--font-alte-haas)]">
                                                 {getUserInitials()}
                                             </AvatarFallback>
                                         </Avatar>
@@ -882,21 +882,21 @@ export default function ChatWidget() {
                                         className="cursor-pointer hover:bg-[#333333]/5 focus:bg-[#333333]/5 rounded-lg"
                                         onClick={() => setShowUploadModal(true)}
                                     >
-                                        <FontAwesomeIcon icon={faUpload} className="text-[#de5e48] size-3 mr-2" />
+                                        <FontAwesomeIcon icon={faUpload} className="text-[#333333] size-3 mr-2" />
                                         Upload Policy Document
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
                                         className="cursor-pointer hover:bg-[#333333]/5 focus:bg-[#333333]/5 rounded-lg"
                                         onClick={() => fileInputRef.current?.click()}
                                     >
-                                        <FontAwesomeIcon icon={faPaperclip} className="text-[#de5e48] size-3 mr-2" />
+                                        <FontAwesomeIcon icon={faPaperclip} className="text-[#333333] size-3 mr-2" />
                                         Attach Files
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
                                         className="cursor-pointer hover:bg-[#333333]/5 focus:bg-[#333333]/5 rounded-lg"
                                         onClick={handlePasteFromClipboard}
                                     >
-                                        <FontAwesomeIcon icon={faClipboard} className="text-[#de5e48] size-3 mr-2" />
+                                        <FontAwesomeIcon icon={faClipboard} className="text-[#333333] size-3 mr-2" />
                                         Paste from Clipboard
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
@@ -946,7 +946,7 @@ export default function ChatWidget() {
                                             <p className="text-xs text-muted-foreground mb-2">No policies uploaded yet</p>
                                             <Button
                                                 size="sm"
-                                                className="text-xs h-7 bg-[#de5e48] hover:bg-[#de5e48]/90 text-white"
+                                                className="text-xs h-7 bg-[#333333] hover:bg-[#333333]/90 text-[#f7f6f3] font-bold"
                                                 onClick={() => setShowUploadModal(true)}
                                             >
                                                 <FontAwesomeIcon icon={faUpload} className="mr-1.5 size-3" />
@@ -975,7 +975,7 @@ export default function ChatWidget() {
                                                 >
                                                     <div className="flex flex-col gap-0.5 w-full">
                                                         <div className="flex items-center">
-                                                            <FontAwesomeIcon icon={faFileLines} className="text-[#de5e48] size-3 mr-2" />
+                                                            <FontAwesomeIcon icon={faFileLines} className="text-[#333333] size-3 mr-2" />
                                                             <span className="font-medium">{getPolicyDisplayName(policy.policyType)}</span>
                                                         </div>
                                                         <span className="text-[10px] text-muted-foreground pl-5 truncate">
@@ -994,7 +994,7 @@ export default function ChatWidget() {
                             <Tooltip>
                                 <TooltipTrigger asChild>
                                     <Button
-                                        className="h-7 w-7 rounded-md bg-[#de5e48] hover:bg-[#de5e48]/90 disabled:opacity-50"
+                                        className="h-7 w-7 rounded-md bg-[#333333] hover:bg-[#333333]/90 disabled:opacity-50"
                                         disabled={!prompt.trim() || isLoading}
                                         size="icon"
                                         type="submit"

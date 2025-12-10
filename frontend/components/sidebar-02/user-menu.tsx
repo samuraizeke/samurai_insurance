@@ -50,7 +50,7 @@ export function UserMenu() {
             >
               <Avatar className="h-8 w-8">
                 <AvatarImage src={user.user_metadata?.avatar_url} alt={displayName} />
-                <AvatarFallback className="bg-[#333333] text-[#f7f6f3] text-sm font-bold font-[family-name:var(--font-alte-haas)]">
+                <AvatarFallback className="bg-[#333333] text-white text-sm font-bold font-[family-name:var(--font-alte-haas)]">
                   {userInitials}
                 </AvatarFallback>
               </Avatar>

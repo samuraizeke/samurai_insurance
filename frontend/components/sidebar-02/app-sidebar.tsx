@@ -161,12 +161,12 @@ export function DashboardSidebar() {
         )}
       >
         <div className="flex items-center">
-          <Logo collapsed={isCollapsed} />
+          <Logo collapsed={isCollapsed} isMobile={isMobileView} />
         </div>
 
         {/* Mobile: always show trigger in sidebar header when open */}
         {isMobileView && (
-          <SidebarTrigger className="size-10 text-[#de5e48] hover:text-[#de5e48]/80 hover:bg-transparent [&_svg]:size-10" />
+          <SidebarTrigger className="h-7 w-7 bg-[#333333] hover:bg-[#333333]/90 text-[#f7f6f3] hover:text-[#f7f6f3] rounded-md [&_svg]:size-4" />
         )}
         {/* Desktop: show trigger when expanded */}
         {!isMobileView && !isCollapsed && (

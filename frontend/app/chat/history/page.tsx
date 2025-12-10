@@ -190,7 +190,7 @@ function ChatHistoryContent() {
                 <h1 className="text-3xl font-bold font-[family-name:var(--font-alte-haas)] text-[#333333]">
                     Chat History
                 </h1>
-                <Button asChild className="bg-[#de5e48] hover:bg-[#de5e48]/90 font-[family-name:var(--font-work-sans)] text-[#fffaf3]">
+                <Button asChild className="bg-[#333333] hover:bg-[#333333]/90 font-[family-name:var(--font-work-sans)] font-bold text-white">
                     <Link href="/chat">
                         <FontAwesomeIcon icon={faPlus} className="size-3 -mr-1" />
                         New Chat
@@ -367,16 +367,20 @@ function MobileHeader() {
     if (openMobile) return null;
 
     return (
-        <header className="flex md:hidden items-center justify-between h-14 px-4 pt-4 shrink-0 bg-[#f7f6f3] sticky top-0 z-10">
-            <SidebarTrigger className="size-10 text-[#de5e48] hover:text-[#de5e48]/80 hover:bg-transparent [&_svg]:size-10" />
-            <Image
-                src="/wordmark-only-logo.png"
-                alt="Samurai Insurance"
-                width={180}
-                height={48}
-                className="h-12 w-auto object-contain"
-            />
-            <div className="size-10" /> {/* Spacer for centering */}
+        <header className="md:hidden shrink-0 bg-[#f7f6f3] sticky top-0 z-10">
+            {/* Safe area spacer - provides padding AND extends background into notch/status bar area */}
+            <div className="h-[env(safe-area-inset-top)]" />
+            <div className="flex items-center justify-between h-14 px-4">
+                <SidebarTrigger className="h-7 w-7 bg-[#333333] hover:bg-[#333333]/90 text-[#f7f6f3] hover:text-[#f7f6f3] rounded-md [&_svg]:size-4" />
+                <Image
+                    src="/wordmark-only-logo.png"
+                    alt="Samurai Insurance"
+                    width={180}
+                    height={48}
+                    className="h-12 w-auto object-contain"
+                />
+                <div className="size-10" /> {/* Spacer for centering */}
+            </div>
         </header>
     );
 }

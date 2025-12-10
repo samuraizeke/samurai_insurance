@@ -4,7 +4,7 @@ import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { faBars } from "@fortawesome/free-solid-svg-icons"
+import { faBars, faXmark } from "@fortawesome/free-solid-svg-icons"
 
 import { useIsMobile } from "@/hooks/use-mobile"
 import { cn } from "@/lib/utils"
@@ -285,7 +285,7 @@ function Sidebar({
                 data-sidebar="sidebar"
                 data-slot="sidebar-inner"
                 className={cn(
-                  "flex h-full w-full flex-col",
+                  "flex h-full w-full flex-col pt-[env(safe-area-inset-top)]",
                   variant === "floating" || variant === "inset"
                     ? "bg-sidebar rounded-lg shadow-sm"
                     : "bg-sidebar"
@@ -362,7 +362,11 @@ function SidebarTrigger({
   onClick,
   ...props
 }: React.ComponentProps<typeof Button>) {
-  const { toggleSidebar } = useSidebar()
+  const { toggleSidebar, state, isMobile, openMobile } = useSidebar()
+
+  // Show X icon when sidebar is open (expanded on desktop, openMobile on mobile)
+  const isOpen = isMobile ? openMobile : state === "expanded"
+  const icon = isOpen ? faXmark : faBars
 
   return (
     <Button
@@ -377,7 +381,7 @@ function SidebarTrigger({
       }}
       {...props}
     >
-      <FontAwesomeIcon icon={faBars} />
+      <FontAwesomeIcon icon={icon} />
       <span className="sr-only">Toggle Sidebar</span>
     </Button>
   )

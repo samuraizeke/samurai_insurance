@@ -13,16 +13,20 @@ function MobileHeader() {
     if (openMobile) return null;
 
     return (
-        <header className="flex md:hidden items-center justify-between h-14 px-4 shrink-0 bg-[#f7f6f3]" style={{ paddingTop: 'max(16px, env(safe-area-inset-top))' }}>
-            <SidebarTrigger className="size-10 text-[#de5e48] hover:text-[#de5e48]/80 hover:bg-transparent [&_svg]:size-10" />
-            <Image
-                src="/wordmark-only-logo.png"
-                alt="Samurai Insurance"
-                width={180}
-                height={48}
-                className="h-12 w-auto object-contain"
-            />
-            <div className="size-10" /> {/* Spacer for centering */}
+        <header className="md:hidden shrink-0 bg-[#f7f6f3]">
+            {/* Safe area spacer - provides padding AND extends background into notch/status bar area */}
+            <div className="h-[env(safe-area-inset-top)]" />
+            <div className="flex items-center justify-between h-14 px-4">
+                <SidebarTrigger className="h-7 w-7 bg-[#333333] hover:bg-[#333333]/90 text-[#f7f6f3] hover:text-[#f7f6f3] rounded-md [&_svg]:size-4" />
+                <Image
+                    src="/wordmark-only-logo.png"
+                    alt="Samurai Insurance"
+                    width={180}
+                    height={48}
+                    className="h-12 w-auto object-contain"
+                />
+                <div className="size-10" /> {/* Spacer for centering */}
+            </div>
         </header>
     );
 }
