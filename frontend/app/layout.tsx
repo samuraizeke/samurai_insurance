@@ -10,6 +10,10 @@ export const metadata: Metadata = {
   description: "Never Worry About Your P&C Insurance Again.",
 };
 
+export const viewport = {
+  viewportFit: 'cover',
+};
+
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID;
 
 export default function RootLayout({
