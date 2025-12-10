@@ -139,8 +139,8 @@ export default function WaitlistModal({
       ) {
         try {
           window.grecaptcha?.reset(captchaWidgetId);
-        } catch (error) {
-          console.warn("Failed to reset reCAPTCHA widget", error);
+        } catch {
+          // reCAPTCHA widget reset failed silently
         }
       }
       setCaptchaToken("");

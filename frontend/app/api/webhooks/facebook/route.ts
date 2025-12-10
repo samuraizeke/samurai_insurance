@@ -14,7 +14,6 @@ export async function GET(request: NextRequest) {
   const challenge = searchParams.get('hub.challenge');
 
   if (mode === 'subscribe' && token === VERIFY_TOKEN) {
-    console.log('Facebook webhook verified successfully');
     return new NextResponse(challenge, { status: 200 });
   }
 
@@ -90,14 +89,6 @@ export async function POST(request: NextRequest) {
         for (const change of entry.changes || []) {
           if (change.field === 'leadgen') {
             const leadgenId = change.value?.leadgen_id;
-            const formId = change.value?.form_id;
-            const pageId = change.value?.page_id;
-
-            console.log('Received lead notification:', {
-              leadgenId,
-              formId,
-              pageId,
-            });
 
             // Fetch the actual lead data from Facebook
             if (leadgenId) {
@@ -154,7 +145,6 @@ async function processLead(leadData: any) {
     }
 
     if (existingEntries && existingEntries.length > 0) {
-      console.log(`Email ${normalizedEmail} already exists in waitlist`);
       return;
     }
 
@@ -169,15 +159,11 @@ async function processLead(leadData: any) {
     });
 
     if (insertError) {
-      if (insertError.code === '23505') {
-        console.log(`Email ${normalizedEmail} already exists (duplicate key)`);
-      } else {
+      if (insertError.code !== '23505') {
         console.error('Failed to insert Facebook lead:', insertError);
       }
       return;
     }
-
-    console.log(`Successfully added Facebook lead: ${normalizedEmail}`);
   } catch (error) {
     console.error('Error processing lead data:', error);
   }

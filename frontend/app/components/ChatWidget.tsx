@@ -160,7 +160,6 @@ export default function ChatWidget() {
 
                 if (storedSessionId) {
                     // Load existing session history
-                    console.log('📂 Loading existing session:', storedSessionId);
                     setDbSessionId(storedSessionId);
                     setCurrentSessionId(storedSessionId);
 
@@ -173,7 +172,6 @@ export default function ChatWidget() {
                             timestamp: new Date(msg.timestamp)
                         }));
                         setMessages(loadedMessages);
-                        console.log(`✅ Loaded ${history.length} messages from history`);
                     }
                 }
                 // Don't create a new session here - wait until first message is sent
@@ -197,7 +195,6 @@ export default function ChatWidget() {
         setSelectedPolicy(null); // Clear policy selection for new chat
         setSessionId(`session_${Date.now()}_${Math.random().toString(36).substring(7)}`);
         sessionInitialized.current = false; // Allow session creation on first message
-        console.log('🆕 Ready for new chat');
     }, [setCurrentSessionId]);
 
     // Function to load a specific session (called from sidebar)
@@ -221,7 +218,6 @@ export default function ChatWidget() {
                     timestamp: new Date(msg.timestamp)
                 }));
                 setMessages(loadedMessages);
-                console.log(`✅ Loaded session ${targetSessionId} with ${history.length} messages`);
             } else {
                 setMessages([]);
             }
@@ -253,8 +249,6 @@ export default function ChatWidget() {
 
     // Handle policy document upload
     const handlePolicyUpload = async (file: File) => {
-        console.log('📤 Uploading policy document:', file.name);
-
         setShowUploadModal(false);
         setIsLoading(true);
         setIsUploadingPolicy(true);
@@ -369,13 +363,11 @@ export default function ChatWidget() {
                 // Create session on first message if we don't have one
                 let currentDbSessionId = dbSessionId;
                 if (!currentDbSessionId && user?.id) {
-                    console.log('🆕 Creating new chat session on first message for user:', user.id);
                     const session = await createChatSession(user.id);
                     if (session) {
                         currentDbSessionId = session.sessionId;
                         setDbSessionId(session.sessionId);
                         setCurrentSessionId(session.sessionId);
-                        console.log('✅ Created session:', session.sessionId);
                     }
                 }
 
