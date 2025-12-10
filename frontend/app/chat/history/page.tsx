@@ -367,16 +367,7 @@ function MobileHeader() {
     if (openMobile) return null;
 
     return (
-        <header
-            className="md:hidden shrink-0 bg-[#f7f6f3] sticky top-0 z-10"
-            style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
-        >
-            {/* Background extension behind status bar */}
-            <div
-                className="absolute inset-x-0 bottom-full bg-[#f7f6f3]"
-                style={{ height: 'env(safe-area-inset-top, 0px)' }}
-                aria-hidden="true"
-            />
+        <header className="md:hidden shrink-0 bg-[#f7f6f3] sticky z-10" style={{ top: 'env(safe-area-inset-top, 0px)' }}>
             <div className="flex items-center justify-between h-14 px-4">
                 <SidebarTrigger className="h-7 w-7 bg-[#333333] hover:bg-[#333333]/90 text-[#f7f6f3] hover:text-[#f7f6f3] rounded-md [&_svg]:size-4" />
                 <Image
@@ -399,6 +390,18 @@ export default function ChatHistoryPage() {
                 <div className="relative flex h-screen w-full">
                     <DashboardSidebar />
                     <SidebarInset className="flex flex-col overflow-auto">
+                        {/* Safe area background - fixed to top of screen on mobile */}
+                        <div
+                            className="md:hidden fixed top-0 left-0 right-0 bg-[#f7f6f3] z-[5]"
+                            style={{ height: 'env(safe-area-inset-top, 0px)' }}
+                            aria-hidden="true"
+                        />
+                        {/* Spacer to push content below safe area on mobile */}
+                        <div
+                            className="md:hidden shrink-0"
+                            style={{ height: 'env(safe-area-inset-top, 0px)' }}
+                            aria-hidden="true"
+                        />
                         <MobileHeader />
                         <ChatHistoryContent />
                     </SidebarInset>
