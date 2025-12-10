@@ -135,13 +135,14 @@ function SidebarProvider({
             {
               "--sidebar-width": SIDEBAR_WIDTH,
               "--sidebar-width-icon": SIDEBAR_WIDTH_ICON,
+              ...(isMobile ? { height: 'calc(100svh + env(safe-area-inset-top, 0px))' } : {}),
               ...style,
             } as React.CSSProperties
           }
           className={cn(
             "group/sidebar-wrapper has-data-[variant=inset]:bg-sidebar flex min-h-svh w-full",
             // Prevent scroll issues on mobile when sidebar opens/closes
-            isMobile && "overflow-hidden h-svh",
+            isMobile && "overflow-hidden",
             className
           )}
           {...props}
@@ -285,7 +286,7 @@ function Sidebar({
                 data-sidebar="sidebar"
                 data-slot="sidebar-inner"
                 className={cn(
-                  "flex h-full w-full flex-col pt-[env(safe-area-inset-top)]",
+                  "flex h-full w-full flex-col mobile-safe-area-top",
                   variant === "floating" || variant === "inset"
                     ? "bg-sidebar rounded-lg shadow-sm"
                     : "bg-sidebar"

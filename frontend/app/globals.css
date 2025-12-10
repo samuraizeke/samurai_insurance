@@ -935,3 +935,19 @@ button:disabled {
 .safe-area-top {
   padding-top: env(safe-area-inset-top, 0px);
 }
+
+/* Mobile-only safe area padding - applies only on mobile screens */
+@media (max-width: 767px) {
+  .mobile-safe-area-top {
+    padding-top: env(safe-area-inset-top, 0px) !important;
+  }
+}
+
+/* Ensure html/body extend to cover safe areas on iOS */
+@supports (padding-top: env(safe-area-inset-top)) {
+  html, body {
+    /* Extend background into safe areas */
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+}

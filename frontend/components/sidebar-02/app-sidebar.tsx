@@ -154,7 +154,7 @@ export function DashboardSidebar() {
     <Sidebar variant="inset" collapsible="icon">
       <SidebarHeader
         className={cn(
-          "flex md:pt-3.5",
+          "flex md:pt-3.5 mobile-safe-area-top",
           isCollapsed
             ? "flex-row items-center justify-between gap-y-4 md:flex-col md:items-start md:justify-start"
             : "flex-row items-center justify-between"

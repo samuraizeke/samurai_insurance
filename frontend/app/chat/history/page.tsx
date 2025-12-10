@@ -367,9 +367,16 @@ function MobileHeader() {
     if (openMobile) return null;
 
     return (
-        <header className="md:hidden shrink-0 bg-[#f7f6f3] sticky top-0 z-10">
-            {/* Safe area spacer - provides padding AND extends background into notch/status bar area */}
-            <div className="h-[env(safe-area-inset-top)]" />
+        <header
+            className="md:hidden shrink-0 bg-[#f7f6f3] sticky top-0 z-10"
+            style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
+        >
+            {/* Background extension behind status bar */}
+            <div
+                className="absolute inset-x-0 bottom-full bg-[#f7f6f3]"
+                style={{ height: 'env(safe-area-inset-top, 0px)' }}
+                aria-hidden="true"
+            />
             <div className="flex items-center justify-between h-14 px-4">
                 <SidebarTrigger className="h-7 w-7 bg-[#333333] hover:bg-[#333333]/90 text-[#f7f6f3] hover:text-[#f7f6f3] rounded-md [&_svg]:size-4" />
                 <Image

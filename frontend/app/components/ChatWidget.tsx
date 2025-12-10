@@ -566,7 +566,7 @@ export default function ChatWidget() {
                         className="object-contain shrink-0"
                         aria-hidden="true"
                     />
-                    <h1 className="text-pretty text-center font-heading font-semibold text-[24px] text-foreground tracking-tighter sm:text-[32px] md:text-[46px]">
+                    <h1 className="text-pretty text-center font-heading font-semibold text-[32px] text-foreground tracking-tighter sm:text-[32px] md:text-[46px]">
                         {getUserFirstName()
                             ? `${getTimeBasedGreeting()}, ${getUserFirstName()}`
                             : "How can I help you today?"}

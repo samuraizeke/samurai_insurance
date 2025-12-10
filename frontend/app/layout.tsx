@@ -8,10 +8,16 @@ import { AuthProvider } from "@/lib/auth-context";
 export const metadata: Metadata = {
   title: "Samurai Insurance",
   description: "Never Worry About Your P&C Insurance Again.",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'Samurai Insurance',
+  },
 };
 
 export const viewport = {
   viewportFit: 'cover',
+  themeColor: '#f7f6f3',
 };
 
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID;
