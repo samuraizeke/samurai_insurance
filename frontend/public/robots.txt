@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /chat
+Disallow: /dashboard
+Disallow: /settings
+Disallow: /api/
+Disallow: /auth/
+
+Sitemap: https://joinsamurai.com/sitemap.xml
