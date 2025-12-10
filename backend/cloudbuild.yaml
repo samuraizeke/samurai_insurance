@@ -1,14 +1,23 @@
+# Cloud Build configuration for Samurai Insurance Backend
+# Security-hardened deployment to Cloud Run
+
 steps:
   # Build the container image
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'us-east5-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/samurai-backend:$COMMIT_SHA', '.']
+    args:
+      - 'build'
+      - '-t'
+      - 'us-east5-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/samurai-backend:$COMMIT_SHA'
+      - '-t'
+      - 'us-east5-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/samurai-backend:latest'
+      - '.'
     dir: 'backend'
 
   # Push the container image to Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'us-east5-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/samurai-backend:$COMMIT_SHA']
+    args: ['push', '--all-tags', 'us-east5-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/samurai-backend']
 
-  # Deploy container image to Cloud Run
+  # Deploy container image to Cloud Run with security settings
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
     args:
@@ -21,10 +30,35 @@ steps:
       - 'us-east5'
       - '--platform'
       - 'managed'
+      # Use a dedicated service account with minimal permissions
+      - '--service-account'
+      - 'samurai-backend@$PROJECT_ID.iam.gserviceaccount.com'
+      # Set environment to production
+      - '--set-env-vars'
+      - 'NODE_ENV=production'
+      # Memory and CPU limits
+      - '--memory'
+      - '512Mi'
+      - '--cpu'
+      - '1'
+      # Concurrency settings
+      - '--concurrency'
+      - '80'
+      - '--max-instances'
+      - '10'
+      # Request timeout
+      - '--timeout'
+      - '300'
+      # IMPORTANT: Allow unauthenticated for now since frontend proxies requests
+      # In future, consider using IAM authentication with Cloud Run Invoker
       - '--allow-unauthenticated'
 
 images:
   - 'us-east5-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/samurai-backend:$COMMIT_SHA'
+  - 'us-east5-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/samurai-backend:latest'
 
 options:
   logging: CLOUD_LOGGING_ONLY
+  # Use a private pool if available for enhanced security
+  # pool:
+  #   name: 'projects/$PROJECT_ID/locations/us-east5/workerPools/secure-pool'

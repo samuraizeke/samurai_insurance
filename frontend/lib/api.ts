@@ -1,4 +1,7 @@
 // frontend/lib/api.ts
+// API client for backend communication with authentication
+
+import { createClient } from './supabase';
 
 export interface ChatMessage {
     role: "user" | "assistant";
@@ -54,23 +57,50 @@ export interface StoredMessage {
     entities?: Record<string, unknown>;
 }
 
-// All API calls use relative paths - Next.js rewrites proxy them to the backend
-// This avoids CORS issues since the browser thinks it's talking to the same origin
-
 // Session storage keys
 const SESSION_ID_KEY = 'samurai_chat_session_id';
 const SESSION_UUID_KEY = 'samurai_chat_session_uuid';
+
+/**
+ * Get the current auth token from Supabase session
+ */
+async function getAuthToken(): Promise<string | null> {
+    try {
+        const supabase = createClient();
+        const { data: { session } } = await supabase.auth.getSession();
+        return session?.access_token || null;
+    } catch (error) {
+        console.error('Error getting auth token:', error);
+        return null;
+    }
+}
+
+/**
+ * Create headers with authentication token
+ */
+async function getAuthHeaders(): Promise<HeadersInit> {
+    const token = await getAuthToken();
+    const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+    };
+
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    return headers;
+}
 
 /**
  * Create a new chat session for a user
  */
 export async function createChatSession(userId: string): Promise<{ sessionId: number; sessionUuid: string } | null> {
     try {
+        const headers = await getAuthHeaders();
+
         const response = await fetch('/api/chat-sessions', {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
+            headers,
             body: JSON.stringify({ userId }),
         });
 
@@ -98,6 +128,7 @@ export async function createChatSession(userId: string): Promise<{ sessionId: nu
  * Get the current session ID from localStorage
  */
 export function getStoredSessionId(): number | null {
+    if (typeof window === 'undefined') return null;
     const stored = localStorage.getItem(SESSION_ID_KEY);
     return stored ? parseInt(stored, 10) : null;
 }
@@ -106,6 +137,7 @@ export function getStoredSessionId(): number | null {
  * Clear the stored session (for starting a new conversation)
  */
 export function clearStoredSession(): void {
+    if (typeof window === 'undefined') return;
     localStorage.removeItem(SESSION_ID_KEY);
     localStorage.removeItem(SESSION_UUID_KEY);
 }
@@ -113,9 +145,19 @@ export function clearStoredSession(): void {
 /**
  * Fetch chat history for a session
  */
-export async function getChatHistory(sessionId: number): Promise<StoredMessage[]> {
+export async function getChatHistory(sessionId: number, userId: string): Promise<StoredMessage[]> {
     try {
-        const response = await fetch(`/api/chat-sessions/${sessionId}/messages`);
+        const token = await getAuthToken();
+        const headers: HeadersInit = {};
+
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        const response = await fetch(
+            `/api/chat-sessions/${sessionId}/messages?userId=${encodeURIComponent(userId)}`,
+            { headers }
+        );
 
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -133,10 +175,19 @@ export async function getChatHistory(sessionId: number): Promise<StoredMessage[]
  * Get user's recent chat sessions
  */
 export async function getUserSessions(userId: string, limit: number = 10): Promise<ChatSession[]> {
-    const url = `/api/users/${userId}/chat-sessions?limit=${limit}`;
-
     try {
-        const response = await fetch(url);
+        const token = await getAuthToken();
+        const headers: HeadersInit = {};
+
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        const response = await fetch(
+            `/api/users/${userId}/chat-sessions?limit=${limit}`,
+            { headers }
+        );
+
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -154,11 +205,11 @@ export async function getUserSessions(userId: string, limit: number = 10): Promi
  */
 export async function renameSession(sessionId: number, userId: string, newName: string): Promise<boolean> {
     try {
+        const headers = await getAuthHeaders();
+
         const response = await fetch(`/api/chat-sessions/${sessionId}`, {
             method: "PATCH",
-            headers: {
-                "Content-Type": "application/json",
-            },
+            headers,
             body: JSON.stringify({ userId, summary: newName }),
         });
 
@@ -180,11 +231,11 @@ export async function renameSession(sessionId: number, userId: string, newName: 
  */
 export async function deleteSession(sessionId: number, userId: string): Promise<boolean> {
     try {
+        const headers = await getAuthHeaders();
+
         const response = await fetch(`/api/chat-sessions/${sessionId}`, {
             method: "DELETE",
-            headers: {
-                "Content-Type": "application/json",
-            },
+            headers,
             body: JSON.stringify({ userId }),
         });
 
@@ -211,11 +262,11 @@ export async function sendChatMessage(
     sessionId?: number
 ): Promise<string> {
     try {
+        const headers = await getAuthHeaders();
+
         const response = await fetch('/api/chat', {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
+            headers,
             body: JSON.stringify({
                 message,
                 history,
@@ -236,12 +287,17 @@ export async function sendChatMessage(
     }
 }
 
+/**
+ * Upload a policy document for analysis
+ */
 export async function uploadPolicyDocument(
     file: File,
     sessionId?: string,
     userId?: string
 ): Promise<UploadResponse> {
     try {
+        const token = await getAuthToken();
+
         const formData = new FormData();
         formData.append('document', file);
         if (sessionId) {
@@ -251,8 +307,15 @@ export async function uploadPolicyDocument(
             formData.append('userId', userId);
         }
 
+        const headers: HeadersInit = {};
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        // Note: Don't set Content-Type for FormData - browser will set it with boundary
+
         const response = await fetch('/api/upload-policy', {
             method: "POST",
+            headers,
             body: formData,
         });
 
@@ -283,10 +346,18 @@ export async function uploadPolicyDocument(
  * Get all uploaded policies for a user
  */
 export async function getUserPolicies(userId: string): Promise<UserPolicy[]> {
-    const url = `/api/users/${userId}/policies`;
-
     try {
-        const response = await fetch(url);
+        const token = await getAuthToken();
+        const headers: HeadersInit = {};
+
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        const response = await fetch(
+            `/api/users/${userId}/policies`,
+            { headers }
+        );
 
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);

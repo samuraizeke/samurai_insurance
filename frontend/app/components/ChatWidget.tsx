@@ -28,6 +28,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
+import rehypeSanitize from "rehype-sanitize";
 import {
     sendChatMessage,
     uploadPolicyDocument,
@@ -163,7 +164,7 @@ export default function ChatWidget() {
                     setDbSessionId(storedSessionId);
                     setCurrentSessionId(storedSessionId);
 
-                    const history = await getChatHistory(storedSessionId);
+                    const history = await getChatHistory(storedSessionId, user!.id);
                     if (history.length > 0) {
                         const loadedMessages: Message[] = history.map(msg => ({
                             id: msg.id,
@@ -211,7 +212,7 @@ export default function ChatWidget() {
             setCurrentSessionId(targetSessionId);
 
             // Load chat history for this session
-            const history = await getChatHistory(targetSessionId);
+            const history = await getChatHistory(targetSessionId, user!.id);
             if (history.length > 0) {
                 const loadedMessages: Message[] = history.map(msg => ({
                     id: msg.id,
@@ -627,6 +628,7 @@ export default function ChatWidget() {
                                     {message.role === "assistant" ? (
                                         <div className="text-base font-[family-name:var(--font-work-sans)] prose prose-sm max-w-none">
                                             <ReactMarkdown
+                                                rehypePlugins={[rehypeSanitize]}
                                                 components={{
                                                     h1: ({ children }) => (
                                                         <h1 className="text-xl font-heading font-bold mt-4 mb-2 first:mt-0">{children}</h1>
@@ -655,6 +657,22 @@ export default function ChatWidget() {
                                                     li: ({ children }) => (
                                                         <li className="mb-1">{children}</li>
                                                     ),
+                                                    a: ({ href, children }) => {
+                                                        // Sanitize href to prevent javascript: and other dangerous protocols
+                                                        const safeHref = href?.startsWith('http://') || href?.startsWith('https://') || href?.startsWith('mailto:')
+                                                            ? href
+                                                            : '#';
+                                                        return (
+                                                            <a
+                                                                href={safeHref}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="text-[#de5e48] underline hover:text-[#de5e48]/80"
+                                                            >
+                                                                {children}
+                                                            </a>
+                                                        );
+                                                    },
                                                 }}
                                             >
                                                 {displayContent}

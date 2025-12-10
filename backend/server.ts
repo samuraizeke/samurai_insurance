@@ -1,23 +1,50 @@
 // backend/server.ts
+// Main Express server with security hardening
+
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import fs from 'fs';
-import path from 'path';
-import os from 'os';
 import multer from 'multer';
 
-// Load environment variables
+// Load environment variables first
 dotenv.config();
 
 import { supabase } from './lib/supabase';
 
-// Decode base64 credentials and write to temp file for Google SDK
-if (process.env.GOOGLE_CREDENTIALS_BASE64) {
-    const credentials = Buffer.from(process.env.GOOGLE_CREDENTIALS_BASE64, 'base64').toString('utf-8');
-    const credentialsPath = path.join(os.tmpdir(), 'gcp-credentials.json');
-    fs.writeFileSync(credentialsPath, credentials);
-    process.env.GOOGLE_APPLICATION_CREDENTIALS = credentialsPath;
+// Security middleware imports
+import { requireAuth, optionalAuth } from './middleware/auth';
+import {
+  generalLimiter,
+  chatLimiter,
+  uploadLimiter,
+  sessionLimiter
+} from './middleware/rateLimiter';
+import {
+  chatRequestSchema,
+  createSessionSchema,
+  renameSessionSchema,
+  deleteSessionSchema,
+  getUserSessionsQuerySchema,
+  uploadPolicyBodySchema,
+  validateRequest
+} from './lib/validation';
+
+// NOTE: GCP Workload Identity is used in Cloud Run - no credentials file needed
+// The service automatically uses the attached service account
+// Only use GOOGLE_CREDENTIALS_BASE64 for local development
+if (process.env.NODE_ENV === 'development' && process.env.GOOGLE_CREDENTIALS_BASE64) {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const fs = require('fs');
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const path = require('path');
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const os = require('os');
+
+  const credentials = Buffer.from(process.env.GOOGLE_CREDENTIALS_BASE64, 'base64').toString('utf-8');
+  const credentialsPath = path.join(os.tmpdir(), 'gcp-credentials.json');
+  fs.writeFileSync(credentialsPath, credentials, { mode: 0o600 }); // Restrict file permissions
+  process.env.GOOGLE_APPLICATION_CREDENTIALS = credentialsPath;
+  console.log('🔐 Development mode: Using credentials file');
 }
 
 import { handleSamChat } from './agents/sam';
@@ -25,8 +52,8 @@ import { handleDocumentUpload, getPendingPolicyResponse, getUserPolicies, Policy
 import { generateSessionSummary, regenerateSummary } from './services/session-summary';
 
 const app = express();
-// Google Cloud Run sets PORT to 8080 automatically
 const port = process.env.PORT || 8080;
+const isProduction = process.env.NODE_ENV === 'production';
 
 // Configure multer for file uploads (store in memory)
 const upload = multer({
@@ -35,7 +62,6 @@ const upload = multer({
     fileSize: 20 * 1024 * 1024, // 20MB max file size
   },
   fileFilter: (req, file, cb) => {
-    // Accept images and PDFs
     const allowedMimes = [
       'image/jpeg',
       'image/jpg',
@@ -54,22 +80,32 @@ const upload = multer({
   }
 });
 
-// Middleware to enable CORS (allow frontend to communicate with backend)
-const allowedOrigins = [
-  'http://localhost:3000',
-  'https://joinsamurai.com',
-  'https://www.joinsamurai.com',
-  process.env.FRONTEND_URL,
-].filter(Boolean);
+// ============================================
+// CORS Configuration (Security Hardened)
+// ============================================
+const allowedOrigins = isProduction
+  ? [
+      'https://joinsamurai.com',
+      'https://www.joinsamurai.com',
+      process.env.FRONTEND_URL,
+    ].filter(Boolean) as string[]
+  : [
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'https://joinsamurai.com',
+      'https://www.joinsamurai.com',
+      process.env.FRONTEND_URL,
+    ].filter(Boolean) as string[];
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (like mobile apps or curl)
+    // Allow requests with no origin (like mobile apps, curl, or same-origin)
     if (!origin) return callback(null, true);
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
-    // Return false instead of error to avoid breaking preflight requests
+    // Log rejected origins for monitoring
+    console.warn(`⚠️ CORS rejected origin: ${origin}`);
     return callback(null, false);
   },
   credentials: true,
@@ -77,19 +113,23 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
 }));
 
-// Middleware to parse JSON bodies
-app.use(express.json());
+// Parse JSON bodies
+app.use(express.json({ limit: '1mb' }));
 
-// --- 1. HEALTH CHECK ---
-// Cloud Run needs this to know the service is healthy.
-// If this fails, the container restarts.
+// Apply general rate limiter to all routes
+app.use(generalLimiter);
+
+// ============================================
+// HEALTH CHECK (Public)
+// ============================================
 app.get('/', (req, res) => {
-  res.send('Samurai Insurance Backend is active and healthy 🥷');
+  res.send('Samurai Insurance Backend is active and healthy');
 });
 
-// --- 2. DOCUMENT UPLOAD ENDPOINT ---
-// Handles policy document uploads with OCR/parsing
-app.post('/api/upload-policy', upload.single('document'), async (req, res) => {
+// ============================================
+// DOCUMENT UPLOAD ENDPOINT (Authenticated)
+// ============================================
+app.post('/api/upload-policy', uploadLimiter, requireAuth, upload.single('document'), async (req, res) => {
   try {
     console.log('\n📤 Incoming document upload...');
 
@@ -97,15 +137,21 @@ app.post('/api/upload-policy', upload.single('document'), async (req, res) => {
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
+    // Validate body fields
+    const [validatedBody, bodyErrors] = validateRequest(uploadPolicyBodySchema, req.body);
+    if (bodyErrors) {
+      return res.status(400).json(bodyErrors);
+    }
+
     const { buffer, originalname, mimetype } = req.file;
-    const sessionId = req.body.sessionId || `session_${Date.now()}`;
-    const userId = req.body.userId;
+    const sessionId = validatedBody.sessionId || `session_${Date.now()}`;
+
+    // Use authenticated user ID (prevents IDOR)
+    const userId = req.user!.id;
 
     console.log(`📄 File: ${originalname} (${mimetype})`);
     console.log(`📋 Session: ${sessionId}`);
-    if (userId) {
-      console.log(`👤 User ID: ${userId}`);
-    }
+    console.log(`👤 Authenticated User: ${userId}`);
 
     const result = await handleDocumentUpload(buffer, originalname, mimetype, sessionId, userId);
 
@@ -125,14 +171,14 @@ app.post('/api/upload-policy', upload.single('document'), async (req, res) => {
   } catch (error) {
     console.error('❌ Error in upload endpoint:', error);
     res.status(500).json({
-      error: 'Document processing failed',
-      details: error instanceof Error ? error.message : 'Unknown error'
+      error: 'Document processing failed. Please try again.'
     });
   }
 });
 
-// --- 3. POLICY STATUS ENDPOINT ---
-// Frontend can poll this to check if policy analysis is ready
+// ============================================
+// POLICY STATUS ENDPOINT (Public - no sensitive data)
+// ============================================
 app.get('/api/policy-status', (req, res) => {
   const pending = getPendingPolicyResponse();
 
@@ -148,15 +194,13 @@ app.get('/api/policy-status', (req, res) => {
   }
 });
 
-// --- 3.5. USER POLICIES ENDPOINT ---
-// Get all uploaded policies for a user
-app.get('/api/users/:userId/policies', async (req, res) => {
+// ============================================
+// USER POLICIES ENDPOINT (Authenticated)
+// ============================================
+app.get('/api/users/:userId/policies', requireAuth, async (req, res) => {
   try {
-    const { userId } = req.params;
-
-    if (!userId) {
-      return res.status(400).json({ error: 'userId is required' });
-    }
+    // Use authenticated user ID (req.user.id is verified by middleware)
+    const userId = req.user!.id;
 
     // Get policies from in-memory store (keyed by external userId)
     const policiesMap = getUserPolicies(userId);
@@ -187,25 +231,33 @@ app.get('/api/users/:userId/policies', async (req, res) => {
     // Sort by most recent first
     policies.sort((a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime());
 
-    console.log(`📋 Returning ${policies.length} policies for user ${userId}`);
+    console.log(`📋 Returning ${policies.length} policies for user`);
     res.json({ policies });
 
   } catch (error) {
     console.error('❌ Error fetching user policies:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(500).json({ error: 'Failed to fetch policies. Please try again.' });
   }
 });
 
-// --- 4. CHAT SESSION ENDPOINTS ---
+// ============================================
+// CHAT SESSION ENDPOINTS
+// ============================================
 
-// Create a new chat session
-app.post('/api/chat-sessions', async (req, res) => {
+// Create a new chat session (Authenticated)
+app.post('/api/chat-sessions', sessionLimiter, requireAuth, async (req, res) => {
   try {
-    const { userId, topicId, policyId, claimId } = req.body;
+    // Validate request body
+    const [validatedData, validationErrors] = validateRequest(createSessionSchema, {
+      ...req.body,
+      userId: req.user!.id // Force authenticated user ID
+    });
 
-    if (!userId) {
-      return res.status(400).json({ error: "userId is required" });
+    if (validationErrors) {
+      return res.status(400).json(validationErrors);
     }
+
+    const { userId, topicId, policyId, claimId } = validatedData;
 
     // Look up the internal user ID from external_id (Supabase auth ID)
     const { data: userData, error: userError } = await supabase
@@ -218,14 +270,19 @@ app.post('/api/chat-sessions', async (req, res) => {
 
     // If user doesn't exist in our users table, create them
     if (!internalUserId) {
-      console.log(`📝 Creating user record for external_id: ${userId}`);
+      console.log(`📝 Creating user record for authenticated user`);
+
+      // Get user info from Supabase auth
+      const { data: authUser } = await supabase.auth.admin.getUserById(userId);
+
       const { data: newUser, error: createError } = await supabase
         .from('users')
         .insert({
           external_id: userId,
-          name: 'Chat User',
-          email: `${userId}@placeholder.local`,
-          password_hash: 'oauth_user'
+          name: authUser?.user?.user_metadata?.full_name ||
+                authUser?.user?.user_metadata?.name ||
+                'User',
+          email: authUser?.user?.email || `${userId.slice(0, 8)}@auth.local`
         })
         .select('id')
         .single();
@@ -266,14 +323,37 @@ app.post('/api/chat-sessions', async (req, res) => {
 
   } catch (error) {
     console.error('❌ Error creating chat session:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(500).json({ error: 'Failed to create session. Please try again.' });
   }
 });
 
-// Get chat history for a session
-app.get('/api/chat-sessions/:sessionId/messages', async (req, res) => {
+// Get chat history for a session (Authenticated)
+app.get('/api/chat-sessions/:sessionId/messages', requireAuth, async (req, res) => {
   try {
     const { sessionId } = req.params;
+    const userId = req.user!.id;
+
+    // Look up internal user ID
+    const { data: userData } = await supabase
+      .from('users')
+      .select('id')
+      .eq('external_id', userId)
+      .single();
+
+    if (!userData) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Verify session belongs to this user (authorization check)
+    const { data: session } = await supabase
+      .from('chat_sessions')
+      .select('user_id')
+      .eq('id', sessionId)
+      .single();
+
+    if (!session || session.user_id !== userData.id) {
+      return res.status(403).json({ error: 'Not authorized to view this session' });
+    }
 
     const { data: messages, error } = await supabase
       .from('conversations')
@@ -290,7 +370,7 @@ app.get('/api/chat-sessions/:sessionId/messages', async (req, res) => {
     const formattedMessages = messages.map((msg, index) => ({
       id: msg.id.toString(),
       content: msg.message,
-      role: index % 2 === 0 ? 'user' : 'assistant', // Alternating pattern
+      role: index % 2 === 0 ? 'user' : 'assistant',
       timestamp: msg.timestamp,
       intent: msg.intent,
       entities: msg.entities
@@ -300,25 +380,29 @@ app.get('/api/chat-sessions/:sessionId/messages', async (req, res) => {
 
   } catch (error) {
     console.error('❌ Error fetching chat history:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(500).json({ error: 'Failed to fetch chat history. Please try again.' });
   }
 });
 
-// Rename a chat session
-app.patch('/api/chat-sessions/:sessionId', async (req, res) => {
+// Rename a chat session (Authenticated)
+app.patch('/api/chat-sessions/:sessionId', requireAuth, async (req, res) => {
   try {
     const { sessionId } = req.params;
-    const { userId, summary } = req.body;
 
-    if (!userId) {
-      return res.status(400).json({ error: 'userId is required' });
+    // Validate request body
+    const [validatedData, validationErrors] = validateRequest(renameSessionSchema, {
+      ...req.body,
+      userId: req.user!.id
+    });
+
+    if (validationErrors) {
+      return res.status(400).json(validationErrors);
     }
 
-    if (!summary || typeof summary !== 'string') {
-      return res.status(400).json({ error: 'summary is required' });
-    }
+    const { summary } = validatedData;
+    const userId = req.user!.id;
 
-    // Look up internal user ID to verify ownership
+    // Look up internal user ID
     const { data: userData } = await supabase
       .from('users')
       .select('id')
@@ -329,7 +413,7 @@ app.patch('/api/chat-sessions/:sessionId', async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Verify the session belongs to this user
+    // Verify session belongs to this user
     const { data: session } = await supabase
       .from('chat_sessions')
       .select('id, user_id')
@@ -355,26 +439,33 @@ app.patch('/api/chat-sessions/:sessionId', async (req, res) => {
       return res.status(500).json({ error: 'Failed to rename session' });
     }
 
-    console.log(`✏️ Renamed chat session ${sessionId} to: "${summary.trim()}"`);
+    console.log(`✏️ Renamed chat session ${sessionId}`);
     res.json({ success: true, message: 'Session renamed successfully' });
 
   } catch (error) {
     console.error('❌ Error renaming chat session:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(500).json({ error: 'Failed to rename session. Please try again.' });
   }
 });
 
-// Soft delete a chat session
-app.delete('/api/chat-sessions/:sessionId', async (req, res) => {
+// Soft delete a chat session (Authenticated)
+app.delete('/api/chat-sessions/:sessionId', requireAuth, async (req, res) => {
   try {
     const { sessionId } = req.params;
-    const { userId } = req.body;
 
-    if (!userId) {
-      return res.status(400).json({ error: 'userId is required' });
+    // Validate request body
+    const [, validationErrors] = validateRequest(deleteSessionSchema, {
+      ...req.body,
+      userId: req.user!.id
+    });
+
+    if (validationErrors) {
+      return res.status(400).json(validationErrors);
     }
 
-    // Look up internal user ID to verify ownership
+    const userId = req.user!.id;
+
+    // Look up internal user ID
     const { data: userData } = await supabase
       .from('users')
       .select('id')
@@ -385,7 +476,7 @@ app.delete('/api/chat-sessions/:sessionId', async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Verify the session belongs to this user before deleting
+    // Verify session belongs to this user
     const { data: session } = await supabase
       .from('chat_sessions')
       .select('id, user_id')
@@ -400,7 +491,7 @@ app.delete('/api/chat-sessions/:sessionId', async (req, res) => {
       return res.status(403).json({ error: 'Not authorized to delete this session' });
     }
 
-    // Soft delete by setting deleted_at timestamp
+    // Soft delete
     const { error: deleteError } = await supabase
       .from('chat_sessions')
       .update({ deleted_at: new Date().toISOString() })
@@ -416,15 +507,19 @@ app.delete('/api/chat-sessions/:sessionId', async (req, res) => {
 
   } catch (error) {
     console.error('❌ Error deleting chat session:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(500).json({ error: 'Failed to delete session. Please try again.' });
   }
 });
 
-// Get user's recent chat sessions
-app.get('/api/users/:userId/chat-sessions', async (req, res) => {
+// Get user's recent chat sessions (Authenticated)
+app.get('/api/users/:userId/chat-sessions', requireAuth, async (req, res) => {
   try {
-    const { userId } = req.params;
-    const limit = parseInt(req.query.limit as string) || 10;
+    // Use authenticated user ID (prevents IDOR)
+    const userId = req.user!.id;
+
+    // Validate query params
+    const [queryData] = validateRequest(getUserSessionsQuerySchema, req.query);
+    const limit = queryData?.limit ?? 10;
 
     // Look up internal user ID
     const { data: userData } = await supabase
@@ -437,7 +532,7 @@ app.get('/api/users/:userId/chat-sessions', async (req, res) => {
       return res.json({ sessions: [] });
     }
 
-    // Fetch sessions that are not soft-deleted (deleted_at is null)
+    // Fetch sessions that are not soft-deleted
     const { data: sessions, error } = await supabase
       .from('chat_sessions')
       .select('id, session_uuid, started_at, last_message_at, total_messages, conversation_context, summary, active')
@@ -454,7 +549,6 @@ app.get('/api/users/:userId/chat-sessions', async (req, res) => {
     // For sessions without summaries, generate them
     const sessionsWithPreviews = await Promise.all(
       (sessions || []).map(async (session) => {
-        // Fetch first message for preview
         const { data: messages } = await supabase
           .from('conversations')
           .select('message')
@@ -462,7 +556,6 @@ app.get('/api/users/:userId/chat-sessions', async (req, res) => {
           .order('timestamp', { ascending: true })
           .limit(3);
 
-        // If no summary in DB, generate one (this also saves it)
         let summary = session.summary;
         if (!summary && messages && messages.length > 0) {
           summary = await generateSessionSummary(session.id, messages);
@@ -480,36 +573,74 @@ app.get('/api/users/:userId/chat-sessions', async (req, res) => {
 
   } catch (error) {
     console.error('❌ Error fetching user sessions:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(500).json({ error: 'Failed to fetch sessions. Please try again.' });
   }
 });
 
-// --- 5. CHAT ENDPOINT ---
-// The main entry point for the Agent Logic
-app.post('/api/chat', async (req, res) => {
+// ============================================
+// CHAT ENDPOINT (Authenticated with optional support)
+// ============================================
+app.post('/api/chat', chatLimiter, optionalAuth, async (req, res) => {
   try {
-    const { message, history, userId, sessionId } = req.body;
+    // Validate request body
+    const [validatedData, validationErrors] = validateRequest(chatRequestSchema, req.body);
 
-    // 1. Basic Validation
-    if (!message) {
-      return res.status(400).json({ error: "Message is required" });
+    if (validationErrors) {
+      return res.status(400).json(validationErrors);
     }
 
-    console.log(`\n💬 Received User Message: "${message}"`);
+    const { message, history, sessionId } = validatedData;
+
+    // Use authenticated user ID if available, otherwise undefined
+    const userId = req.user?.id;
+
+    console.log(`\n💬 Received User Message: "${message.substring(0, 100)}${message.length > 100 ? '...' : ''}"`);
     if (userId) {
-      console.log(`👤 User ID: ${userId}`);
+      console.log(`👤 Authenticated User`);
     }
     if (sessionId) {
       console.log(`📋 Session ID: ${sessionId}`);
     }
 
-    // 2. Save user message to database (if sessionId provided)
-    if (sessionId) {
+    // SECURITY: Require authentication for session persistence (prevents session injection)
+    if (sessionId && !req.user) {
+      return res.status(401).json({
+        error: 'Authentication required to save chat to session'
+      });
+    }
+
+    // SECURITY: Verify session ownership before writing
+    let verifiedSessionId: number | undefined = undefined;
+    if (sessionId && req.user) {
+      const { data: userData } = await supabase
+        .from('users')
+        .select('id')
+        .eq('external_id', req.user.id)
+        .single();
+
+      if (userData) {
+        const { data: session } = await supabase
+          .from('chat_sessions')
+          .select('user_id')
+          .eq('id', sessionId)
+          .single();
+
+        if (session && session.user_id === userData.id) {
+          verifiedSessionId = sessionId;
+        } else {
+          console.warn(`⚠️ Session ownership mismatch: user tried to write to session ${sessionId}`);
+          return res.status(403).json({ error: 'Not authorized to write to this session' });
+        }
+      }
+    }
+
+    // Save user message to database (only if session ownership verified)
+    if (verifiedSessionId) {
       try {
         await supabase
           .from('conversations')
           .insert({
-            session_id: sessionId,
+            session_id: verifiedSessionId,
             message: message,
             language: 'en',
             channel: 'web',
@@ -517,24 +648,22 @@ app.post('/api/chat', async (req, res) => {
           });
       } catch (dbError) {
         console.error('⚠️ Failed to save user message:', dbError);
-        // Continue processing even if save fails
       }
     }
 
-    // 3. Call Agent Sam (The Customer-Facing Advisor)
-    // Sam decides if this needs Uri's analysis or can be handled directly
+    // Call Agent Sam
     console.log("👉 Routing to Agent Sam...");
     const finalResponse = await handleSamChat(message, history || [], userId);
 
     console.log("✅ Sam completed. Sending final response.");
 
-    // 4. Save assistant response to database (if sessionId provided)
-    if (sessionId) {
+    // Save assistant response to database (only if session ownership verified)
+    if (verifiedSessionId) {
       try {
         await supabase
           .from('conversations')
           .insert({
-            session_id: sessionId,
+            session_id: verifiedSessionId,
             message: finalResponse,
             language: 'en',
             channel: 'web',
@@ -549,52 +678,73 @@ app.post('/api/chat', async (req, res) => {
             last_message_at: new Date().toISOString(),
             total_messages: messageCount
           })
-          .eq('id', sessionId);
+          .eq('id', verifiedSessionId);
 
-        // Generate summary after first message exchange (when no history yet)
+        // Generate summary after first message exchange
         if (!history || history.length === 0) {
-          // Don't await - generate in background to not slow down response
-          regenerateSummary(sessionId).catch(err => {
+          regenerateSummary(verifiedSessionId).catch(err => {
             console.error('⚠️ Failed to generate session summary:', err);
           });
         }
       } catch (dbError) {
         console.error('⚠️ Failed to save assistant message:', dbError);
-        // Continue even if save fails
       }
     }
 
-    // 5. Send Final Response
     res.json({ response: finalResponse });
 
   } catch (error) {
     console.error('❌ Critical Error in /chat endpoint:', error);
+    // Never expose internal error details
     res.status(500).json({
-        error: 'Internal Server Error',
-        details: error instanceof Error ? error.message : 'Unknown error'
+      error: 'An unexpected error occurred. Please try again.'
     });
   }
 });
 
-// Global error handlers to prevent server from crashing
-process.on('uncaughtException', (error) => {
-  console.error('❌ Uncaught Exception:', error);
-  // Don't exit - keep server running
+// ============================================
+// ERROR HANDLING
+// ============================================
+
+// Global error handler for uncaught errors in routes
+app.use((error: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error('❌ Unhandled error:', error);
+  res.status(500).json({
+    error: 'An unexpected error occurred. Please try again.'
+  });
 });
 
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
-  // Don't exit - keep server running
-});
+// In production, let the container restart on uncaught exceptions
+// In development, keep running for easier debugging
+if (isProduction) {
+  process.on('uncaughtException', (error) => {
+    console.error('❌ Uncaught Exception:', error);
+    process.exit(1); // Let container orchestrator restart
+  });
 
-// Start the server
+  process.on('unhandledRejection', (reason, promise) => {
+    console.error('❌ Unhandled Rejection:', reason);
+    process.exit(1);
+  });
+} else {
+  process.on('uncaughtException', (error) => {
+    console.error('❌ Uncaught Exception (dev mode - continuing):', error);
+  });
+
+  process.on('unhandledRejection', (reason, promise) => {
+    console.error('❌ Unhandled Rejection (dev mode - continuing):', reason);
+  });
+}
+
+// ============================================
+// START SERVER
+// ============================================
 const server = app.listen(port, () => {
   console.log(`🚀 Server listening on port ${port}`);
+  console.log(`🔒 Environment: ${isProduction ? 'Production' : 'Development'}`);
+  console.log(`🌐 Allowed origins: ${allowedOrigins.join(', ')}`);
 });
 
 server.on('error', (error) => {
   console.error('❌ Server error:', error);
 });
-
-// Keep the process alive
-process.stdin.resume();
