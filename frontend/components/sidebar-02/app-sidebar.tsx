@@ -63,13 +63,24 @@ function getSessionPreview(session: { summary?: string; conversation_context?: s
 }
 
 export function DashboardSidebar() {
-  const { state, isMobile, setOpenMobile } = useSidebar();
+  const { state, setOpenMobile } = useSidebar();
   const isCollapsed = state === "collapsed";
   const { user } = useAuth();
 
+  // Check viewport width directly to avoid stale hook state
+  const [isMobileView, setIsMobileView] = useState(false);
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobileView(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
   // Close mobile sidebar after navigation
   const closeMobileSidebar = () => {
-    if (isMobile) {
+    if (isMobileView) {
       setOpenMobile(false);
     }
   };
@@ -154,11 +165,11 @@ export function DashboardSidebar() {
         </div>
 
         {/* Mobile: always show trigger in sidebar header when open */}
-        {isMobile && (
+        {isMobileView && (
           <SidebarTrigger className="size-10 text-[#de5e48] hover:text-[#de5e48]/80 hover:bg-transparent [&_svg]:size-10" />
         )}
         {/* Desktop: show trigger when expanded */}
-        {!isMobile && !isCollapsed && (
+        {!isMobileView && !isCollapsed && (
           <motion.div
             key="header-expanded"
             className="flex items-center gap-2"

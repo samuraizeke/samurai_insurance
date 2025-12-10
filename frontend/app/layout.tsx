@@ -26,7 +26,7 @@ export default function RootLayout({
         {/* Skip navigation link for keyboard/screen reader users */}
         <a
           href="#main-content"
-          className="fixed left-4 top-4 z-[100] rounded-md bg-[#de5e48] px-4 py-2 text-white opacity-0 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-[#de5e48] focus:ring-offset-2 transition-opacity"
+          className="sr-only focus:not-sr-only fixed left-4 top-4 z-[10003] rounded-md bg-[#de5e48] px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-[#de5e48] focus:ring-offset-2"
         >
           Skip to main content
         </a>

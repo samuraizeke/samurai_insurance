@@ -11,13 +11,6 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   Tooltip,
@@ -90,9 +83,15 @@ function SidebarProvider({
   )
 
   // Helper to toggle the sidebar.
+  // Check viewport width directly to avoid stale isMobile state during hydration
   const toggleSidebar = React.useCallback(() => {
-    return isMobile ? setOpenMobile((open) => !open) : setOpen((open) => !open)
-  }, [isMobile, setOpen, setOpenMobile])
+    const isMobileViewport = typeof window !== "undefined" && window.innerWidth < 768
+    if (isMobileViewport) {
+      setOpenMobile((open) => !open)
+    } else {
+      setOpen((open) => !open)
+    }
+  }, [setOpen, setOpenMobile])
 
   // Adds a keyboard shortcut to toggle the sidebar.
   React.useEffect(() => {
@@ -141,6 +140,8 @@ function SidebarProvider({
           }
           className={cn(
             "group/sidebar-wrapper has-data-[variant=inset]:bg-sidebar flex min-h-svh w-full",
+            // Prevent scroll issues on mobile when sidebar opens/closes
+            isMobile && "overflow-hidden h-svh",
             className
           )}
           {...props}
@@ -164,7 +165,20 @@ function Sidebar({
   variant?: "sidebar" | "floating" | "inset"
   collapsible?: "offcanvas" | "icon" | "none"
 }) {
-  const { isMobile, state, openMobile, setOpenMobile, toggleSidebar } = useSidebar()
+  const { state, openMobile, setOpenMobile, toggleSidebar } = useSidebar()
+  const [mounted, setMounted] = React.useState(false)
+  const [isMobileView, setIsMobileView] = React.useState(false)
+
+  // Check viewport width directly to avoid stale hook state
+  React.useEffect(() => {
+    const checkMobile = () => {
+      setIsMobileView(window.innerWidth < 768)
+    }
+    checkMobile()
+    setMounted(true)
+    window.addEventListener("resize", checkMobile)
+    return () => window.removeEventListener("resize", checkMobile)
+  }, [])
 
   if (collapsible === "none") {
     return (
@@ -181,7 +195,56 @@ function Sidebar({
     )
   }
 
-  if (isMobile) {
+  // Before hydration, render a placeholder that matches desktop layout to avoid flash
+  if (!mounted) {
+    return (
+      <div
+        className="group peer text-sidebar-foreground hidden md:block"
+        data-state={state}
+        data-collapsible={state === "collapsed" ? collapsible : ""}
+        data-variant={variant}
+        data-side={side}
+        data-slot="sidebar"
+      >
+        <div
+          data-slot="sidebar-gap"
+          className={cn(
+            "relative w-(--sidebar-width) bg-transparent transition-[width] duration-200 ease-linear",
+            "group-data-[collapsible=offcanvas]:w-0",
+            "group-data-[side=right]:rotate-180",
+            variant === "floating" || variant === "inset"
+              ? "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4)))]"
+              : "group-data-[collapsible=icon]:w-(--sidebar-width-icon)"
+          )}
+        />
+        <div
+          data-slot="sidebar-container"
+          className={cn(
+            "fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) transition-[left,right,width] duration-200 ease-linear md:flex",
+            side === "left"
+              ? "left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]"
+              : "right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]",
+            variant === "floating" || variant === "inset"
+              ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]"
+              : "group-data-[collapsible=icon]:w-(--sidebar-width-icon) group-data-[side=left]:border-r group-data-[side=right]:border-l",
+            className
+          )}
+          {...props}
+        >
+          <div
+            data-sidebar="sidebar"
+            data-slot="sidebar-inner"
+            className="bg-sidebar flex h-full w-full flex-col"
+          >
+            {children}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Mobile sidebar - only render overlay/container when open to avoid blocking clicks
+  if (isMobileView) {
     return (
       <div
         className="group peer text-sidebar-foreground"
@@ -192,39 +255,52 @@ function Sidebar({
         data-slot="sidebar"
         data-mobile="true"
       >
-        <div
-          data-slot="sidebar-container"
-          className={cn(
-            "fixed inset-y-0 z-10 h-svh w-(--sidebar-width) transition-[left,right,width] duration-200 ease-linear flex",
-            side === "left"
-              ? openMobile ? "left-0" : "left-[calc(var(--sidebar-width)*-1)]"
-              : openMobile ? "right-0" : "right-[calc(var(--sidebar-width)*-1)]",
-            variant === "floating" || variant === "inset"
-              ? "p-2"
-              : "group-data-[side=left]:border-r group-data-[side=right]:border-l",
-            className
-          )}
-          style={
-            {
-              "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
-            } as React.CSSProperties
-          }
-          {...props}
-        >
-          <div
-            data-sidebar="sidebar"
-            data-slot="sidebar-inner"
-            className={cn(
-              "bg-sidebar group-data-[variant=floating]:border-sidebar-border flex h-full w-full flex-col group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:shadow-sm"
-            )}
-          >
-            {children}
-          </div>
-        </div>
+        {openMobile && (
+          <>
+            {/* Invisible overlay to capture clicks and close sidebar */}
+            <div
+              data-slot="sidebar-overlay"
+              className="fixed inset-0 z-[10001]"
+              onClick={() => setOpenMobile(false)}
+              aria-hidden="true"
+            />
+            <div
+              data-slot="sidebar-container"
+              className={cn(
+                "fixed inset-y-0 left-0 z-[10002] h-svh flex animate-in slide-in-from-left duration-200",
+                variant === "floating" || variant === "inset"
+                  ? "p-2"
+                  : "border-r",
+                className
+              )}
+              style={
+                {
+                  "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
+                  width: SIDEBAR_WIDTH_MOBILE,
+                } as React.CSSProperties
+              }
+              {...props}
+            >
+              <div
+                data-sidebar="sidebar"
+                data-slot="sidebar-inner"
+                className={cn(
+                  "flex h-full w-full flex-col",
+                  variant === "floating" || variant === "inset"
+                    ? "bg-sidebar rounded-lg shadow-sm"
+                    : "bg-sidebar"
+                )}
+              >
+                {children}
+              </div>
+            </div>
+          </>
+        )}
       </div>
     )
   }
 
+  // Desktop sidebar
   return (
     <div
       className="group peer text-sidebar-foreground hidden md:block"
@@ -289,32 +365,21 @@ function SidebarTrigger({
   const { toggleSidebar } = useSidebar()
 
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          data-sidebar="trigger"
-          data-slot="sidebar-trigger"
-          variant="ghost"
-          size="icon"
-          className={cn("size-7 hover:bg-[#333333]/5 transition-colors", className)}
-          onClick={(event) => {
-            onClick?.(event)
-            toggleSidebar()
-          }}
-          {...props}
-        >
-          <FontAwesomeIcon icon={faBars} />
-          <span className="sr-only">Toggle Sidebar</span>
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent
-        side="bottom"
-        sideOffset={4}
-        className="bg-[#333333] text-[#f7f6f3] font-[family-name:var(--font-work-sans)]"
-      >
-        Toggle Sidebar
-      </TooltipContent>
-    </Tooltip>
+    <Button
+      data-sidebar="trigger"
+      data-slot="sidebar-trigger"
+      variant="ghost"
+      size="icon"
+      className={cn("size-7 hover:bg-[#333333]/5 transition-colors", className)}
+      onClick={(event) => {
+        onClick?.(event)
+        toggleSidebar()
+      }}
+      {...props}
+    >
+      <FontAwesomeIcon icon={faBars} />
+      <span className="sr-only">Toggle Sidebar</span>
+    </Button>
   )
 }
 

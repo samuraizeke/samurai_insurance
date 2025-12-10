@@ -13,7 +13,7 @@ function MobileHeader() {
     if (openMobile) return null;
 
     return (
-        <header className="flex md:hidden items-center justify-between h-14 px-4 pt-4 shrink-0">
+        <header className="flex md:hidden items-center justify-between h-14 px-4 pt-4 shrink-0 bg-[#f7f6f3]">
             <SidebarTrigger className="size-10 text-[#de5e48] hover:text-[#de5e48]/80 hover:bg-transparent [&_svg]:size-10" />
             <Image
                 src="/wordmark-only-logo.png"

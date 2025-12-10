@@ -184,7 +184,7 @@ function ChatHistoryContent() {
     }
 
     return (
-        <div className="flex flex-col h-full w-full max-w-3xl mx-auto bg-background">
+        <div className="flex flex-col min-h-full w-full max-w-3xl mx-auto bg-background">
             {/* Header */}
             <div className="flex items-center justify-between px-4 pt-4 md:pt-12 pb-4">
                 <h1 className="text-3xl font-bold font-[family-name:var(--font-alte-haas)] text-[#333333]">
@@ -223,7 +223,7 @@ function ChatHistoryContent() {
             </div>
 
             {/* Chat List */}
-            <div className="flex-1 overflow-y-auto">
+            <div className="flex-1">
                 {isLoading ? (
                     <div className="flex flex-col items-center justify-center h-40 gap-2">
                         <div className="flex gap-1">
@@ -367,7 +367,7 @@ function MobileHeader() {
     if (openMobile) return null;
 
     return (
-        <header className="flex md:hidden items-center justify-between h-14 px-4 pt-4 shrink-0">
+        <header className="flex md:hidden items-center justify-between h-14 px-4 pt-4 shrink-0 bg-[#f7f6f3] sticky top-0 z-10">
             <SidebarTrigger className="size-10 text-[#de5e48] hover:text-[#de5e48]/80 hover:bg-transparent [&_svg]:size-10" />
             <Image
                 src="/wordmark-only-logo.png"
@@ -387,7 +387,7 @@ export default function ChatHistoryPage() {
             <SidebarProvider>
                 <div className="relative flex h-screen w-full">
                     <DashboardSidebar />
-                    <SidebarInset className="flex flex-col">
+                    <SidebarInset className="flex flex-col overflow-auto">
                         <MobileHeader />
                         <ChatHistoryContent />
                     </SidebarInset>
