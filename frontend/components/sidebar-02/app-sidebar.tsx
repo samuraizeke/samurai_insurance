@@ -39,6 +39,7 @@ import { UserMenu } from "@/components/sidebar-02/user-menu";
 import { useChatContext } from "@/app/context/ChatContext";
 import { useAuth } from "@/lib/auth-context";
 import Link from "next/link";
+import { useRouter, usePathname } from "next/navigation";
 
 // Helper to get session preview text
 function getSessionPreview(session: { summary?: string; conversation_context?: string; first_message?: string; started_at: string }): string {
@@ -66,6 +67,9 @@ export function DashboardSidebar() {
   const { state, setOpenMobile } = useSidebar();
   const isCollapsed = state === "collapsed";
   const { user } = useAuth();
+  const router = useRouter();
+  const pathname = usePathname();
+  const isOnChatPage = pathname === "/chat";
 
   // Check viewport width directly to avoid stale hook state
   const [isMobileView, setIsMobileView] = useState(false);
@@ -183,15 +187,22 @@ export function DashboardSidebar() {
         )}
       </SidebarHeader>
       <SidebarContent className="gap-4 px-2 py-4">
-        {/* New Chat Button - always visible, only triggers action when there are existing messages */}
+        {/* New Chat Button - always visible */}
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
               tooltip="New Chat"
-              onClick={hasMessages ? () => { triggerNewChat(); closeMobileSidebar(); } : undefined}
+              onClick={() => {
+                if (isOnChatPage && hasMessages) {
+                  triggerNewChat();
+                } else if (!isOnChatPage) {
+                  router.push("/chat");
+                }
+                closeMobileSidebar();
+              }}
               className={cn(
                 "flex items-center rounded-lg px-2 transition-colors text-muted-foreground",
-                hasMessages ? "hover:bg-[#333333]/5 hover:text-foreground cursor-pointer" : "cursor-default",
+                (hasMessages || !isOnChatPage) ? "hover:bg-[#333333]/5 hover:text-foreground cursor-pointer" : "cursor-default",
                 isCollapsed && "justify-center"
               )}
             >
@@ -250,7 +261,16 @@ export function DashboardSidebar() {
                       <div className="flex items-center w-full rounded-lg hover:bg-[#333333]/5 transition-colors">
                         <SidebarMenuButton
                           tooltip={getSessionPreview(session)}
-                          onClick={() => { selectSession(session.id); closeMobileSidebar(); }}
+                          onClick={() => {
+                            if (isOnChatPage) {
+                              selectSession(session.id);
+                            } else {
+                              // Store session ID and navigate to chat
+                              localStorage.setItem('samurai_pending_session_id', session.id.toString());
+                              router.push("/chat");
+                            }
+                            closeMobileSidebar();
+                          }}
                           className={cn(
                             "flex-1 flex items-center rounded-lg px-2 py-1.5 transition-colors text-muted-foreground hover:text-foreground",
                             currentSessionId === session.id && "bg-[#333333]/10 text-foreground"

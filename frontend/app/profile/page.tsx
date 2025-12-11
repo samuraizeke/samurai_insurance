@@ -10,10 +10,42 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase";
+import { getUserPolicies, deleteUserPolicy, renameUserPolicy, UserPolicy, PolicyType } from "@/lib/api";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faTrash, faPen, faPlus, faCar, faHome, faUmbrella, faHeart, faHospital, faFile, faBuilding } from "@fortawesome/free-solid-svg-icons";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import Link from "next/link";
+
+const policyTypeIcons: Record<PolicyType, typeof faCar> = {
+  auto: faCar,
+  home: faHome,
+  renters: faBuilding,
+  umbrella: faUmbrella,
+  life: faHeart,
+  health: faHospital,
+  other: faFile,
+};
+
+const policyTypeLabels: Record<PolicyType, string> = {
+  auto: "Auto Insurance",
+  home: "Home Insurance",
+  renters: "Renters Insurance",
+  umbrella: "Umbrella Insurance",
+  life: "Life Insurance",
+  health: "Health Insurance",
+  other: "Other Insurance",
+};
 
 export default function ProfilePage() {
   const { user, isLoading } = useAuth();
@@ -23,17 +55,48 @@ export default function ProfilePage() {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  if (isLoading) {
+  // Policy management state
+  const [policies, setPolicies] = useState<UserPolicy[]>([]);
+  const [policiesLoading, setPoliciesLoading] = useState(true);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [policyToDelete, setPolicyToDelete] = useState<UserPolicy | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
+  const [policyToRename, setPolicyToRename] = useState<UserPolicy | null>(null);
+  const [newCarrierName, setNewCarrierName] = useState("");
+  const [isRenaming, setIsRenaming] = useState(false);
+
+  const loadPolicies = useCallback(async () => {
+    if (!user) return;
+    setPoliciesLoading(true);
+    try {
+      const userPolicies = await getUserPolicies(user.id);
+      setPolicies(userPolicies);
+    } catch (err) {
+      console.error("Error loading policies:", err);
+    } finally {
+      setPoliciesLoading(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.push("/login");
+    }
+  }, [user, isLoading, router]);
+
+  useEffect(() => {
+    if (user) {
+      loadPolicies();
+    }
+  }, [user, loadPolicies]);
+
+  if (isLoading || !user) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-[#f7f6f3]">
         <Loader2 className="h-8 w-8 animate-spin text-[#333333]" />
       </div>
     );
-  }
-
-  if (!user) {
-    router.push("/login");
-    return null;
   }
 
   const userInitials = user.user_metadata?.full_name
@@ -76,6 +139,56 @@ export default function ProfilePage() {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleDeletePolicy = async () => {
+    if (!policyToDelete || !user) return;
+    setIsDeleting(true);
+    try {
+      const success = await deleteUserPolicy(user.id, policyToDelete.policyType);
+      if (success) {
+        setPolicies(policies.filter(p => p.policyType !== policyToDelete.policyType));
+        setDeleteDialogOpen(false);
+        setPolicyToDelete(null);
+      }
+    } catch (err) {
+      console.error("Error deleting policy:", err);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleRenamePolicy = async () => {
+    if (!policyToRename || !user || !newCarrierName.trim()) return;
+    setIsRenaming(true);
+    try {
+      const success = await renameUserPolicy(user.id, policyToRename.policyType, newCarrierName.trim());
+      if (success) {
+        setPolicies(policies.map(p =>
+          p.policyType === policyToRename.policyType
+            ? { ...p, carrier: newCarrierName.trim() }
+            : p
+        ));
+        setRenameDialogOpen(false);
+        setPolicyToRename(null);
+        setNewCarrierName("");
+      }
+    } catch (err) {
+      console.error("Error renaming policy:", err);
+    } finally {
+      setIsRenaming(false);
+    }
+  };
+
+  const openDeleteDialog = (policy: UserPolicy) => {
+    setPolicyToDelete(policy);
+    setDeleteDialogOpen(true);
+  };
+
+  const openRenameDialog = (policy: UserPolicy) => {
+    setPolicyToRename(policy);
+    setNewCarrierName(policy.carrier);
+    setRenameDialogOpen(true);
   };
 
   return (
@@ -198,10 +311,189 @@ export default function ProfilePage() {
                     </form>
                   </CardContent>
                 </Card>
+
+                <Card className="border-[#333333]/10 bg-[hsl(0_0%_98%)]">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="font-heading">Your Policies</CardTitle>
+                        <CardDescription className="font-[family-name:var(--font-work-sans)]">
+                          Manage your uploaded insurance policies
+                        </CardDescription>
+                      </div>
+                      <Button
+                        asChild
+                        className="gap-2 bg-[#333333] hover:bg-[#333333]/90 text-[#f7f6f3] font-[family-name:var(--font-work-sans)] rounded-lg"
+                      >
+                        <Link href="/chat">
+                          <FontAwesomeIcon icon={faPlus} className="size-4" />
+                          Add Policy
+                        </Link>
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    {policiesLoading ? (
+                      <div className="flex items-center justify-center py-8">
+                        <Loader2 className="h-6 w-6 animate-spin text-[#333333]" />
+                      </div>
+                    ) : policies.length === 0 ? (
+                      <div className="text-center py-8">
+                        <div className="mx-auto w-16 h-16 bg-[#333333]/5 rounded-full flex items-center justify-center mb-4">
+                          <FontAwesomeIcon icon={faFile} className="size-6 text-[#333333]/40" />
+                        </div>
+                        <p className="text-muted-foreground font-[family-name:var(--font-work-sans)]">
+                          No policies uploaded yet
+                        </p>
+                        <p className="text-sm text-muted-foreground font-[family-name:var(--font-work-sans)] mt-1">
+                          Start a chat and upload your insurance documents
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {policies.map((policy) => (
+                          <div
+                            key={policy.policyType}
+                            className="flex items-center justify-between p-4 rounded-lg bg-[#f7f6f3] border border-[#333333]/5"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 bg-[#333333] rounded-lg flex items-center justify-center">
+                                <FontAwesomeIcon
+                                  icon={policyTypeIcons[policy.policyType]}
+                                  className="size-5 text-[#f7f6f3]"
+                                />
+                              </div>
+                              <div>
+                                <p className="font-semibold font-[family-name:var(--font-work-sans)]">
+                                  {policyTypeLabels[policy.policyType]}
+                                </p>
+                                <p className="text-sm text-muted-foreground font-[family-name:var(--font-work-sans)]">
+                                  {policy.carrier}
+                                </p>
+                                <p className="text-xs text-muted-foreground font-[family-name:var(--font-work-sans)]">
+                                  {new Date(policy.uploadedAt).toLocaleDateString()}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => openRenameDialog(policy)}
+                                className="h-8 w-8 hover:bg-[#333333]/10"
+                                title="Rename carrier"
+                              >
+                                <FontAwesomeIcon icon={faPen} className="size-4 text-[#333333]" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => openDeleteDialog(policy)}
+                                className="h-8 w-8 hover:bg-red-50 text-destructive"
+                                title="Delete policy"
+                              >
+                                <FontAwesomeIcon icon={faTrash} className="size-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
               </div>
             </main>
           </SidebarInset>
         </div>
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <DialogContent className="border-[#333333]/10 bg-[hsl(0_0%_98%)]">
+            <DialogHeader>
+              <DialogTitle className="font-heading">Delete Policy</DialogTitle>
+              <DialogDescription className="font-[family-name:var(--font-work-sans)]">
+                Are you sure you want to delete your {policyToDelete && policyTypeLabels[policyToDelete.policyType].toLowerCase()}?
+                This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button
+                variant="outline"
+                onClick={() => setDeleteDialogOpen(false)}
+                className="font-[family-name:var(--font-work-sans)] border-[#333333]/10 rounded-lg"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleDeletePolicy}
+                disabled={isDeleting}
+                className="gap-2 font-[family-name:var(--font-work-sans)] rounded-lg"
+              >
+                {isDeleting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <FontAwesomeIcon icon={faTrash} className="size-4" />
+                    Delete
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Rename Dialog */}
+        <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
+          <DialogContent className="border-[#333333]/10 bg-[hsl(0_0%_98%)]">
+            <DialogHeader>
+              <DialogTitle className="font-heading">Rename Carrier</DialogTitle>
+              <DialogDescription className="font-[family-name:var(--font-work-sans)]">
+                Update the carrier name for your {policyToRename && policyTypeLabels[policyToRename.policyType].toLowerCase()}.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="carrierName" className="font-[family-name:var(--font-work-sans)]">
+                  Carrier Name
+                </Label>
+                <Input
+                  id="carrierName"
+                  value={newCarrierName}
+                  onChange={(e) => setNewCarrierName(e.target.value)}
+                  placeholder="e.g., State Farm, Allstate"
+                  className="h-11 font-[family-name:var(--font-work-sans)] border-[#333333]/10 bg-white rounded-lg"
+                />
+              </div>
+            </div>
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button
+                variant="outline"
+                onClick={() => setRenameDialogOpen(false)}
+                className="font-[family-name:var(--font-work-sans)] border-[#333333]/10 rounded-lg"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleRenamePolicy}
+                disabled={isRenaming || !newCarrierName.trim()}
+                className="gap-2 bg-[#333333] hover:bg-[#333333]/90 text-[#f7f6f3] font-[family-name:var(--font-work-sans)] rounded-lg"
+              >
+                {isRenaming ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  "Save"
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </SidebarProvider>
     </ChatProvider>
   );

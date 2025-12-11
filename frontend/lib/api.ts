@@ -370,3 +370,60 @@ export async function getUserPolicies(userId: string): Promise<UserPolicy[]> {
         return [];
     }
 }
+
+/**
+ * Delete a policy for a user
+ */
+export async function deleteUserPolicy(userId: string, policyType: PolicyType): Promise<boolean> {
+    try {
+        const headers = await getAuthHeaders();
+
+        const response = await fetch(
+            `/api/users/${userId}/policies/${policyType}`,
+            {
+                method: 'DELETE',
+                headers
+            }
+        );
+
+        if (!response.ok) {
+            const error = await response.json();
+            console.error("Error deleting policy:", error);
+            return false;
+        }
+
+        return true;
+    } catch (error) {
+        console.error("Error deleting policy:", error);
+        return false;
+    }
+}
+
+/**
+ * Rename a policy (update carrier name)
+ */
+export async function renameUserPolicy(userId: string, policyType: PolicyType, newCarrier: string): Promise<boolean> {
+    try {
+        const headers = await getAuthHeaders();
+
+        const response = await fetch(
+            `/api/users/${userId}/policies/${policyType}`,
+            {
+                method: 'PATCH',
+                headers,
+                body: JSON.stringify({ carrier: newCarrier })
+            }
+        );
+
+        if (!response.ok) {
+            const error = await response.json();
+            console.error("Error renaming policy:", error);
+            return false;
+        }
+
+        return true;
+    } catch (error) {
+        console.error("Error renaming policy:", error);
+        return false;
+    }
+}

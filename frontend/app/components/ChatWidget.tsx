@@ -250,6 +250,15 @@ export default function ChatWidget() {
         onSessionSelected(loadSession);
     }, [onSessionSelected, loadSession]);
 
+    // Check for pending session ID (set when navigating from another page)
+    useEffect(() => {
+        const pendingSessionId = localStorage.getItem('samurai_pending_session_id');
+        if (pendingSessionId && user?.id) {
+            localStorage.removeItem('samurai_pending_session_id');
+            loadSession(parseInt(pendingSessionId, 10));
+        }
+    }, [user?.id, loadSession]);
+
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
@@ -492,7 +501,10 @@ export default function ChatWidget() {
         }
     };
     const handleKeyDown = (e: React.KeyboardEvent) => {
-        if (e.key === "Enter" && !e.shiftKey) {
+        // On mobile, let Enter create new lines. Only send on Enter for desktop.
+        const isMobile = window.matchMedia("(max-width: 768px)").matches;
+
+        if (e.key === "Enter" && !e.shiftKey && !isMobile) {
             e.preventDefault();
             submitPrompt();
         }

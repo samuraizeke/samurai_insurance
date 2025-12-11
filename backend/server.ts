@@ -49,7 +49,7 @@ if (process.env.NODE_ENV === 'development' && process.env.GOOGLE_CREDENTIALS_BAS
 }
 
 import { handleSamChat } from './agents/sam';
-import { handleDocumentUpload, getPendingPolicyResponse, getUserPolicies, PolicyType, StoredPolicy } from './services/document-upload';
+import { handleDocumentUpload, getPendingPolicyResponse, getUserPolicies, deleteUserPolicy, renameUserPolicy, PolicyType, StoredPolicy } from './services/document-upload';
 import { generateSessionSummary, regenerateSummary } from './services/session-summary';
 
 const app = express();
@@ -240,6 +240,65 @@ app.get('/api/users/:userId/policies', requireAuth, async (req, res) => {
   } catch (error) {
     logger.error('Error fetching user policies', error);
     res.status(500).json({ error: 'Failed to fetch policies. Please try again.' });
+  }
+});
+
+// Delete a specific policy (Authenticated)
+app.delete('/api/users/:userId/policies/:policyType', requireAuth, async (req, res) => {
+  try {
+    const userId = req.user!.id;
+    const { policyType } = req.params;
+
+    // Validate policy type
+    const validPolicyTypes = ['auto', 'home', 'renters', 'umbrella', 'life', 'health', 'other'];
+    if (!validPolicyTypes.includes(policyType)) {
+      return res.status(400).json({ error: 'Invalid policy type' });
+    }
+
+    const deleted = deleteUserPolicy(userId, policyType as PolicyType);
+
+    if (deleted) {
+      logger.info('Deleted user policy', { userId, policyType });
+      res.json({ success: true, message: 'Policy deleted successfully' });
+    } else {
+      res.status(404).json({ error: 'Policy not found' });
+    }
+
+  } catch (error) {
+    logger.error('Error deleting policy', error);
+    res.status(500).json({ error: 'Failed to delete policy. Please try again.' });
+  }
+});
+
+// Rename a policy (update carrier name) (Authenticated)
+app.patch('/api/users/:userId/policies/:policyType', requireAuth, async (req, res) => {
+  try {
+    const userId = req.user!.id;
+    const { policyType } = req.params;
+    const { carrier } = req.body;
+
+    // Validate policy type
+    const validPolicyTypes = ['auto', 'home', 'renters', 'umbrella', 'life', 'health', 'other'];
+    if (!validPolicyTypes.includes(policyType)) {
+      return res.status(400).json({ error: 'Invalid policy type' });
+    }
+
+    if (!carrier || typeof carrier !== 'string' || carrier.trim().length === 0) {
+      return res.status(400).json({ error: 'Carrier name is required' });
+    }
+
+    const renamed = renameUserPolicy(userId, policyType as PolicyType, carrier.trim());
+
+    if (renamed) {
+      logger.info('Renamed user policy', { userId, policyType, newCarrier: carrier.trim() });
+      res.json({ success: true, message: 'Policy updated successfully' });
+    } else {
+      res.status(404).json({ error: 'Policy not found' });
+    }
+
+  } catch (error) {
+    logger.error('Error renaming policy', error);
+    res.status(500).json({ error: 'Failed to update policy. Please try again.' });
   }
 });
 

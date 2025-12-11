@@ -487,3 +487,38 @@ export async function handleDocumentUpload(
 export function clearPolicyData(sessionId: string): void {
     analyzedPolicies.delete(sessionId);
 }
+
+/**
+ * Deletes a specific policy for a user
+ */
+export function deleteUserPolicy(userId: string, policyType: PolicyType): boolean {
+    const policies = userPolicies.get(userId);
+    if (!policies) {
+        return false;
+    }
+    const deleted = policies.delete(policyType);
+    if (deleted) {
+        console.log(`🗑️ Deleted ${policyType} policy for user ${userId}`);
+    }
+    return deleted;
+}
+
+/**
+ * Renames a policy by updating its carrier name
+ */
+export function renameUserPolicy(userId: string, policyType: PolicyType, newCarrier: string): boolean {
+    const policies = userPolicies.get(userId);
+    if (!policies) {
+        return false;
+    }
+    const policy = policies.get(policyType);
+    if (!policy) {
+        return false;
+    }
+    policy.carrier = newCarrier;
+    if (policy.rawData) {
+        policy.rawData.carrier = newCarrier;
+    }
+    console.log(`✏️ Renamed ${policyType} policy carrier to "${newCarrier}" for user ${userId}`);
+    return true;
+}
