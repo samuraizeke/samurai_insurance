@@ -38,7 +38,7 @@ export function ProcessSection() {
         muted
         playsInline
         preload="metadata"
-        src="https://samuraiinsurancestorage.blob.core.windows.net/videos/traffic%20background.mp4?sp=r&st=2025-10-20T23:36:36Z&se=2027-12-31T08:51:36Z&spr=https&sv=2024-11-04&sr=b&sig=%2FI%2FI4hmtypmJof3J%2FP%2B0UNgVvpa%2B0HMKyiJg%2FrV3lPk%3D"
+        src="https://atgykhhbgbchhbnurhtx.supabase.co/storage/v1/object/sign/Lander%20Content/traffic%20background.mp4?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9kNjkwNjYyNy05MWFhLTRhMTgtODEyYy01YjJiODUyNzhmMTQiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJMYW5kZXIgQ29udGVudC90cmFmZmljIGJhY2tncm91bmQubXA0IiwiaWF0IjoxNzY1NDY1NzE0LCJleHAiOjQ5MTkwNjU3MTR9.LARYxfJTbKA9caud4Q6z_FzZ4yzQHIA7uA8t1CZYa8k"
       >
         Your browser does not support the video tag.
       </video>

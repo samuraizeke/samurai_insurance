@@ -18,307 +18,141 @@ export default function PrivacyPage() {
           <article className={`${workSans.className} prose prose-slate max-w-none`}>
             <h1 className={`${alteHaasGrotesk.className} text-5xl sm:text-6xl font-bold text-[#333333] mb-4 text-center`}>Privacy Policy</h1>
             <p className="text-sm text-[#333333]/60 mb-12 text-center">
-              <strong>Last Updated: November 17, 2025</strong>
+              <strong>Last Updated: December 9, 2025</strong>
+            </p>
+
+            <p className="text-[#333333]/80 leading-relaxed mb-8">
+              Samurai Insurance Inc (&quot;we,&quot; &quot;us,&quot; or &quot;our&quot;) is a licensed Ohio insurance broker. This Privacy Policy explains how we collect, use, disclose, and protect your information when you visit our website, create an account, or interact with our AI agent &quot;Sam.&quot;
             </p>
 
             <section className="mb-8">
-              <h2 className={`${alteHaasGrotesk.className} text-2xl font-bold text-[#333333] mt-8 mb-4`}>Introduction</h2>
-              <p className="text-[#333333]/80 leading-relaxed">
-                Samurai Insurance (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;) operates www.joinsamurai.com (the &quot;Site&quot;).
-                This Privacy Policy explains how we collect, use, disclose, and protect your personal information
-                when you use our insurance comparison services.
-              </p>
+              <h2 className={`${alteHaasGrotesk.className} text-2xl font-bold text-[#333333] mt-8 mb-4`}>1. Information We Collect</h2>
+
+              <h3 className={`${alteHaasGrotesk.className} text-xl font-semibold text-[#333333] mt-6 mb-3`}>A. Information You Provide Directly</h3>
+              <ul className="list-disc pl-6 space-y-2 text-[#333333]/80">
+                <li><strong>Identity &amp; Contact:</strong> name, date of birth, address, phone, email</li>
+                <li><strong>Risk &amp; Underwriting Data:</strong> driver&apos;s license, SSN (when required by carriers), VIN, vehicle/property details, driving and claims history</li>
+                <li><strong>Chat &amp; Voice Interactions:</strong> full transcripts and recordings of all conversations with Sam</li>
+                <li><strong>Payment Information:</strong> processed through PCI-DSS Level 1 compliant third-party processors (we do not store full card numbers)</li>
+              </ul>
+
+              <h3 className={`${alteHaasGrotesk.className} text-xl font-semibold text-[#333333] mt-6 mb-3`}>B. Information We Collect Automatically</h3>
+              <ul className="list-disc pl-6 space-y-2 text-[#333333]/80">
+                <li>Device and usage data (IP address, browser, pages visited)</li>
+                <li>Cookies and similar tracking technologies (see Section 9)</li>
+              </ul>
+
+              <h3 className={`${alteHaasGrotesk.className} text-xl font-semibold text-[#333333] mt-6 mb-3`}>C. Information from Third Parties</h3>
+              <ul className="list-disc pl-6 space-y-2 text-[#333333]/80">
+                <li>Consumer reporting agencies (insurance scores, MVR, CLUE)</li>
+                <li>Public records and data enrichment services</li>
+              </ul>
             </section>
 
             <section className="mb-8">
-              <h2 className={`${alteHaasGrotesk.className} text-2xl font-bold text-[#333333] mt-8 mb-4`}>Beta Service Notice</h2>
-              <p className="text-[#333333]/80 leading-relaxed mb-4">
-                Samurai Insurance is currently operating in beta. Our services are under development and may
-                change as we test and improve our platform. During this beta period:
-              </p>
+              <h2 className={`${alteHaasGrotesk.className} text-2xl font-bold text-[#333333] mt-8 mb-4`}>2. How We Use Your Information</h2>
+              <p className="text-[#333333]/80 leading-relaxed mb-4">We use your information only for the following business purposes:</p>
               <ul className="list-disc pl-6 space-y-2 text-[#333333]/80">
-                <li>Features and functionality may be modified or discontinued</li>
-                <li>We are actively collecting user feedback to improve our services</li>
-                <li>Service availability may be limited or interrupted</li>
-                <li>Some features described in this policy may not yet be fully implemented</li>
+                <li>Generating quotes and submitting applications to insurance carriers</li>
+                <li>Facilitating policy purchase, renewal, and claims assistance</li>
+                <li>Operating, improving, and training Sam using fully de-identified and aggregated data only</li>
+                <li>Complying with legal and regulatory obligations</li>
+                <li>Protecting against fraud and security risks</li>
               </ul>
               <p className="text-[#333333]/80 leading-relaxed mt-4">
-                Your participation in our beta helps us build a better product. By using our beta services,
-                you acknowledge that the platform is still being refined.
+                We never sell your personal information and never use identifiable data to train third-party or public AI models.
               </p>
             </section>
 
             <section className="mb-8">
-              <h2 className={`${alteHaasGrotesk.className} text-2xl font-bold text-[#333333] mt-8 mb-4`}>Information We Collect</h2>
-
-              <h3 className={`${alteHaasGrotesk.className} text-xl font-semibold text-[#333333] mt-6 mb-3`}>Information You Provide</h3>
+              <h2 className={`${alteHaasGrotesk.className} text-2xl font-bold text-[#333333] mt-8 mb-4`}>3. How We Share Your Information</h2>
+              <p className="text-[#333333]/80 leading-relaxed mb-4">We share only when necessary and only with:</p>
               <ul className="list-disc pl-6 space-y-2 text-[#333333]/80">
-                <li>
-                  <strong>Contact Information:</strong> Name, email address, phone number, mailing address
-                </li>
-                <li>
-                  <strong>Insurance Information:</strong> Current insurance details, coverage preferences,
-                  vehicle information, property details
-                </li>
-                <li>
-                  <strong>Demographic Information:</strong> Age, date of birth, marital status, occupation
-                </li>
-                <li>
-                  <strong>Financial Information:</strong> Payment information for policies purchased through
-                  our platform
-                </li>
-              </ul>
-
-              <h3 className={`${alteHaasGrotesk.className} text-xl font-semibold text-[#333333] mt-6 mb-3`}>Information Collected Automatically</h3>
-              <ul className="list-disc pl-6 space-y-2 text-[#333333]/80">
-                <li>
-                  <strong>Usage Data:</strong> Pages visited, time spent on site, click patterns, referring URLs
-                </li>
-                <li>
-                  <strong>Device Information:</strong> IP address, browser type, operating system, device identifiers
-                </li>
-                <li>
-                  <strong>Location Data:</strong> General geographic location based on IP address
-                </li>
-                <li>
-                  <strong>Cookies and Tracking Technologies:</strong> See &quot;Cookies and Tracking&quot; section below
-                </li>
+                <li><strong>Insurance Carriers</strong> to obtain the quotes and coverage you request (required sharing – you cannot opt out)</li>
+                <li><strong>Service Providers</strong> under strict confidentiality agreements (cloud hosting, payment processors, identity verification, analytics)</li>
+                <li><strong>Regulators and law enforcement</strong> when required</li>
+                <li><strong>A successor entity</strong> in the event of merger, acquisition, or sale of assets</li>
               </ul>
             </section>
 
             <section className="mb-8">
-              <h2 className={`${alteHaasGrotesk.className} text-2xl font-bold text-[#333333] mt-8 mb-4`}>How We Use Your Information</h2>
-              <p className="text-[#333333]/80 leading-relaxed mb-4">We use your information to:</p>
+              <h2 className={`${alteHaasGrotesk.className} text-2xl font-bold text-[#333333] mt-8 mb-4`}>4. Use of Artificial Intelligence</h2>
               <ul className="list-disc pl-6 space-y-2 text-[#333333]/80">
-                <li>Provide insurance quotes and comparison services</li>
-                <li>Connect you with insurance carriers and agents</li>
-                <li>Process transactions and manage your account</li>
-                <li>Communicate with you about your requests and our services</li>
-                <li>Improve our website and services</li>
-                <li>Comply with legal obligations</li>
-                <li>Prevent fraud and ensure security</li>
-                <li>Send marketing communications (with your consent)</li>
-                <li>Analyze website performance and user behavior</li>
+                <li>Sam uses artificial intelligence to analyze your information, recommend coverage, and generate real-time quotes from carriers.</li>
+                <li>You may request a human review of any AI-generated recommendation or quote by calling (614) 321-7718.</li>
+                <li><strong>Limitations:</strong> While we strive for accuracy, AI outputs can contain errors. The final terms are always determined by the official Carrier policy documents, not Sam.</li>
               </ul>
             </section>
 
             <section className="mb-8">
-              <h2 className={`${alteHaasGrotesk.className} text-2xl font-bold text-[#333333] mt-8 mb-4`}>How We Share Your Information</h2>
-              <p className="text-[#333333]/80 leading-relaxed mb-4">We may share your information with:</p>
-
-              <h3 className={`${alteHaasGrotesk.className} text-xl font-semibold text-[#333333] mt-6 mb-3`}>Insurance Providers and Agents</h3>
-              <p className="text-[#333333]/80 leading-relaxed">
-                We share your information with insurance carriers and licensed agents to provide you with
-                quotes and coverage options.
-              </p>
-
-              <h3 className={`${alteHaasGrotesk.className} text-xl font-semibold text-[#333333] mt-6 mb-3`}>Service Providers</h3>
-              <p className="text-[#333333]/80 leading-relaxed mb-3">
-                We work with third-party service providers who perform services on our behalf, including:
-              </p>
+              <h2 className={`${alteHaasGrotesk.className} text-2xl font-bold text-[#333333] mt-8 mb-4`}>5. Your Federal Privacy Rights (Gramm-Leach-Bliley Act – Annual Notice)</h2>
+              <p className="text-[#333333]/80 leading-relaxed mb-4">Federal law requires us to tell you:</p>
               <ul className="list-disc pl-6 space-y-2 text-[#333333]/80">
-                <li>Payment processors</li>
-                <li>Customer support platforms</li>
-                <li>Analytics providers</li>
-                <li>Marketing and advertising partners</li>
-                <li>Cloud hosting services</li>
-              </ul>
-
-              <h3 className={`${alteHaasGrotesk.className} text-xl font-semibold text-[#333333] mt-6 mb-3`}>Advertising Partners</h3>
-              <p className="text-[#333333]/80 leading-relaxed">
-                We use advertising partners, including Meta (Facebook/Instagram), Google, and other platforms
-                to deliver targeted advertisements. These partners may collect information through cookies and
-                similar technologies. We may share hashed or anonymized identifiers for advertising purposes.
-              </p>
-
-              <h3 className={`${alteHaasGrotesk.className} text-xl font-semibold text-[#333333] mt-6 mb-3`}>Legal Requirements</h3>
-              <p className="text-[#333333]/80 leading-relaxed">
-                We may disclose your information when required by law, legal process, or to protect our rights,
-                property, or safety, or that of others.
-              </p>
-
-              <h3 className={`${alteHaasGrotesk.className} text-xl font-semibold text-[#333333] mt-6 mb-3`}>Business Transfers</h3>
-              <p className="text-[#333333]/80 leading-relaxed">
-                In the event of a merger, acquisition, or sale of assets, your information may be transferred
-                to the acquiring entity.
-              </p>
-            </section>
-
-            <section className="mb-8">
-              <h2 className={`${alteHaasGrotesk.className} text-2xl font-bold text-[#333333] mt-8 mb-4`}>Cookies and Tracking Technologies</h2>
-              <p className="text-[#333333]/80 leading-relaxed mb-4">
-                We use cookies, pixels, and similar technologies to:
-              </p>
-              <ul className="list-disc pl-6 space-y-2 text-[#333333]/80">
-                <li>Remember your preferences</li>
-                <li>Understand how you use our Site</li>
-                <li>Deliver personalized advertising</li>
-                <li>Measure advertising effectiveness</li>
-                <li>Improve our services</li>
-              </ul>
-
-              <h3 className={`${alteHaasGrotesk.className} text-xl font-semibold text-[#333333] mt-6 mb-3`}>Types of Cookies We Use:</h3>
-              <ul className="list-disc pl-6 space-y-2 text-[#333333]/80">
-                <li><strong>Essential Cookies:</strong> Necessary for site functionality</li>
-                <li><strong>Analytics Cookies:</strong> Help us understand site usage</li>
-                <li><strong>Advertising Cookies:</strong> Used to deliver relevant ads</li>
-                <li><strong>Social Media Cookies:</strong> Enable social sharing features</li>
+                <li>We do not sell your personal information.</li>
+                <li>We do not share your information with non-affiliated third parties for their own marketing.</li>
+                <li>We do share your information with insurance carriers and service providers to fulfill your requests. You cannot opt out of this required sharing.</li>
+                <li>If we ever share with non-affiliates for joint marketing, you will have the right to opt out.</li>
               </ul>
               <p className="text-[#333333]/80 leading-relaxed mt-4">
-                You can control cookies through your browser settings, but disabling cookies may limit site
-                functionality.
+                You may exercise any available opt-out by contacting us (Section 13).
               </p>
             </section>
 
             <section className="mb-8">
-              <h2 className={`${alteHaasGrotesk.className} text-2xl font-bold text-[#333333] mt-8 mb-4`}>
-                Third-Party Advertising and Analytics
-              </h2>
-              <p className="text-[#333333]/80 leading-relaxed mb-4">
-                We use third-party advertising and analytics services, including:
-              </p>
+              <h2 className={`${alteHaasGrotesk.className} text-2xl font-bold text-[#333333] mt-8 mb-4`}>6. Security &amp; Data Protection</h2>
               <ul className="list-disc pl-6 space-y-2 text-[#333333]/80">
-                <li>
-                  <strong>Meta Pixel:</strong> To measure ad performance and deliver targeted ads on Facebook
-                  and Instagram
-                </li>
-                <li>
-                  <strong>Google Analytics and Google Ads:</strong> To analyze site traffic and deliver targeted
-                  advertising
-                </li>
-                <li>
-                  <strong>Other Ad Networks:</strong> To reach potential customers across the web
-                </li>
-              </ul>
-              <p className="text-[#333333]/80 leading-relaxed mt-4">
-                These services may collect information about your online activities across different websites
-                and services. They may use cookies, device identifiers, and similar technologies to collect
-                this information.
-              </p>
-              <p className="text-[#333333]/80 leading-relaxed mt-4">
-                To opt out of interest-based advertising, visit:
-              </p>
-              <ul className="list-disc pl-6 space-y-2 text-[#333333]/80">
-                <li>Digital Advertising Alliance: www.aboutads.info/choices</li>
-                <li>Network Advertising Initiative: www.networkadvertising.org/choices</li>
+                <li>We implement administrative, technical, and physical safeguards, including industry-standard encryption (TLS) for data in transit and at rest, to protect your information in accordance with the Ohio Data Protection Act and other applicable laws.</li>
+                <li>In the event of a data breach affecting your information, we will notify you and relevant authorities as required by law.</li>
+                <li>We retain customer records (including chat transcripts and applications) for a minimum of seven (7) years after the policy expiration or account termination, as required by Ohio insurance regulations and our professional liability duties.</li>
               </ul>
             </section>
 
             <section className="mb-8">
-              <h2 className={`${alteHaasGrotesk.className} text-2xl font-bold text-[#333333] mt-8 mb-4`}>Your Privacy Rights</h2>
-              <p className="text-[#333333]/80 leading-relaxed mb-4">
-                Depending on your location, you may have certain rights regarding your personal information:
-              </p>
-
-              <h3 className={`${alteHaasGrotesk.className} text-xl font-semibold text-[#333333] mt-6 mb-3`}>All Users</h3>
-              <ul className="list-disc pl-6 space-y-2 text-[#333333]/80">
-                <li>Access the personal information we hold about you</li>
-                <li>Request correction of inaccurate information</li>
-                <li>Request deletion of your information (subject to legal obligations)</li>
-                <li>Opt out of marketing communications</li>
-                <li>Object to certain processing of your information</li>
-              </ul>
-
-              <h3 className={`${alteHaasGrotesk.className} text-xl font-semibold text-[#333333] mt-6 mb-3`}>
-                California Residents (CCPA/CPRA)
-              </h3>
-              <p className="text-[#333333]/80 leading-relaxed mb-3">You have the right to:</p>
-              <ul className="list-disc pl-6 space-y-2 text-[#333333]/80">
-                <li>Know what personal information we collect, use, and share</li>
-                <li>Request deletion of your personal information</li>
-                <li>Opt out of the sale or sharing of your personal information</li>
-                <li>Non-discrimination for exercising your rights</li>
-              </ul>
-
-              <h3 className={`${alteHaasGrotesk.className} text-xl font-semibold text-[#333333] mt-6 mb-3`}>European Users (GDPR)</h3>
-              <p className="text-[#333333]/80 leading-relaxed mb-3">You have the right to:</p>
-              <ul className="list-disc pl-6 space-y-2 text-[#333333]/80">
-                <li>Access, rectify, or erase your personal data</li>
-                <li>Restrict or object to processing</li>
-                <li>Data portability</li>
-                <li>Withdraw consent</li>
-                <li>Lodge a complaint with a supervisory authority</li>
-              </ul>
-
-              <p className="text-[#333333]/80 leading-relaxed mt-4">
-                To exercise your rights, contact us at info@joinsamurai.com or use the contact information below.
-              </p>
-            </section>
-
-            <section className="mb-8">
-              <h2 className={`${alteHaasGrotesk.className} text-2xl font-bold text-[#333333] mt-8 mb-4`}>
-                Do Not Sell or Share My Personal Information
-              </h2>
+              <h2 className={`${alteHaasGrotesk.className} text-2xl font-bold text-[#333333] mt-8 mb-4`}>7. Voice Recordings &amp; Biometric Data</h2>
               <p className="text-[#333333]/80 leading-relaxed">
-                We may share your information with advertising partners for targeted advertising purposes.
-                Under certain privacy laws, this may be considered a &quot;sale&quot; or &quot;share&quot; of
-                information. You have the right to opt out of this sharing.
-              </p>
-              <p className="text-[#333333]/80 leading-relaxed mt-4">
-                To opt out email info@joinsamurai.com.
+                Voice interactions with Sam are recorded for quality and compliance. Voiceprints may be considered biometric information under applicable law.
               </p>
             </section>
 
             <section className="mb-8">
-              <h2 className={`${alteHaasGrotesk.className} text-2xl font-bold text-[#333333] mt-8 mb-4`}>Data Security</h2>
+              <h2 className={`${alteHaasGrotesk.className} text-2xl font-bold text-[#333333] mt-8 mb-4`}>8. Cookies &amp; Tracking</h2>
               <p className="text-[#333333]/80 leading-relaxed">
-                We implement reasonable security measures to protect your information from unauthorized access,
-                alteration, disclosure, or destruction. However, no internet transmission is completely secure,
-                and we cannot guarantee absolute security.
+                We use necessary cookies for site functionality and analytics cookies (with your consent) to improve performance. You can manage preferences via the cookie banner.
               </p>
             </section>
 
             <section className="mb-8">
-              <h2 className={`${alteHaasGrotesk.className} text-2xl font-bold text-[#333333] mt-8 mb-4`}>Data Retention</h2>
+              <h2 className={`${alteHaasGrotesk.className} text-2xl font-bold text-[#333333] mt-8 mb-4`}>9. Children&apos;s Privacy</h2>
               <p className="text-[#333333]/80 leading-relaxed">
-                We retain your personal information for as long as necessary to provide our services, comply
-                with legal obligations, resolve disputes, and enforce our agreements. When we no longer need
-                your information, we securely delete or anonymize it.
+                Our services are for adults 18+. We do not knowingly collect data from children under 13.
               </p>
             </section>
 
             <section className="mb-8">
-              <h2 className={`${alteHaasGrotesk.className} text-2xl font-bold text-[#333333] mt-8 mb-4`}>Children&apos;s Privacy</h2>
+              <h2 className={`${alteHaasGrotesk.className} text-2xl font-bold text-[#333333] mt-8 mb-4`}>10. Do Not Track</h2>
               <p className="text-[#333333]/80 leading-relaxed">
-                Our services are not directed to individuals under 18. We do not knowingly collect personal
-                information from children. If you believe we have collected information from a child, please
-                contact us immediately.
+                We do not currently respond to browser &quot;Do Not Track&quot; signals.
               </p>
             </section>
 
             <section className="mb-8">
-              <h2 className={`${alteHaasGrotesk.className} text-2xl font-bold text-[#333333] mt-8 mb-4`}>International Data Transfers</h2>
+              <h2 className={`${alteHaasGrotesk.className} text-2xl font-bold text-[#333333] mt-8 mb-4`}>11. Changes to This Policy</h2>
               <p className="text-[#333333]/80 leading-relaxed">
-                Your information may be transferred to and processed in countries other than your own. We
-                ensure appropriate safeguards are in place to protect your information in accordance with
-                this Privacy Policy.
+                Material changes will be notified by email or prominent notice in your dashboard. Continued use after the effective date constitutes acceptance.
               </p>
             </section>
 
             <section className="mb-8">
-              <h2 className={`${alteHaasGrotesk.className} text-2xl font-bold text-[#333333] mt-8 mb-4`}>Changes to This Privacy Policy</h2>
-              <p className="text-[#333333]/80 leading-relaxed">
-                We may update this Privacy Policy from time to time. We will notify you of material changes
-                by posting the updated policy on our Site with a new &quot;Last Updated&quot; date. Your
-                continued use of our services after changes constitutes acceptance of the updated policy.
-              </p>
-            </section>
-
-            <section className="mb-8">
-              <h2 className={`${alteHaasGrotesk.className} text-2xl font-bold text-[#333333] mt-8 mb-4`}>Contact Us</h2>
-              <p className="text-[#333333]/80 leading-relaxed mb-4">
-                If you have questions about this Privacy Policy or our privacy practices, please contact us:
-              </p>
+              <h2 className={`${alteHaasGrotesk.className} text-2xl font-bold text-[#333333] mt-8 mb-4`}>12. Contact Us</h2>
               <div className="bg-[#de5e48]/5 border-l-4 border-[#de5e48] p-4 rounded">
-                <p className="text-[#333333] font-semibold mb-2">Samurai Insurance</p>
-                <p className="text-[#333333]/80">Email: info@joinsamurai.com</p>
-                <p className="text-[#333333]/80">Address: 5 West Main Street, Westerville, OH 43081</p>
+                <p className="text-[#333333] font-semibold mb-2">Samurai Insurance Inc</p>
+                <p className="text-[#333333]/80">5 W Main Street</p>
+                <p className="text-[#333333]/80">Westerville, OH 43081</p>
                 <p className="text-[#333333]/80">Phone: (614) 321-7718</p>
+                <p className="text-[#333333]/80 mt-2">
+                  Privacy requests: <a href="mailto:info@joinsamurai.com" className="text-[#de5e48] hover:underline">info@joinsamurai.com</a>
+                </p>
               </div>
-              <p className="text-[#333333]/80 leading-relaxed mt-4">
-                For California residents, you may also contact us to request information about our disclosure
-                of personal information to third parties for their direct marketing purposes.
-              </p>
             </section>
           </article>
         </div>

@@ -40,6 +40,7 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "img-src 'self' data: https: blob:",
       "font-src 'self' https://fonts.gstatic.com",
+      "media-src 'self' https://*.supabase.co",
       "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://www.google-analytics.com https://region1.google-analytics.com",
       "frame-src 'self' https://vercel.live",
       "frame-ancestors 'none'",

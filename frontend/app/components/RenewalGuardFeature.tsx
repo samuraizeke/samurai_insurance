@@ -114,7 +114,7 @@ export function RenewalGuardFeature({
             playsInline
             preload="metadata"
             onEnded={(event) => event.currentTarget.pause()}
-            src="https://samuraiinsurancestorage.blob.core.windows.net/videos/Renewal%20Guard.mp4?sp=r&st=2025-11-19T13:58:18Z&se=2030-01-01T22:13:18Z&spr=https&sv=2024-11-04&sr=b&sig=7DtUJLwV1b4%2FnIjM02j8MnuBCzj5hJyI69ToLr6VXY4%3D"
+            src="https://atgykhhbgbchhbnurhtx.supabase.co/storage/v1/object/sign/Lander%20Content/Renewal%20Guard.mp4?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9kNjkwNjYyNy05MWFhLTRhMTgtODEyYy01YjJiODUyNzhmMTQiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJMYW5kZXIgQ29udGVudC9SZW5ld2FsIEd1YXJkLm1wNCIsImlhdCI6MTc2NTQ2NTY0NywiZXhwIjo0OTE5MDY1NjQ3fQ.hoFinQYVTCBSMucceZ8uLTo-i0_OSUedkXnXhGWrGEU"
           >
             Your browser does not support the video tag.
           </video>

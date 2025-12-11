@@ -124,7 +124,7 @@ export function OnDemandSupportFeature({
             playsInline
             preload="metadata"
             onEnded={(event) => event.currentTarget.pause()}
-            src="https://samuraiinsurancestorage.blob.core.windows.net/videos/On%20Demand%20Help.mp4?sp=r&st=2025-11-19T13:59:10Z&se=2030-01-01T22:14:10Z&spr=https&sv=2024-11-04&sr=b&sig=l%2BJbSAv7Z3UQXA9nxgPkl2mPWfTQmv1SxkDfRSXwe5E%3D"
+            src="https://atgykhhbgbchhbnurhtx.supabase.co/storage/v1/object/sign/Lander%20Content/On%20Demand%20Help.mp4?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9kNjkwNjYyNy05MWFhLTRhMTgtODEyYy01YjJiODUyNzhmMTQiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJMYW5kZXIgQ29udGVudC9PbiBEZW1hbmQgSGVscC5tcDQiLCJpYXQiOjE3NjU0NjU2MTMsImV4cCI6NDkxOTA2NTYxM30.76Ul2imBX5GWDJdggOUCHOZdp6r7XyWczAmmTM2rDko"
           >
             Your browser does not support the video tag.
           </video>

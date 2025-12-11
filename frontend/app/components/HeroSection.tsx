@@ -41,7 +41,7 @@ export function HeroSection({ onJoinWaitlist }: HeroSectionProps) {
               playsInline
               preload="metadata"
               onEnded={(event) => event.currentTarget.pause()}
-              src="https://samuraiinsurancestorage.blob.core.windows.net/videos/quote%20demo.mp4?sp=r&st=2025-11-19T13:55:37Z&se=2030-01-01T22:10:37Z&spr=https&sv=2024-11-04&sr=b&sig=a1iXY7qf1Y5pW5ARANeYcVlBf6tpM79dUC99RAvw%2Bf4%3D"
+              src="https://atgykhhbgbchhbnurhtx.supabase.co/storage/v1/object/sign/Lander%20Content/quote%20demo.mp4?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9kNjkwNjYyNy05MWFhLTRhMTgtODEyYy01YjJiODUyNzhmMTQiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJMYW5kZXIgQ29udGVudC9xdW90ZSBkZW1vLm1wNCIsImlhdCI6MTc2NTQ2NTczNCwiZXhwIjo0OTE5MDY1NzM0fQ.oM1rX4_u6hIvvKxFHspRwLXU4flRa9Ql49Q9geROUYE"
             >
               Your browser does not support the video tag.
             </video>

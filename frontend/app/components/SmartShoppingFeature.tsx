@@ -124,7 +124,7 @@ export function SmartShoppingFeature({
             playsInline
             preload="metadata"
             onEnded={(event) => event.currentTarget.pause()}
-            src="https://samuraiinsurancestorage.blob.core.windows.net/videos/Smart%20Shopping%20Site.mp4?sp=r&st=2025-11-19T14:39:23Z&se=2030-01-01T22:54:23Z&spr=https&sv=2024-11-04&sr=b&sig=a%2B364Ig1pmuF4IOiK0gM%2FLQAK%2B%2BX92TUEW7ouq37OtM%3D"
+            src="https://atgykhhbgbchhbnurhtx.supabase.co/storage/v1/object/sign/Lander%20Content/Smart%20Shopping%20Site.mp4?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9kNjkwNjYyNy05MWFhLTRhMTgtODEyYy01YjJiODUyNzhmMTQiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJMYW5kZXIgQ29udGVudC9TbWFydCBTaG9wcGluZyBTaXRlLm1wNCIsImlhdCI6MTc2NTQ2NTY4NSwiZXhwIjo0OTE5MDY1Njg1fQ.9qLNUl4-dvwh5iTf8EdYGC12pM3w1SwKelbB2FXJq5g"
           >
             Your browser does not support the video tag.
           </video>

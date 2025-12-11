@@ -17,7 +17,8 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/lib/auth-context";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSort, faGear, faRightFromBracket, faUser, faBell } from "@fortawesome/free-solid-svg-icons";
+import { faSort, faGear, faRightFromBracket, faUser } from "@fortawesome/free-solid-svg-icons";
+import Link from "next/link";
 
 export function UserMenu() {
   const { isMobile } = useSidebar();
@@ -78,17 +79,17 @@ export function UserMenu() {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="gap-2 p-2 cursor-pointer hover:bg-[#333333]/5 focus:bg-[#333333]/5 rounded-lg">
-              <FontAwesomeIcon icon={faUser} className="size-4" />
-              <span className="font-[family-name:var(--font-work-sans)]">Profile</span>
+            <DropdownMenuItem asChild className="gap-2 p-2 cursor-pointer hover:bg-[#333333]/5 focus:bg-[#333333]/5 rounded-lg">
+              <Link href="/profile">
+                <FontAwesomeIcon icon={faUser} className="size-4" />
+                <span className="font-[family-name:var(--font-work-sans)]">Profile</span>
+              </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem className="gap-2 p-2 cursor-pointer hover:bg-[#333333]/5 focus:bg-[#333333]/5 rounded-lg">
-              <FontAwesomeIcon icon={faBell} className="size-4" />
-              <span className="font-[family-name:var(--font-work-sans)]">Notifications</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem className="gap-2 p-2 cursor-pointer hover:bg-[#333333]/5 focus:bg-[#333333]/5 rounded-lg">
-              <FontAwesomeIcon icon={faGear} className="size-4" />
-              <span className="font-[family-name:var(--font-work-sans)]">Settings</span>
+            <DropdownMenuItem asChild className="gap-2 p-2 cursor-pointer hover:bg-[#333333]/5 focus:bg-[#333333]/5 rounded-lg">
+              <Link href="/settings">
+                <FontAwesomeIcon icon={faGear} className="size-4" />
+                <span className="font-[family-name:var(--font-work-sans)]">Settings</span>
+              </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
