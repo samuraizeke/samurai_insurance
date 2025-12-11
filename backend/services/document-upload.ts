@@ -3,6 +3,7 @@ import { Storage } from '@google-cloud/storage';
 import { VertexAI } from '@google-cloud/vertexai';
 import vision from '@google-cloud/vision';
 import dotenv from 'dotenv';
+import { supabase } from '../lib/supabase';
 
 dotenv.config();
 
@@ -386,7 +387,7 @@ export async function handleDocumentUpload(
     mimeType: string,
     sessionId: string,
     userId?: string
-): Promise<{ success: boolean; analysis?: string; error?: string }> {
+): Promise<{ success: boolean; analysis?: string; documentId?: number; error?: string }> {
     console.log(`\n📤 Processing document upload: ${originalName} (${mimeType})`);
     if (userId) {
         console.log(`👤 Associated with user: ${userId}`);
@@ -434,7 +435,17 @@ export async function handleDocumentUpload(
 
         // 5. Store the analysis (keyed by userId if available, otherwise sessionId)
         const storageKey = userId || sessionId;
-        const rawData = {
+        const rawData: {
+            fileName: string;
+            extractedText: string;
+            gcsPath: string;
+            uploadedAt: string;
+            documentType: 'image' | 'pdf';
+            userId: string | null;
+            policyType: PolicyType;
+            carrier: string;
+            documentId?: number;
+        } = {
             fileName: originalName,
             extractedText,
             gcsPath: gcsFileName,
@@ -467,9 +478,40 @@ export async function handleDocumentUpload(
         console.log(`✅ Document processed: ${policyType} policy from ${carrier}`);
         console.log(`   Stored for ${userId ? `user ${userId}` : `session ${sessionId}`}`);
 
+        // 6. Persist to database if user is authenticated
+        let documentId: number | undefined;
+        if (userId) {
+            const dbResult = await persistDocumentToDatabase(userId, {
+                fileName: originalName,
+                fileType: mimeType,
+                fileSize: buffer.length,
+                gcsPath: gcsFileName,
+                policyType,
+                carrier,
+                analysis,
+                extractedData: {
+                    extractedText,
+                    uploadedAt: rawData.uploadedAt,
+                    documentType: docType,
+                }
+            });
+
+            if (dbResult.success) {
+                documentId = dbResult.documentId;
+                // Update rawData with documentId for cache consistency
+                rawData.documentId = documentId;
+                storedPolicy.rawData.documentId = documentId;
+                console.log(`📊 Document linked to user account (ID: ${documentId})`);
+            } else {
+                // Log error but don't fail the upload - GCS storage succeeded
+                console.warn(`⚠️ Database persistence failed: ${dbResult.error}`);
+            }
+        }
+
         return {
             success: true,
-            analysis
+            analysis,
+            documentId
         };
 
     } catch (error) {
@@ -521,4 +563,359 @@ export function renameUserPolicy(userId: string, policyType: PolicyType, newCarr
     }
     console.log(`✏️ Renamed ${policyType} policy carrier to "${newCarrier}" for user ${userId}`);
     return true;
+}
+
+// ============================================
+// DATABASE PERSISTENCE (Supabase)
+// ============================================
+
+/**
+ * Document types supported by the system
+ */
+export type DocumentType = 'policy' | 'id_card' | 'claim' | 'chat_attachment' | 'image' | 'screenshot' | 'other';
+
+/**
+ * Upload context - where the upload originated
+ */
+export type UploadContext = 'documents' | 'chat' | 'profile' | 'claim_submission';
+
+/**
+ * Database document record structure
+ */
+export interface UserDocument {
+    id: number;
+    user_id: string;
+    chat_session_id: number | null;
+    document_type: DocumentType;
+    policy_type: PolicyType | null;
+    upload_context: UploadContext;
+    description: string | null;
+    file_name: string;
+    file_type: string | null;
+    file_size: number | null;
+    gcs_bucket: string;
+    gcs_path: string;
+    gcs_uri: string;
+    carrier_name: string | null;
+    policy_number: string | null;
+    analysis_summary: string | null;
+    extracted_data: any;
+    status: string;
+    uploaded_at: string;
+    analyzed_at: string | null;
+    updated_at: string;
+}
+
+/**
+ * Persists a document record to Supabase
+ */
+export async function persistDocumentToDatabase(
+    userId: string,
+    document: {
+        fileName: string;
+        fileType: string;
+        fileSize?: number;
+        gcsPath: string;
+        policyType?: PolicyType;
+        carrier?: string;
+        analysis?: string;
+        extractedData?: any;
+        // New optional fields for general attachments
+        documentType?: DocumentType;
+        uploadContext?: UploadContext;
+        chatSessionId?: number;
+        description?: string;
+    }
+): Promise<{ success: boolean; documentId?: number; error?: string }> {
+    if (!GCS_BUCKET_NAME) {
+        return { success: false, error: 'GCS_BUCKET_NAME not configured' };
+    }
+
+    try {
+        console.log(`💾 Persisting document to database for user: ${userId}`);
+
+        const { data, error } = await supabase
+            .from('user_documents')
+            .insert({
+                user_id: userId,
+                chat_session_id: document.chatSessionId || null,
+                document_type: document.documentType || 'policy',
+                policy_type: document.policyType || null,
+                upload_context: document.uploadContext || 'documents',
+                description: document.description || null,
+                file_name: document.fileName,
+                file_type: document.fileType,
+                file_size: document.fileSize || null,
+                gcs_bucket: GCS_BUCKET_NAME,
+                gcs_path: document.gcsPath,
+                carrier_name: document.carrier || null,
+                analysis_summary: document.analysis || null,
+                extracted_data: document.extractedData || null,
+                status: 'active',
+                analyzed_at: document.analysis ? new Date().toISOString() : null,
+            })
+            .select('id')
+            .single();
+
+        if (error) {
+            console.error('❌ Database insert error:', error);
+            return { success: false, error: error.message };
+        }
+
+        console.log(`✅ Document persisted with ID: ${data.id}`);
+        return { success: true, documentId: data.id };
+
+    } catch (error) {
+        console.error('❌ Database persistence error:', error);
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error'
+        };
+    }
+}
+
+/**
+ * Fetches documents for a user from the database with optional filtering
+ */
+export async function fetchUserDocumentsFromDatabase(
+    userId: string,
+    options?: {
+        documentType?: DocumentType | DocumentType[];
+        uploadContext?: UploadContext;
+        chatSessionId?: number;
+        policyDocumentsOnly?: boolean;
+    }
+): Promise<{ success: boolean; documents?: UserDocument[]; error?: string }> {
+    try {
+        console.log(`📚 Fetching documents from database for user: ${userId}`);
+
+        let query = supabase
+            .from('user_documents')
+            .select('*')
+            .eq('user_id', userId)
+            .eq('status', 'active');
+
+        // Apply optional filters
+        if (options?.documentType) {
+            if (Array.isArray(options.documentType)) {
+                query = query.in('document_type', options.documentType);
+            } else {
+                query = query.eq('document_type', options.documentType);
+            }
+        }
+
+        if (options?.uploadContext) {
+            query = query.eq('upload_context', options.uploadContext);
+        }
+
+        if (options?.chatSessionId) {
+            query = query.eq('chat_session_id', options.chatSessionId);
+        }
+
+        if (options?.policyDocumentsOnly) {
+            query = query.eq('document_type', 'policy');
+        }
+
+        const { data, error } = await query.order('uploaded_at', { ascending: false });
+
+        if (error) {
+            console.error('❌ Database fetch error:', error);
+            return { success: false, error: error.message };
+        }
+
+        console.log(`✅ Found ${data?.length || 0} documents`);
+        return { success: true, documents: data as UserDocument[] };
+
+    } catch (error) {
+        console.error('❌ Database fetch error:', error);
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error'
+        };
+    }
+}
+
+/**
+ * Fetches chat attachments for a specific session
+ */
+export async function fetchChatAttachments(
+    userId: string,
+    chatSessionId: number
+): Promise<{ success: boolean; attachments?: UserDocument[]; error?: string }> {
+    return fetchUserDocumentsFromDatabase(userId, {
+        chatSessionId,
+        documentType: ['chat_attachment', 'image', 'screenshot'],
+    });
+}
+
+/**
+ * Persists a chat attachment to the database
+ * Convenience wrapper for persistDocumentToDatabase with chat-specific defaults
+ */
+export async function persistChatAttachment(
+    userId: string,
+    chatSessionId: number,
+    attachment: {
+        fileName: string;
+        fileType: string;
+        fileSize?: number;
+        gcsPath: string;
+        description?: string;
+    }
+): Promise<{ success: boolean; documentId?: number; error?: string }> {
+    // Determine document type based on MIME type
+    let documentType: DocumentType = 'chat_attachment';
+    if (attachment.fileType?.startsWith('image/')) {
+        documentType = 'image';
+    }
+
+    return persistDocumentToDatabase(userId, {
+        ...attachment,
+        documentType,
+        uploadContext: 'chat',
+        chatSessionId,
+    });
+}
+
+/**
+ * Fetches a specific document by policy type for a user
+ */
+export async function fetchUserDocumentByType(
+    userId: string,
+    policyType: PolicyType
+): Promise<{ success: boolean; document?: UserDocument; error?: string }> {
+    try {
+        const { data, error } = await supabase
+            .from('user_documents')
+            .select('*')
+            .eq('user_id', userId)
+            .eq('policy_type', policyType)
+            .eq('status', 'active')
+            .order('uploaded_at', { ascending: false })
+            .limit(1)
+            .single();
+
+        if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+            console.error('❌ Database fetch error:', error);
+            return { success: false, error: error.message };
+        }
+
+        return { success: true, document: data as UserDocument | undefined };
+
+    } catch (error) {
+        console.error('❌ Database fetch error:', error);
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error'
+        };
+    }
+}
+
+/**
+ * Soft deletes a document from the database
+ */
+export async function deleteDocumentFromDatabase(
+    userId: string,
+    documentId: number
+): Promise<{ success: boolean; error?: string }> {
+    try {
+        const { error } = await supabase
+            .from('user_documents')
+            .update({ status: 'deleted', updated_at: new Date().toISOString() })
+            .eq('id', documentId)
+            .eq('user_id', userId); // Security: ensure user owns the document
+
+        if (error) {
+            console.error('❌ Database delete error:', error);
+            return { success: false, error: error.message };
+        }
+
+        console.log(`🗑️ Document ${documentId} marked as deleted`);
+        return { success: true };
+
+    } catch (error) {
+        console.error('❌ Database delete error:', error);
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error'
+        };
+    }
+}
+
+/**
+ * Updates document carrier name in the database
+ */
+export async function updateDocumentCarrierInDatabase(
+    userId: string,
+    documentId: number,
+    newCarrier: string
+): Promise<{ success: boolean; error?: string }> {
+    try {
+        const { error } = await supabase
+            .from('user_documents')
+            .update({
+                carrier_name: newCarrier,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', documentId)
+            .eq('user_id', userId); // Security: ensure user owns the document
+
+        if (error) {
+            console.error('❌ Database update error:', error);
+            return { success: false, error: error.message };
+        }
+
+        console.log(`✏️ Document ${documentId} carrier updated to "${newCarrier}"`);
+        return { success: true };
+
+    } catch (error) {
+        console.error('❌ Database update error:', error);
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error'
+        };
+    }
+}
+
+/**
+ * Loads user documents from database into the in-memory cache
+ * Call this on server startup or when a user first accesses their documents
+ */
+export async function loadUserDocumentsToCache(userId: string): Promise<void> {
+    const result = await fetchUserDocumentsFromDatabase(userId);
+
+    if (!result.success || !result.documents) {
+        console.log(`⚠️ Could not load documents for user ${userId}`);
+        return;
+    }
+
+    // Clear existing cache for this user
+    userPolicies.delete(userId);
+
+    // Populate cache from database
+    for (const doc of result.documents) {
+        if (doc.policy_type) {
+            const storedPolicy: StoredPolicy = {
+                policyType: doc.policy_type as PolicyType,
+                carrier: doc.carrier_name || 'Unknown',
+                analysis: doc.analysis_summary || '',
+                rawData: {
+                    fileName: doc.file_name,
+                    gcsPath: doc.gcs_path,
+                    gcsUri: doc.gcs_uri,
+                    uploadedAt: doc.uploaded_at,
+                    documentType: doc.file_type?.startsWith('image/') ? 'image' : 'pdf',
+                    userId: doc.user_id,
+                    policyType: doc.policy_type,
+                    carrier: doc.carrier_name,
+                    documentId: doc.id,
+                    ...doc.extracted_data
+                },
+                timestamp: new Date(doc.uploaded_at).getTime()
+            };
+            storeUserPolicy(userId, storedPolicy);
+        }
+    }
+
+    console.log(`📦 Loaded ${result.documents.length} documents into cache for user ${userId}`);
 }

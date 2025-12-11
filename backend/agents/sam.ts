@@ -1,5 +1,5 @@
 // backend/agents/sam.ts
-import { VertexAI } from '@google-cloud/vertexai';
+import { VertexAI, FunctionDeclarationsTool, Part, Content } from '@google-cloud/vertexai';
 import dotenv from 'dotenv';
 import { handleUriChat } from './uri';
 import { handleRaiReview } from './rai';
@@ -8,8 +8,49 @@ import {
     getUserPolicyTypes,
     PolicyType
 } from '../services/document-upload';
+import {
+    getMCPConnection,
+    releaseMCPConnection,
+    closeMCPConnection,
+    listMCPTools,
+    executeMCPTool,
+    filterSafeTools,
+    convertMCPToolsToVertexAI,
+    validateSQLQuery,
+    generateDatabaseSecurityPrompt,
+} from '../lib/mcp-client';
 
 dotenv.config();
+
+// ============================================================================
+// SAM CORE SYSTEM PROMPT
+// ============================================================================
+// This is the authoritative source for Sam's personality, tone, and behavior.
+// Technical guardrails are appended dynamically by each function as needed.
+
+const SAM_CORE_PROMPT = `You are Sam, a friendly, empathetic, and professional insurance advisor specializing in personal lines (auto and home). Your primary goal is to provide top-tier customer service: build trust, listen actively, explain concepts clearly, and guide users through their insurance needs without overwhelming them. Always assume good intent from the user and respond positively, even to edgy questions—treat them as adults without lecturing.
+
+**Core Knowledge**:
+- Use the "AI KB Core Concepts.pdf" for foundational insurance principles, legal doctrines (e.g., indemnity, insurable interest), policy details (PAP for auto, HO-3 for home), state-specific rules (e.g., cancellation notices, prompt pay statutes, mandatory endorsements like earthquake in CA), and scenarios (e.g., rideshare gaps, mold limits).
+- Use the "Coverage Recommendation Guide.pdf" for structuring interactions: Gather info for TIE calculation, use analogies (e.g., liability as a "forcefield", umbrella as a "raincoat", ACV vs. RCV as "used TV" vs. "new TV"), handle objections with the 5 A's (Acknowledge, Appreciate, Ask, Adapt, Act), and present in "Protection Audit" format (Current Risk vs. Recommended vs. Real Impact).
+
+**Interaction Guidelines**:
+- Be conversational and warm: Start with greetings like "Hi there! I'm Sam, here to help with your insurance questions." Use simple language, define terms (e.g., "ACV means Actual Cash Value—it's replacement cost minus depreciation"), and confirm understanding (e.g., "Does that make sense?").
+- Gather info empathetically: Ask for details like state, assets, family, risks (e.g., "Do you have teens driving or a pool at home?") to assess needs, but respect privacy—don't retain PII.
+- If the query needs analysis: Summarize user info and pass to Uri (e.g., "Passing this to my colleague Uri for coverage recommendations: [summary]"). Wait for Uri's output, then review with Rai if complex.
+- For quotes or recommendations: Defer to Uri, then present finalized versions clearly, emphasizing benefits and ROI (e.g., "This umbrella adds $1M protection for just ~$200/year").
+- Compliance: No guarantees (say "designed to cover" not "will cover"). If high-risk (e.g., knob-and-tube wiring), hand off to human. Use tools for real-time data (e.g., web search for quotes, state laws).
+- Output: Keep responses concise, engaging, and action-oriented. End with next steps (e.g., "What else can I help with?").
+
+Remember, your role is the "face" of the team—make users feel supported and informed.`;
+
+// Technical output guardrails (appended to prompts for frontend compatibility)
+const OUTPUT_GUARDRAILS = `
+**Output Format Requirements** (CRITICAL - DO NOT IGNORE):
+- Use plain text ONLY - NO markdown, NO asterisks (*), NO bold formatting, NO headers (#)
+- Keep responses concise: 2-3 sentences max unless the user asks for detail
+- Never include URLs unless explicitly asked
+- Never say "Uri said" or "Rai said" - speak as one unified voice`;
 
 const PROJECT_ID = process.env.GOOGLE_PROJECT_ID;
 
@@ -90,6 +131,50 @@ function detectNeededPolicyType(query: string): PolicyType | null {
     return null;
 }
 
+// Check if user was recently prompted for upload and is declining or continuing without it
+function userDeclinedOrContinuingWithoutUpload(userQuery: string, history: any[]): boolean {
+    const lowerQuery = userQuery.toLowerCase();
+
+    // Check if previous message was an upload prompt (contains [UPLOAD_POLICY] marker or asks to upload)
+    const recentHistory = history.slice(-4); // Check last 4 messages
+    const wasRecentlyPromptedForUpload = recentHistory.some(msg =>
+        msg.role === 'assistant' && (
+            msg.content.includes('[UPLOAD_POLICY]') ||
+            msg.content.toLowerCase().includes('upload') && msg.content.toLowerCase().includes('policy')
+        )
+    );
+
+    if (!wasRecentlyPromptedForUpload) {
+        return false;
+    }
+
+    // User was prompted - check if they're declining or asking to continue
+    const declinePatterns = [
+        /\b(no|nope|nah|not now|later|skip|don'?t have|cant|can'?t|unable)\b/i,
+        /\b(just|still|anyway|without|general|instead)\b/i,
+        /\b(help me|can you|could you|tell me|explain|what is|what are|how does|how do)\b/i,
+        /\b(don'?t want to|rather not|prefer not)\b/i,
+    ];
+
+    const isDeclineOrContinue = declinePatterns.some(pattern => pattern.test(lowerQuery));
+
+    if (isDeclineOrContinue) {
+        console.log(`🔄 User appears to be declining upload or asking for general help`);
+        return true;
+    }
+
+    // If user asks a follow-up question after upload prompt (not uploading), treat as wanting general help
+    const isFollowUpQuestion = lowerQuery.includes('?') ||
+        /^(what|how|why|when|where|can|could|should|would|is|are|do|does)\b/i.test(lowerQuery);
+
+    if (isFollowUpQuestion) {
+        console.log(`🔄 User asking follow-up question after upload prompt - providing general help`);
+        return true;
+    }
+
+    return false;
+}
+
 // Format policy type for display
 function formatPolicyType(policyType: PolicyType): string {
     const names: Record<PolicyType, string> = {
@@ -113,14 +198,12 @@ async function promptSpecificPolicyUpload(
     const formattedNeeded = formatPolicyType(neededType);
     const formattedExisting = existingTypes.map(formatPolicyType).join(', ');
 
-    const prompt = `You are Sam, a friendly insurance advisor. The user asked about their ${formattedNeeded} policy, but they've only uploaded their ${formattedExisting} policy/policies.
+    const prompt = `You are Sam, a friendly, empathetic insurance advisor.
+${OUTPUT_GUARDRAILS}
 
-**Guidelines**:
-- Acknowledge you have their ${formattedExisting} policy on file
-- Explain you'll need their ${formattedNeeded} policy to answer this question
-- Keep it SHORT (1-2 sentences)
-- Be friendly and helpful
-- Use plain text - NO markdown, NO asterisks, NO bold formatting
+**Situation**: The user asked about their ${formattedNeeded} policy, but they've only uploaded their ${formattedExisting} policy/policies.
+
+**Task**: Acknowledge you have their ${formattedExisting} policy on file and warmly explain you'll need their ${formattedNeeded} policy to help with this question. Keep it to 1-2 sentences.
 
 User asked: "${userQuery}"
 
@@ -162,6 +245,22 @@ export async function handleSamChat(userQuery: string, history: any[], userId?: 
         // How are you
         if (/how are you|how're you/i.test(lowerQuery)) {
             return "I'm doing great, thanks for asking! How can I help with your insurance needs?";
+        }
+
+        // Check if user was recently prompted for upload and is declining/continuing without it
+        const userWantsGeneralHelp = userDeclinedOrContinuingWithoutUpload(userQuery, history);
+
+        if (userWantsGeneralHelp) {
+            console.log("💬 Sam: User declined upload or wants general help - proceeding without policy data");
+            // Skip policy upload check entirely and provide general assistance
+            const needsAnalysis = await shouldCallUri(userQuery, history);
+            if (needsAnalysis) {
+                const uriResult = await handleUriChat(userQuery, history);
+                if (typeof uriResult === 'string') return uriResult;
+                const raiApprovedAnswer = await handleRaiReview(userQuery, uriResult.answer, uriResult.context);
+                return await presentFinalAnalysis(userQuery, raiApprovedAnswer, history);
+            }
+            return await handleDirectly(userQuery, history);
         }
 
         // Check if user needs to reference their policy
@@ -383,7 +482,11 @@ async function answerWithPolicyData(
 ): Promise<string> {
     console.log("🔍 Answering with policy data...");
 
-    const prompt = `You are Sam, a friendly insurance advisor. The customer has uploaded their insurance policy and you now have access to their coverage details.
+    const prompt = `${SAM_CORE_PROMPT}
+${OUTPUT_GUARDRAILS}
+
+**Policy Data Context**:
+The customer has uploaded their insurance policy. Use this data to provide specific, personalized answers.
 
 CUSTOMER'S POLICY ANALYSIS:
 ${policyData.analysis}
@@ -391,13 +494,10 @@ ${policyData.analysis}
 RAW POLICY DATA:
 ${JSON.stringify(policyData.rawData, null, 2)}
 
-**Guidelines**:
-- Answer their question using the ACTUAL data from their policy
-- Be specific - reference their actual coverage limits, deductibles, carrier, etc.
-- Keep responses concise (2-3 sentences)
-- Use plain text - NO markdown, NO asterisks, NO bold formatting
-- If you notice gaps or concerns, mention them briefly
-- Be helpful and friendly
+**Task-Specific Guidelines**:
+- Answer using the ACTUAL data from their policy - reference specific coverage limits, deductibles, carrier, etc.
+- If you notice coverage gaps or concerns, mention them briefly using the Protection Audit format
+- Remember: say "designed to cover" not "will cover" (compliance)
 
 ${history.length > 0 ? `Previous conversation:\n${history.map(msg => `${msg.role}: ${msg.content}`).join('\n')}\n\n` : ''}
 
@@ -422,22 +522,16 @@ Answer using their specific policy information:`;
 
 // Prompt user to upload their policy document
 async function promptDocumentUpload(userQuery: string): Promise<string> {
-    const prompt = `You are Sam, a friendly insurance advisor. The user asked about their specific policy.
+    const prompt = `You are Sam, a friendly, empathetic insurance advisor.
+${OUTPUT_GUARDRAILS}
 
-Your task: Briefly explain they need to upload their insurance documents so you can review their coverage.
+**Situation**: The user asked about their specific policy, but they haven't uploaded any documents yet.
 
-**Guidelines**:
-- Keep it SHORT (1-2 sentences)
-- Explain they can upload a photo of their insurance card, declarations page, or policy PDF
-- It's quick and secure
-- Use plain text - NO markdown, NO asterisks, NO bold formatting
-- Do NOT include any URLs - the upload button appears automatically
-
-Example: "To review your specific coverage, I'll need you to upload your policy documents. You can take a photo of your insurance card or upload your declarations page - it only takes a moment!"
+**Task**: Warmly explain they need to upload their insurance documents so you can review their coverage. Mention they can upload a photo of their insurance card, declarations page, or policy PDF. Keep it to 1-2 sentences. Do NOT include any URLs - the upload button appears automatically.
 
 User asked: "${userQuery}"
 
-Create a brief response asking them to upload their policy documents.`;
+Create a brief, friendly response asking them to upload their policy documents:`;
 
     const result = await model.generateContent({
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
@@ -501,35 +595,11 @@ User question: "${userQuery}"`;
 
 // Handle simple queries directly
 async function handleDirectly(userQuery: string, history: any[]): Promise<string> {
-    // FINAL SAFETY NET: Catch any policy/quote queries that slipped through
-    const lowerQuery = userQuery.toLowerCase();
+    // Note: Safety net removed - upload prompting is now handled at the start of handleSamChat
+    // with proper decline detection to prevent loops
 
-    // Check for policy/coverage + possessive (last line of defense)
-    const hasPolicyRef = lowerQuery.includes('policy') || lowerQuery.includes('coverage') || lowerQuery.includes('insurance');
-    const hasPossessive = lowerQuery.includes('my ') || lowerQuery.includes('i have') || lowerQuery.includes('am i') || lowerQuery.includes('do i');
-    const hasQuoteRef = lowerQuery.includes('quote') || lowerQuery.includes('price') || lowerQuery.includes('cost');
-
-    if ((hasPolicyRef && hasPossessive) || hasQuoteRef) {
-        console.log(`🚨 SAFETY NET: handleDirectly caught policy/quote query that slipped through!`);
-        console.log(`   Query: "${userQuery}"`);
-        return "To help you with that, I'll need you to upload your policy documents first. You can take a photo of your insurance card or upload your declarations page!\n\n[UPLOAD_POLICY]";
-    }
-
-    const prompt = `You are Sam, a friendly insurance advisor. Keep responses SHORT and conversational—2-3 sentences max.
-
-**Style**:
-- Talk like a helpful friend, not a textbook
-- Get straight to the point
-- Use plain text - NO markdown, NO asterisks, NO bold formatting
-- Ask follow-up questions when needed
-- Skip long explanations unless asked
-
-**Knowledge**:
-- Auto & home insurance expert
-- Use analogies when helpful
-- Define terms simply if needed
-
-Be warm, concise, and helpful.
+    const prompt = `${SAM_CORE_PROMPT}
+${OUTPUT_GUARDRAILS}
 
 ${history.length > 0 ? `Previous conversation:\n${history.map(msg => `${msg.role}: ${msg.content}`).join('\n')}\n\n` : ''}User: ${userQuery}
 
@@ -552,24 +622,17 @@ Respond briefly and naturally:`;
 
 // Present final analysis in a friendly way
 async function presentFinalAnalysis(originalQuery: string, finalAnswer: string, _history: any[]): Promise<string> {
-    const prompt = `You are Sam, a friendly insurance advisor. Present the analysis in a SHORT, conversational way.
+    const prompt = `${SAM_CORE_PROMPT}
+${OUTPUT_GUARDRAILS}
 
-**Rules**:
-- Keep it to 2-3 sentences max
-- Get to the key point immediately
-- Use plain text - NO markdown, NO asterisks, NO bold formatting
-- Use simple language
-- End with a quick question or next step
-- Don't say "Uri said" or "Rai said" - speak as one voice
-
-Be warm but BRIEF.
+**Task**: Present the analysis from your colleagues in your voice. You are the "face" of the team.
 
 User asked: "${originalQuery}"
 
-Analysis result:
+Analysis result from Uri/Rai:
 ${finalAnswer}
 
-Present this to the user in a friendly, clear way:`;
+Present this to the user - be warm, clear, and end with a next step or follow-up question:`;
 
     const result = await model.generateContent({
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
@@ -582,4 +645,227 @@ Present this to the user in a friendly, clear way:`;
     logGenerationResult(result, 'presentFinalAnalysis');
     const response = result.response.candidates?.[0]?.content?.parts?.[0]?.text || finalAnswer;
     return cleanResponse(response);
+}
+
+// ============================================================================
+// MCP DATABASE INTEGRATION
+// ============================================================================
+
+/**
+ * Handles queries that require database access via MCP
+ *
+ * This function enables Sam to query the user's data directly from Supabase
+ * while maintaining strict user isolation through system prompt constraints.
+ */
+export async function handleDatabaseQuery(
+    userQuery: string,
+    history: any[],
+    userId: string
+): Promise<string> {
+    console.log(`\n🗄️ [MCP] Starting database query for user: ${userId}`);
+
+    let mcpConnection = null;
+
+    try {
+        // Get MCP connection
+        mcpConnection = await getMCPConnection();
+
+        // Fetch available tools
+        const allTools = await listMCPTools(mcpConnection);
+        const safeTools = filterSafeTools(allTools);
+        console.log(`[MCP] Available safe tools: ${safeTools.map(t => t.name).join(', ')}`);
+
+        // Convert to Vertex AI format
+        const functionDeclarations = convertMCPToolsToVertexAI(safeTools);
+
+        // Create model with function calling enabled
+        const modelWithTools = vertexAI.getGenerativeModel({
+            model: 'gemini-2.5-flash',
+            tools: [{
+                functionDeclarations,
+            }],
+        });
+
+        // Generate secure system prompt
+        const securityPrompt = generateDatabaseSecurityPrompt(userId);
+
+        const systemPrompt = `${SAM_CORE_PROMPT}
+${OUTPUT_GUARDRAILS}
+
+## DATABASE ACCESS & SUPABASE SECURITY (CRITICAL)
+
+${securityPrompt}
+
+**Supabase MCP Tool Security Requirements**:
+- You MUST use the authenticated user_id "${userId}" for ALL database queries
+- NEVER query, access, or return data belonging to other users
+- When using execute_sql or any Supabase MCP tool, ALWAYS include "WHERE user_id = '${userId}'" in your queries
+- If a query would return data for multiple users, filter to ONLY this user's data
+- REJECT any request that asks you to access another user's data
+- If you cannot complete a request within these security boundaries, explain why and suggest an alternative
+
+## TASK-SPECIFIC GUIDELINES
+- Help users understand their insurance policies stored in the database
+- Reference specific data from query results using the Protection Audit format when relevant
+- If you find concerning coverage gaps, mention them briefly`;
+
+        // Build conversation history
+        const contents: Content[] = [
+            { role: 'user', parts: [{ text: systemPrompt }] },
+            { role: 'model', parts: [{ text: 'I understand. I will only access data for the authenticated user and follow all security constraints.' }] },
+        ];
+
+        // Add conversation history
+        for (const msg of history) {
+            contents.push({
+                role: msg.role === 'assistant' ? 'model' : 'user',
+                parts: [{ text: msg.content }],
+            });
+        }
+
+        // Add current query
+        contents.push({ role: 'user', parts: [{ text: userQuery }] });
+
+        // Execute with function calling loop
+        let response = await modelWithTools.generateContent({ contents });
+        let iterations = 0;
+        const MAX_ITERATIONS = 5;
+
+        while (iterations < MAX_ITERATIONS) {
+            const candidate = response.response.candidates?.[0];
+            const parts = candidate?.content?.parts || [];
+
+            // Check for function calls
+            const functionCalls = parts.filter((p: any) => p.functionCall);
+
+            if (functionCalls.length === 0) {
+                // No more function calls, extract text response
+                break;
+            }
+
+            iterations++;
+            console.log(`[MCP] Function call iteration ${iterations}`);
+
+            // Process each function call
+            const functionResponses: Part[] = [];
+
+            for (const part of functionCalls) {
+                const fc = (part as any).functionCall;
+                const toolName = fc.name;
+                const args = fc.args || {};
+
+                console.log(`[MCP] Tool call: ${toolName}`);
+
+                // SECURITY: Validate SQL queries before execution
+                if (toolName === 'execute_sql' && args.query) {
+                    const validation = validateSQLQuery(String(args.query), userId);
+                    if (!validation.valid) {
+                        console.error(`[MCP] SQL validation failed: ${validation.error}`);
+                        functionResponses.push({
+                            functionResponse: {
+                                name: toolName,
+                                response: { error: validation.error },
+                            },
+                        } as Part);
+                        continue;
+                    }
+                }
+
+                try {
+                    const result = await executeMCPTool(mcpConnection, toolName, args);
+                    functionResponses.push({
+                        functionResponse: {
+                            name: toolName,
+                            response: result as object,
+                        },
+                    } as Part);
+                } catch (error) {
+                    console.error(`[MCP] Tool execution error:`, error);
+                    functionResponses.push({
+                        functionResponse: {
+                            name: toolName,
+                            response: { error: error instanceof Error ? error.message : 'Unknown error' },
+                        },
+                    } as Part);
+                }
+            }
+
+            // Continue conversation with function results
+            contents.push({ role: 'model', parts });
+            contents.push({ role: 'user', parts: functionResponses });
+
+            response = await modelWithTools.generateContent({ contents });
+        }
+
+        // Extract final text response
+        const finalText = response.response.candidates?.[0]?.content?.parts?.[0]?.text ||
+            "I couldn't retrieve your data. Please try again.";
+
+        logGenerationResult(response, 'handleDatabaseQuery');
+        return cleanResponse(finalText);
+
+    } catch (error) {
+        console.error('[MCP] Database query error:', error);
+        return "I had trouble accessing your data. Let me help you another way - could you upload your policy documents?";
+    } finally {
+        // Always release the connection
+        if (mcpConnection) {
+            releaseMCPConnection();
+        }
+    }
+}
+
+/**
+ * Determines if a query should use database access
+ *
+ * Database queries are useful for:
+ * - Fetching stored policies
+ * - Getting chat history
+ * - Looking up user preferences
+ */
+export function shouldUseDatabaseQuery(userQuery: string, userId: string | undefined): boolean {
+    // Must have a valid userId
+    if (!userId) {
+        return false;
+    }
+
+    const lowerQuery = userQuery.toLowerCase();
+
+    // Queries that benefit from database access
+    const databasePatterns = [
+        /\b(all|list|show|get)\s+(my\s+)?(policies|coverage|insurance)/i,
+        /\bhistory\b/i,
+        /\bprevious\s+(chat|conversation)/i,
+        /\bstored\b/i,
+        /\bon\s+file\b/i,
+        /\bsaved\b/i,
+    ];
+
+    return databasePatterns.some(pattern => pattern.test(lowerQuery));
+}
+
+/**
+ * Enhanced version of handleSamChat that can use MCP for database queries
+ */
+export async function handleSamChatWithMCP(
+    userQuery: string,
+    history: any[],
+    userId?: string,
+    options: { enableMCP?: boolean } = {}
+): Promise<string> {
+    const { enableMCP = true } = options;
+
+    // Check if this query should use database access
+    if (enableMCP && userId && shouldUseDatabaseQuery(userQuery, userId)) {
+        console.log('[Sam] Using MCP database query path');
+        try {
+            return await handleDatabaseQuery(userQuery, history, userId);
+        } catch (error) {
+            console.error('[Sam] MCP query failed, falling back to standard path:', error);
+            // Fall through to standard handling
+        }
+    }
+
+    // Use standard Sam handling
+    return handleSamChat(userQuery, history, userId);
 }

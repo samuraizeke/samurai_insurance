@@ -48,8 +48,20 @@ if (process.env.NODE_ENV === 'development' && process.env.GOOGLE_CREDENTIALS_BAS
   logger.info('Development mode: Using credentials file');
 }
 
-import { handleSamChat } from './agents/sam';
-import { handleDocumentUpload, getPendingPolicyResponse, getUserPolicies, deleteUserPolicy, renameUserPolicy, PolicyType, StoredPolicy } from './services/document-upload';
+import { handleSamChatWithMCP } from './agents/sam';
+import {
+  handleDocumentUpload,
+  getPendingPolicyResponse,
+  getUserPolicies,
+  deleteUserPolicy,
+  renameUserPolicy,
+  PolicyType,
+  StoredPolicy,
+  fetchUserDocumentsFromDatabase,
+  deleteDocumentFromDatabase,
+  updateDocumentCarrierInDatabase,
+  loadUserDocumentsToCache
+} from './services/document-upload';
 import { generateSessionSummary, regenerateSummary } from './services/session-summary';
 
 const app = express();
@@ -205,7 +217,29 @@ app.get('/api/users/:userId/policies', requireAuth, async (req, res) => {
     // Use authenticated user ID (req.user.id is verified by middleware)
     const userId = req.user!.id;
 
-    // Get policies from in-memory store (keyed by external userId)
+    // First try to fetch from database (source of truth) - only policy documents
+    const dbResult = await fetchUserDocumentsFromDatabase(userId, { policyDocumentsOnly: true });
+
+    if (dbResult.success && dbResult.documents && dbResult.documents.length > 0) {
+      // Load into cache for faster access in chat
+      await loadUserDocumentsToCache(userId);
+
+      // Return database documents
+      const policies = dbResult.documents.map(doc => ({
+        id: doc.id,
+        policyType: doc.policy_type as PolicyType,
+        carrier: doc.carrier_name || 'Unknown',
+        analysis: doc.analysis_summary || '',
+        uploadedAt: doc.uploaded_at,
+        fileName: doc.file_name,
+        gcsUri: doc.gcs_uri
+      }));
+
+      logger.info('Returning user policies from database', { policyCount: policies.length });
+      return res.json({ policies });
+    }
+
+    // Fallback to in-memory store for backwards compatibility
     const policiesMap = getUserPolicies(userId);
 
     if (!policiesMap || policiesMap.size === 0) {
@@ -214,27 +248,31 @@ app.get('/api/users/:userId/policies', requireAuth, async (req, res) => {
 
     // Convert Map to array format for frontend
     const policies: Array<{
+      id?: number;
       policyType: PolicyType;
       carrier: string;
       analysis: string;
       uploadedAt: string;
       fileName: string;
+      gcsUri?: string;
     }> = [];
 
     policiesMap.forEach((policy: StoredPolicy, policyType: PolicyType) => {
       policies.push({
+        id: policy.rawData?.documentId,
         policyType,
         carrier: policy.carrier,
         analysis: policy.analysis,
         uploadedAt: policy.rawData?.uploadedAt || new Date(policy.timestamp).toISOString(),
-        fileName: policy.rawData?.fileName || 'Unknown'
+        fileName: policy.rawData?.fileName || 'Unknown',
+        gcsUri: policy.rawData?.gcsUri
       });
     });
 
     // Sort by most recent first
     policies.sort((a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime());
 
-    logger.info('Returning user policies', { policyCount: policies.length });
+    logger.info('Returning user policies from cache', { policyCount: policies.length });
     res.json({ policies });
 
   } catch (error) {
@@ -244,15 +282,50 @@ app.get('/api/users/:userId/policies', requireAuth, async (req, res) => {
 });
 
 // Delete a specific policy (Authenticated)
-app.delete('/api/users/:userId/policies/:policyType', requireAuth, async (req, res) => {
+// Supports both by policyType (legacy) and by documentId (new)
+app.delete('/api/users/:userId/policies/:identifier', requireAuth, async (req, res) => {
   try {
     const userId = req.user!.id;
-    const { policyType } = req.params;
+    const { identifier } = req.params;
 
-    // Validate policy type
+    // Check if identifier is a document ID (numeric) or policy type
+    const documentId = parseInt(identifier, 10);
+    const isDocumentId = !isNaN(documentId);
+
+    if (isDocumentId) {
+      // Delete by document ID from database
+      const dbResult = await deleteDocumentFromDatabase(userId, documentId);
+
+      if (dbResult.success) {
+        // Also clear from cache - need to find and remove the policy
+        const policiesMap = getUserPolicies(userId);
+        if (policiesMap) {
+          for (const [policyType, policy] of policiesMap.entries()) {
+            if (policy.rawData?.documentId === documentId) {
+              deleteUserPolicy(userId, policyType);
+              break;
+            }
+          }
+        }
+
+        logger.info('Deleted user document', { userId, documentId });
+        return res.json({ success: true, message: 'Policy deleted successfully' });
+      } else {
+        return res.status(404).json({ error: 'Document not found or already deleted' });
+      }
+    }
+
+    // Legacy: Delete by policy type
+    const policyType = identifier;
     const validPolicyTypes = ['auto', 'home', 'renters', 'umbrella', 'life', 'health', 'other'];
     if (!validPolicyTypes.includes(policyType)) {
-      return res.status(400).json({ error: 'Invalid policy type' });
+      return res.status(400).json({ error: 'Invalid policy type or document ID' });
+    }
+
+    // Get the document ID from cache to also delete from database
+    const policy = getUserPolicies(userId)?.get(policyType as PolicyType);
+    if (policy?.rawData?.documentId) {
+      await deleteDocumentFromDatabase(userId, policy.rawData.documentId);
     }
 
     const deleted = deleteUserPolicy(userId, policyType as PolicyType);
@@ -271,26 +344,63 @@ app.delete('/api/users/:userId/policies/:policyType', requireAuth, async (req, r
 });
 
 // Rename a policy (update carrier name) (Authenticated)
-app.patch('/api/users/:userId/policies/:policyType', requireAuth, async (req, res) => {
+// Supports both by policyType (legacy) and by documentId (new)
+app.patch('/api/users/:userId/policies/:identifier', requireAuth, async (req, res) => {
   try {
     const userId = req.user!.id;
-    const { policyType } = req.params;
+    const { identifier } = req.params;
     const { carrier } = req.body;
-
-    // Validate policy type
-    const validPolicyTypes = ['auto', 'home', 'renters', 'umbrella', 'life', 'health', 'other'];
-    if (!validPolicyTypes.includes(policyType)) {
-      return res.status(400).json({ error: 'Invalid policy type' });
-    }
 
     if (!carrier || typeof carrier !== 'string' || carrier.trim().length === 0) {
       return res.status(400).json({ error: 'Carrier name is required' });
     }
 
-    const renamed = renameUserPolicy(userId, policyType as PolicyType, carrier.trim());
+    const trimmedCarrier = carrier.trim();
+
+    // Check if identifier is a document ID (numeric) or policy type
+    const documentId = parseInt(identifier, 10);
+    const isDocumentId = !isNaN(documentId);
+
+    if (isDocumentId) {
+      // Update by document ID in database
+      const dbResult = await updateDocumentCarrierInDatabase(userId, documentId, trimmedCarrier);
+
+      if (dbResult.success) {
+        // Also update in cache
+        const policiesMap = getUserPolicies(userId);
+        if (policiesMap) {
+          for (const [policyType, policy] of policiesMap.entries()) {
+            if (policy.rawData?.documentId === documentId) {
+              renameUserPolicy(userId, policyType, trimmedCarrier);
+              break;
+            }
+          }
+        }
+
+        logger.info('Updated user document carrier', { userId, documentId, newCarrier: trimmedCarrier });
+        return res.json({ success: true, message: 'Policy updated successfully' });
+      } else {
+        return res.status(404).json({ error: 'Document not found' });
+      }
+    }
+
+    // Legacy: Update by policy type
+    const policyType = identifier;
+    const validPolicyTypes = ['auto', 'home', 'renters', 'umbrella', 'life', 'health', 'other'];
+    if (!validPolicyTypes.includes(policyType)) {
+      return res.status(400).json({ error: 'Invalid policy type or document ID' });
+    }
+
+    // Get the document ID from cache to also update database
+    const policy = getUserPolicies(userId)?.get(policyType as PolicyType);
+    if (policy?.rawData?.documentId) {
+      await updateDocumentCarrierInDatabase(userId, policy.rawData.documentId, trimmedCarrier);
+    }
+
+    const renamed = renameUserPolicy(userId, policyType as PolicyType, trimmedCarrier);
 
     if (renamed) {
-      logger.info('Renamed user policy', { userId, policyType, newCarrier: carrier.trim() });
+      logger.info('Renamed user policy', { userId, policyType, newCarrier: trimmedCarrier });
       res.json({ success: true, message: 'Policy updated successfully' });
     } else {
       res.status(404).json({ error: 'Policy not found' });
@@ -714,9 +824,10 @@ app.post('/api/chat', chatLimiter, optionalAuth, async (req, res) => {
       }
     }
 
-    // Call Agent Sam
-    logger.info('Routing to Agent Sam');
-    const finalResponse = await handleSamChat(message, history || [], userId);
+    // Call Agent Sam (with optional MCP database access)
+    const enableMCP = process.env.ENABLE_MCP_DATABASE === 'true';
+    logger.info('Routing to Agent Sam', { enableMCP, hasUserId: !!userId });
+    const finalResponse = await handleSamChatWithMCP(message, history || [], userId, { enableMCP });
 
     logger.info('Sam completed, sending response');
 
