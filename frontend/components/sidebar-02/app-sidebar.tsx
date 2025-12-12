@@ -301,7 +301,14 @@ export function DashboardSidebar() {
                               More options
                             </TooltipContent>
                           </Tooltip>
-                          <DropdownMenuContent align="end" side="bottom" className="rounded-2xl p-1.5 border-[#333333]/10 shadow-lg bg-[hsl(0_0%_98%)] font-[family-name:var(--font-work-sans)]">
+                          <DropdownMenuContent
+                            align="start"
+                            side="right"
+                            sideOffset={8}
+                            collisionPadding={16}
+                            className="z-[100] rounded-2xl p-1.5 border border-[#e5e5e5] shadow-xl font-[family-name:var(--font-work-sans)]"
+                            style={{ backgroundColor: '#ffffff' }}
+                          >
                             <DropdownMenuItem
                               onClick={(e) => handleOpenRenameDialog(e, session.id, getSessionPreview(session))}
                               className="cursor-pointer hover:bg-[#333333]/5 focus:bg-[#333333]/5 rounded-lg"

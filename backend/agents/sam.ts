@@ -6,7 +6,8 @@ import { handleRaiReview } from './rai';
 import {
     getPolicyForQuery,
     getUserPolicyTypes,
-    PolicyType
+    PolicyType,
+    loadUserDocumentsToCache
 } from '../services/document-upload';
 import {
     getMCPConnection,
@@ -37,12 +38,12 @@ const SAM_CORE_PROMPT = `You are Sam, a friendly, empathetic, and professional i
 **Interaction Guidelines**:
 - Be conversational and warm: Start with greetings like "Hi there! I'm Sam, here to help with your insurance questions." Use simple language, define terms (e.g., "ACV means Actual Cash Value—it's replacement cost minus depreciation"), and confirm understanding (e.g., "Does that make sense?").
 - Gather info empathetically: Ask for details like state, assets, family, risks (e.g., "Do you have teens driving or a pool at home?") to assess needs, but respect privacy—don't retain PII.
-- If the query needs analysis: Summarize user info and pass to Uri (e.g., "Passing this to my colleague Uri for coverage recommendations: [summary]"). Wait for Uri's output, then review with Rai if complex.
-- For quotes or recommendations: Defer to Uri, then present finalized versions clearly, emphasizing benefits and ROI (e.g., "This umbrella adds $1M protection for just ~$200/year").
+- For complex analysis or recommendations: You have internal resources that automatically help with detailed analysis. Present the results as your own - never mention any colleagues, internal processes, or ask permission to analyze.
+- For quotes or recommendations: Present finalized versions clearly, emphasizing benefits and ROI (e.g., "This umbrella adds $1M protection for just ~$200/year").
 - Compliance: No guarantees (say "designed to cover" not "will cover"). If high-risk (e.g., knob-and-tube wiring), hand off to human. Use tools for real-time data (e.g., web search for quotes, state laws).
 - Output: Keep responses concise, engaging, and action-oriented. End with next steps (e.g., "What else can I help with?").
 
-Remember, your role is the "face" of the team—make users feel supported and informed.`;
+Remember, you are the sole voice the user interacts with. Never mention internal processes, colleagues, or ask permission to do analysis—just do it and present the results naturally.`;
 
 // Technical output guardrails (appended to prompts for frontend compatibility)
 const OUTPUT_GUARDRAILS = `
@@ -52,22 +53,43 @@ const OUTPUT_GUARDRAILS = `
 - Never include URLs unless explicitly asked
 - Never say "Uri said" or "Rai said" - speak as one unified voice`;
 
-const PROJECT_ID = process.env.GOOGLE_PROJECT_ID;
+// Lazy initialization to ensure credentials are set up before use
+let _vertexAI: VertexAI | null = null;
+let _model: ReturnType<VertexAI['getGenerativeModel']> | null = null;
 
-if (!PROJECT_ID) {
-    console.error('❌ GOOGLE_PROJECT_ID environment variable is not set');
-    throw new Error('Missing GOOGLE_PROJECT_ID environment variable');
+function getVertexAI(): VertexAI {
+    if (!_vertexAI) {
+        const PROJECT_ID = process.env.GOOGLE_PROJECT_ID;
+        if (!PROJECT_ID) {
+            console.error('❌ GOOGLE_PROJECT_ID environment variable is not set');
+            throw new Error('Missing GOOGLE_PROJECT_ID environment variable');
+        }
+        _vertexAI = new VertexAI({
+            project: PROJECT_ID,
+            location: 'us-central1',
+        });
+    }
+    return _vertexAI;
 }
 
-// Initialize Vertex AI for US-CENTRAL1 with Gemini 2.5 Flash
-const vertexAI = new VertexAI({
-    project: PROJECT_ID,
-    location: 'us-central1',
-});
+function getModel() {
+    if (!_model) {
+        _model = getVertexAI().getGenerativeModel({
+            model: 'gemini-2.5-flash',
+        });
+    }
+    return _model;
+}
 
-const model = vertexAI.getGenerativeModel({
-    model: 'gemini-2.5-flash',
-});
+// Getter for use in code (replaces direct 'model' references)
+const model = {
+    generateContent: (...args: Parameters<ReturnType<VertexAI['getGenerativeModel']>['generateContent']>) =>
+        getModel().generateContent(...args)
+};
+const vertexAI = {
+    getGenerativeModel: (...args: Parameters<VertexAI['getGenerativeModel']>) =>
+        getVertexAI().getGenerativeModel(...args)
+};
 
 // Helper to clean AI responses (removes markdown formatting only, no truncation)
 function cleanResponse(text: string): string {
@@ -83,7 +105,7 @@ function cleanResponse(text: string): string {
 }
 
 // Helper to log finish reason and detect truncation
-function logGenerationResult(result: any, context: string): void {
+function logGenerationResult(result: any, context: string): boolean {
     const candidate = result.response.candidates?.[0];
     const finishReason = candidate?.finishReason;
     const text = candidate?.content?.parts?.[0]?.text || '';
@@ -94,9 +116,47 @@ function logGenerationResult(result: any, context: string): void {
         if (finishReason === 'MAX_TOKENS') {
             console.warn(`   Response may be truncated! Last 50 chars: "...${text.slice(-50)}"`);
         }
+        return finishReason === 'MAX_TOKENS';
     } else {
         console.log(`✅ [${context}] Generation completed normally (${text.length} chars)`);
+        return false;
     }
+}
+
+// Helper to handle truncated responses gracefully
+function handleTruncatedResponse(text: string): string {
+    if (!text) return text;
+
+    // Check if response ends mid-sentence (no proper ending punctuation)
+    const trimmed = text.trim();
+    const hasProperEnding = /[.!?]$/.test(trimmed) || /[.!?]["']$/.test(trimmed);
+
+    if (!hasProperEnding) {
+        // Find the last complete sentence
+        const lastSentenceEnd = Math.max(
+            trimmed.lastIndexOf('. '),
+            trimmed.lastIndexOf('! '),
+            trimmed.lastIndexOf('? '),
+            trimmed.lastIndexOf('.\n'),
+            trimmed.lastIndexOf('!\n'),
+            trimmed.lastIndexOf('?\n')
+        );
+
+        if (lastSentenceEnd > trimmed.length * 0.5) {
+            // If we have at least half the response with complete sentences, use that
+            console.log(`📝 Trimming truncated response at position ${lastSentenceEnd}`);
+            return trimmed.substring(0, lastSentenceEnd + 1).trim();
+        }
+
+        // Otherwise, try to end at the last period
+        const lastPeriod = trimmed.lastIndexOf('.');
+        if (lastPeriod > trimmed.length * 0.3) {
+            console.log(`📝 Trimming truncated response at last period ${lastPeriod}`);
+            return trimmed.substring(0, lastPeriod + 1).trim();
+        }
+    }
+
+    return trimmed;
 }
 
 // Detect what policy type the user is asking about based on their query
@@ -131,9 +191,28 @@ function detectNeededPolicyType(query: string): PolicyType | null {
     return null;
 }
 
+// Check if user is referencing an existing policy on file
+function userReferencingExistingPolicy(userQuery: string): boolean {
+    const lowerQuery = userQuery.toLowerCase();
+
+    const existingPolicyPatterns = [
+        /\b(on file|already have|already uploaded|have on file|i have|i uploaded|the one|use the|use my|my existing|my current|existing policy|current policy)\b/i,
+        /\b(check my|review my|look at my|see my|analyze my)\s*(specific\s*)?(policy|coverage|insurance)/i,
+        /\buse\s+(the\s+)?(one|policy|it)\b/i,
+    ];
+
+    return existingPolicyPatterns.some(pattern => pattern.test(lowerQuery));
+}
+
 // Check if user was recently prompted for upload and is declining or continuing without it
 function userDeclinedOrContinuingWithoutUpload(userQuery: string, history: any[]): boolean {
     const lowerQuery = userQuery.toLowerCase();
+
+    // FIRST: Check if user is referencing an existing policy - this is NOT a decline
+    if (userReferencingExistingPolicy(userQuery)) {
+        console.log(`📋 User is referencing existing policy on file - not a decline`);
+        return false;
+    }
 
     // Check if previous message was an upload prompt (contains [UPLOAD_POLICY] marker or asks to upload)
     const recentHistory = history.slice(-4); // Check last 4 messages
@@ -151,8 +230,7 @@ function userDeclinedOrContinuingWithoutUpload(userQuery: string, history: any[]
     // User was prompted - check if they're declining or asking to continue
     const declinePatterns = [
         /\b(no|nope|nah|not now|later|skip|don'?t have|cant|can'?t|unable)\b/i,
-        /\b(just|still|anyway|without|general|instead)\b/i,
-        /\b(help me|can you|could you|tell me|explain|what is|what are|how does|how do)\b/i,
+        /\b(without|general|instead)\b/i,
         /\b(don'?t want to|rather not|prefer not)\b/i,
     ];
 
@@ -163,12 +241,11 @@ function userDeclinedOrContinuingWithoutUpload(userQuery: string, history: any[]
         return true;
     }
 
-    // If user asks a follow-up question after upload prompt (not uploading), treat as wanting general help
-    const isFollowUpQuestion = lowerQuery.includes('?') ||
-        /^(what|how|why|when|where|can|could|should|would|is|are|do|does)\b/i.test(lowerQuery);
+    // If user asks a general question after upload prompt (not about their policy), treat as wanting general help
+    const isGeneralQuestion = /^(what is|what are|how does|how do|explain|tell me about)\s+(a|an|the)?\s*(deductible|coverage|insurance|policy|premium)/i.test(lowerQuery);
 
-    if (isFollowUpQuestion) {
-        console.log(`🔄 User asking follow-up question after upload prompt - providing general help`);
+    if (isGeneralQuestion) {
+        console.log(`🔄 User asking general question after upload prompt - providing general help`);
         return true;
     }
 
@@ -247,6 +324,35 @@ export async function handleSamChat(userQuery: string, history: any[], userId?: 
             return "I'm doing great, thanks for asking! How can I help with your insurance needs?";
         }
 
+        // Check if user is explicitly referencing an existing policy on file
+        const storageKey = userId || 'anonymous';
+        if (userReferencingExistingPolicy(userQuery)) {
+            console.log("📋 Sam: User is referencing existing policy on file...");
+
+            // First check in-memory cache
+            let matchingPolicy = getPolicyForQuery(storageKey, userQuery);
+
+            // If not in cache and we have a userId, try loading from database
+            if (!matchingPolicy && userId) {
+                console.log("🔄 Policy not in cache, loading from database...");
+                await loadUserDocumentsToCache(userId);
+                matchingPolicy = getPolicyForQuery(storageKey, userQuery);
+            }
+
+            if (matchingPolicy) {
+                console.log(`✅ Found ${matchingPolicy.policyType} policy from ${matchingPolicy.carrier}`);
+                return await answerWithPolicyData(
+                    userQuery,
+                    { analysis: matchingPolicy.analysis, rawData: matchingPolicy.rawData },
+                    history
+                );
+            } else {
+                console.log("❌ No policy found on file");
+                // User thinks they have a policy but we can't find it
+                return "I don't see any policy documents on file yet. Could you upload your insurance card, declarations page, or policy PDF so I can help you?";
+            }
+        }
+
         // Check if user was recently prompted for upload and is declining/continuing without it
         const userWantsGeneralHelp = userDeclinedOrContinuingWithoutUpload(userQuery, history);
 
@@ -269,10 +375,13 @@ export async function handleSamChat(userQuery: string, history: any[], userId?: 
         if (needsPolicyUpload) {
             // Determine what policy type the user is asking about
             const neededPolicyType = detectNeededPolicyType(userQuery);
-            const storageKey = userId || 'anonymous';
 
-            // Check if we have the specific policy type they need
-            const matchingPolicy = getPolicyForQuery(storageKey, userQuery);
+            // Check if we have the specific policy type they need (try loading from DB first if needed)
+            let matchingPolicy = getPolicyForQuery(storageKey, userQuery);
+            if (!matchingPolicy && userId) {
+                await loadUserDocumentsToCache(userId);
+                matchingPolicy = getPolicyForQuery(storageKey, userQuery);
+            }
             const uploadedTypes = getUserPolicyTypes(storageKey);
 
             console.log(`📋 User has uploaded: [${uploadedTypes.join(', ') || 'none'}]`);
@@ -509,13 +618,17 @@ Answer using their specific policy information:`;
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
         generationConfig: {
             temperature: 0.7,
-            maxOutputTokens: 2048,
+            maxOutputTokens: 4096,
         },
     });
 
-    logGenerationResult(result, 'answerWithPolicyData');
-    const response = result.response.candidates?.[0]?.content?.parts?.[0]?.text ||
+    const wasTruncated = logGenerationResult(result, 'answerWithPolicyData');
+    let response = result.response.candidates?.[0]?.content?.parts?.[0]?.text ||
         "I have your policy data but couldn't generate a response. Please try asking again.";
+
+    if (wasTruncated) {
+        response = handleTruncatedResponse(response);
+    }
 
     return cleanResponse(response);
 }
@@ -609,13 +722,17 @@ Respond briefly and naturally:`;
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
         generationConfig: {
             temperature: 0.7,
-            maxOutputTokens: 2048,
+            maxOutputTokens: 4096,
         },
     });
 
-    logGenerationResult(result, 'handleDirectly');
-    const response = result.response.candidates?.[0]?.content?.parts?.[0]?.text ||
+    const wasTruncated = logGenerationResult(result, 'handleDirectly');
+    let response = result.response.candidates?.[0]?.content?.parts?.[0]?.text ||
         "I'm here to help! What can I assist you with today?";
+
+    if (wasTruncated) {
+        response = handleTruncatedResponse(response);
+    }
 
     return cleanResponse(response);
 }
@@ -625,25 +742,30 @@ async function presentFinalAnalysis(originalQuery: string, finalAnswer: string, 
     const prompt = `${SAM_CORE_PROMPT}
 ${OUTPUT_GUARDRAILS}
 
-**Task**: Present the analysis from your colleagues in your voice. You are the "face" of the team.
+**Task**: Present this insurance analysis in your voice. You are the sole advisor the user interacts with.
 
 User asked: "${originalQuery}"
 
-Analysis result from Uri/Rai:
+Analysis result:
 ${finalAnswer}
 
-Present this to the user - be warm, clear, and end with a next step or follow-up question:`;
+Present this to the user as your own response - be warm, clear, and end with a next step or follow-up question:`;
 
     const result = await model.generateContent({
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
         generationConfig: {
             temperature: 0.7,
-            maxOutputTokens: 2048,
+            maxOutputTokens: 4096,
         },
     });
 
-    logGenerationResult(result, 'presentFinalAnalysis');
-    const response = result.response.candidates?.[0]?.content?.parts?.[0]?.text || finalAnswer;
+    const wasTruncated = logGenerationResult(result, 'presentFinalAnalysis');
+    let response = result.response.candidates?.[0]?.content?.parts?.[0]?.text || finalAnswer;
+
+    if (wasTruncated) {
+        response = handleTruncatedResponse(response);
+    }
+
     return cleanResponse(response);
 }
 

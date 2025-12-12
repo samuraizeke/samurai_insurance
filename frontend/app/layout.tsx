@@ -4,6 +4,7 @@ import Script from "next/script";
 import "./globals.css";
 import { Analytics } from '@vercel/analytics/next';
 import { AuthProvider } from "@/lib/auth-context";
+import { UpdateBanner } from "@/components/update-banner";
 
 export const metadata: Metadata = {
   title: "Samurai Insurance",
@@ -42,6 +43,7 @@ export default function RootLayout({
         </a>
         <AuthProvider>
           {children}
+          <UpdateBanner />
         </AuthProvider>
         {process.env.NEXT_PUBLIC_VERCEL_ANALYTICS_ID ? (
           <Script
