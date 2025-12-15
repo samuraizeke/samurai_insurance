@@ -41,7 +41,7 @@ const securityHeaders = [
       "img-src 'self' data: https: blob:",
       "font-src 'self' https://fonts.gstatic.com",
       "media-src 'self' https://*.supabase.co",
-      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://www.google-analytics.com https://region1.google-analytics.com",
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://www.google-analytics.com https://region1.google-analytics.com https://*.a.run.app https://*.ngrok-free.dev",
       "frame-src 'self' https://vercel.live",
       "frame-ancestors 'none'",
       "base-uri 'self'",

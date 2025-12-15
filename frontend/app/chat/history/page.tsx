@@ -184,7 +184,7 @@ function ChatHistoryContent() {
     }
 
     return (
-        <div className="flex flex-col min-h-full w-full max-w-3xl mx-auto bg-background">
+        <div className="flex flex-col min-h-full w-full max-w-3xl mx-auto bg-background pb-20 md:pb-8">
             {/* Header */}
             <div className="flex items-center justify-between px-4 pt-4 md:pt-12 pb-4">
                 <h1 className="text-3xl font-bold font-(family-name:--font-alte-haas) text-[#333333]">
@@ -239,11 +239,6 @@ function ChatHistoryContent() {
                         <p className="text-base text-muted-foreground text-center font-(family-name:--font-work-sans)">
                             {searchQuery ? "No chats match your search" : "No chats yet"}
                         </p>
-                        {!searchQuery && (
-                            <Button asChild size="sm" className="mt-2 bg-[#de5e48] hover:bg-[#de5e48]/90">
-                                <Link href="/chat">Start a chat</Link>
-                            </Button>
-                        )}
                     </div>
                 ) : (
                     <div className="divide-y divide-[#333333]/20 border-t border-[#333333]/20">
@@ -367,9 +362,9 @@ function MobileHeader() {
     if (openMobile) return null;
 
     return (
-        <header className="md:hidden shrink-0 bg-[#f7f6f3] sticky top-0 z-10">
+        <header className="md:hidden shrink-0 bg-[#f7f6f3] sticky top-0 z-10 pt-3">
             <div className="flex items-center justify-between h-14 px-4">
-                <SidebarTrigger className="h-7 w-7 bg-[#333333] hover:bg-[#333333]/90 text-[#f7f6f3] hover:text-[#f7f6f3] rounded-md [&_svg]:size-4" />
+                <SidebarTrigger className="h-7 w-7 bg-[#333333] hover:bg-[#333333]/90 text-[#f7f6f3] hover:text-[#f7f6f3] rounded-full [&_svg]:size-4" />
                 <Image
                     src="/wordmark-only-logo.png"
                     alt="Samurai Insurance"

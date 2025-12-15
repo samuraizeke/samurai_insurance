@@ -17,7 +17,7 @@ function MobileHeader() {
     if (openMobile) return null;
 
     return (
-        <header className="md:hidden shrink-0 bg-[#f7f6f3]">
+        <header className="md:hidden shrink-0 bg-[#f7f6f3] pt-3">
             <div className="flex items-center justify-between h-14 px-4">
                 <SidebarTrigger className="h-7 w-7 bg-[#333333] hover:bg-[#333333]/90 text-[#f7f6f3] hover:text-[#f7f6f3] rounded-full [&_svg]:size-4" />
                 <Image

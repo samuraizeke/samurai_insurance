@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
 import { JSX, SVGProps, useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
@@ -305,7 +304,7 @@ export default function SignupPage() {
                 onCheckedChange={(checked) => setAgreedToTerms(checked as boolean)}
                 className="mt-0.5"
               />
-              <Label htmlFor="terms" className="text-base leading-6 text-muted-foreground font-(family-name:--font-work-sans)">
+              <label htmlFor="terms" className="text-base leading-6 text-muted-foreground font-(family-name:--font-work-sans)">
                 I agree to the{" "}
                 <Link href="/terms" className="text-[#333333] underline">
                   Terms of Use
@@ -314,7 +313,7 @@ export default function SignupPage() {
                 <Link href="/privacy" className="text-[#333333] underline">
                   Privacy Policy
                 </Link>
-              </Label>
+              </label>
             </div>
 
             <Button
