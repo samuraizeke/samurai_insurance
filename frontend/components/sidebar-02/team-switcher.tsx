@@ -46,10 +46,10 @@ export function TeamSwitcher({ teams }: { teams: Team[] }) {
                 <LogoComponent collapsed={true} className="size-8" />
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold font-[family-name:var(--font-work-sans)]">
+                <span className="truncate font-semibold font-(family-name:--font-work-sans)">
                   {activeTeam.name}
                 </span>
-                <span className="truncate text-xs font-[family-name:var(--font-work-sans)]">{activeTeam.plan}</span>
+                <span className="truncate text-xs font-(family-name:--font-work-sans)">{activeTeam.plan}</span>
               </div>
               <FontAwesomeIcon icon={faSort} className="ml-auto size-4" />
             </SidebarMenuButton>
@@ -74,7 +74,7 @@ export function TeamSwitcher({ teams }: { teams: Team[] }) {
                   <div className="flex size-6 items-center justify-center rounded-sm border overflow-hidden">
                     <TeamLogo collapsed={true} className="size-6" />
                   </div>
-                  <span className="font-[family-name:var(--font-work-sans)]">{team.name}</span>
+                  <span className="font-(family-name:--font-work-sans)">{team.name}</span>
                   <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>
                 </DropdownMenuItem>
               );
@@ -84,7 +84,7 @@ export function TeamSwitcher({ teams }: { teams: Team[] }) {
               <div className="flex size-6 items-center justify-center rounded-md border bg-background">
                 <FontAwesomeIcon icon={faPlus} className="size-4" />
               </div>
-              <div className="font-medium text-muted-foreground font-[family-name:var(--font-work-sans)]">Add team</div>
+              <div className="font-medium text-muted-foreground font-(family-name:--font-work-sans)">Add team</div>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

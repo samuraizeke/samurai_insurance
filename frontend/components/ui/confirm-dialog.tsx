@@ -48,9 +48,9 @@ export function ConfirmDialog({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-lg rounded-2xl font-[family-name:var(--font-work-sans)] p-8">
+            <DialogContent className="sm:max-w-lg rounded-2xl font-(family-name:--font-work-sans) p-8">
                 <DialogHeader className="pb-4">
-                    <DialogTitle className="font-[family-name:var(--font-alte-haas)] text-xl">{title}</DialogTitle>
+                    <DialogTitle className="font-(family-name:--font-alte-haas) text-xl">{title}</DialogTitle>
                     <DialogDescription className="text-muted-foreground text-base pt-2">
                         {description}
                     </DialogDescription>

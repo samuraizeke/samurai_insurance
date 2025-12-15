@@ -5,6 +5,7 @@ import "./globals.css";
 import { Analytics } from '@vercel/analytics/next';
 import { AuthProvider } from "@/lib/auth-context";
 import { UpdateBanner } from "@/components/update-banner";
+import { Providers } from "./providers";
 
 export const metadata: Metadata = {
   title: "Samurai Insurance",
@@ -37,14 +38,16 @@ export default function RootLayout({
         {/* Skip navigation link for keyboard/screen reader users */}
         <a
           href="#main-content"
-          className="sr-only focus:not-sr-only fixed left-4 top-4 z-[10003] rounded-md bg-[#de5e48] px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-[#de5e48] focus:ring-offset-2"
+          className="sr-only focus:not-sr-only fixed left-4 top-4 z-10003 rounded-md bg-[#de5e48] px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-[#de5e48] focus:ring-offset-2"
         >
           Skip to main content
         </a>
-        <AuthProvider>
-          {children}
-          <UpdateBanner />
-        </AuthProvider>
+        <Providers>
+          <AuthProvider>
+            {children}
+            <UpdateBanner />
+          </AuthProvider>
+        </Providers>
         {process.env.NEXT_PUBLIC_VERCEL_ANALYTICS_ID ? (
           <Script
             src="https://va.vercel-scripts.com/v1/script.js"

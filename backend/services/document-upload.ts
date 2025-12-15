@@ -53,38 +53,170 @@ export const analyzedPolicies: Map<string, { analysis: string; rawData: any; tim
 let pendingPolicyResponse: { analysis: string; rawData: any; timestamp: number } | null = null;
 
 /**
- * Detects the policy type from the analysis text
+ * Policy type detection keywords with weighted scoring
+ * Higher weight = stronger indicator of that policy type
+ */
+const POLICY_TYPE_INDICATORS: Record<PolicyType, { keywords: string[]; strongKeywords: string[] }> = {
+    auto: {
+        // Strong keywords are definitive identifiers
+        strongKeywords: [
+            'auto policy', 'automobile policy', 'car insurance policy', 'vehicle insurance',
+            'auto insurance declarations', 'personal auto', 'commercial auto',
+            'vin:', 'vehicle identification', 'bodily injury liability', 'property damage liability',
+            'uninsured motorist', 'underinsured motorist', 'collision coverage', 'comprehensive coverage',
+            'medical payments coverage', 'pip coverage', 'personal injury protection'
+        ],
+        // Regular keywords contribute to scoring but are less definitive
+        keywords: [
+            'automobile', 'vehicle', 'driver', 'collision', 'car', 'driving',
+            'garage', 'mileage', 'odometer', 'model year', 'make and model'
+        ]
+    },
+    home: {
+        strongKeywords: [
+            'homeowners policy', 'homeowner policy', 'home insurance policy', 'dwelling coverage',
+            'ho-3', 'ho-5', 'ho-4', 'ho-6', 'ho-8', 'homeowners declarations',
+            'dwelling limit', 'other structures', 'personal property coverage',
+            'loss of use', 'additional living expense', 'replacement cost dwelling'
+        ],
+        keywords: [
+            'homeowner', 'dwelling', 'residence', 'property coverage', 'home insurance',
+            'structure', 'roof', 'foundation', 'square footage', 'year built'
+        ]
+    },
+    renters: {
+        strongKeywords: [
+            'renters policy', 'renter policy', 'tenant insurance', 'renters insurance declarations',
+            'ho-4 policy', 'contents coverage', 'tenant liability'
+        ],
+        keywords: [
+            'renter', 'tenant', 'apartment', 'lease', 'landlord', 'contents only'
+        ]
+    },
+    umbrella: {
+        strongKeywords: [
+            'umbrella policy', 'personal umbrella', 'excess liability policy',
+            'umbrella declarations', 'underlying coverage', 'umbrella coverage'
+        ],
+        keywords: [
+            'umbrella', 'excess liability', 'excess coverage', 'additional liability'
+        ]
+    },
+    life: {
+        strongKeywords: [
+            'life insurance policy', 'term life policy', 'whole life policy', 'universal life',
+            'death benefit', 'life insurance declarations', 'beneficiary designation',
+            'cash value', 'surrender value', 'face amount'
+        ],
+        keywords: [
+            'life insurance', 'term life', 'whole life', 'beneficiary', 'insured life'
+        ]
+    },
+    health: {
+        strongKeywords: [
+            'health insurance policy', 'medical insurance', 'health plan',
+            'hmo plan', 'ppo plan', 'epo plan', 'health declarations',
+            'deductible maximum', 'out-of-pocket maximum', 'copay', 'coinsurance'
+        ],
+        keywords: [
+            'health insurance', 'medical', 'hmo', 'ppo', 'prescription', 'healthcare'
+        ]
+    },
+    other: {
+        strongKeywords: [],
+        keywords: []
+    }
+};
+
+/**
+ * Detection result for a single policy type
+ */
+export interface PolicyTypeDetection {
+    type: PolicyType;
+    confidence: 'high' | 'medium' | 'low';
+    score: number;
+    matchedKeywords: string[];
+}
+
+/**
+ * Detects ALL policy types present in a document with confidence scoring
+ * Returns an array of detected policy types, sorted by confidence/score
+ */
+export function detectAllPolicyTypes(analysisText: string): PolicyTypeDetection[] {
+    const lowerAnalysis = analysisText.toLowerCase();
+    const detections: PolicyTypeDetection[] = [];
+
+    for (const [policyType, indicators] of Object.entries(POLICY_TYPE_INDICATORS)) {
+        if (policyType === 'other') continue;
+
+        let score = 0;
+        const matchedKeywords: string[] = [];
+
+        // Check strong keywords (worth 10 points each)
+        for (const keyword of indicators.strongKeywords) {
+            if (lowerAnalysis.includes(keyword.toLowerCase())) {
+                score += 10;
+                matchedKeywords.push(keyword);
+            }
+        }
+
+        // Check regular keywords (worth 2 points each)
+        for (const keyword of indicators.keywords) {
+            if (lowerAnalysis.includes(keyword.toLowerCase())) {
+                score += 2;
+                matchedKeywords.push(keyword);
+            }
+        }
+
+        if (score > 0) {
+            // Determine confidence based on score
+            let confidence: 'high' | 'medium' | 'low';
+            if (score >= 20) {
+                confidence = 'high';
+            } else if (score >= 8) {
+                confidence = 'medium';
+            } else {
+                confidence = 'low';
+            }
+
+            detections.push({
+                type: policyType as PolicyType,
+                confidence,
+                score,
+                matchedKeywords
+            });
+        }
+    }
+
+    // Sort by score descending
+    detections.sort((a, b) => b.score - a.score);
+
+    return detections;
+}
+
+/**
+ * Detects the PRIMARY policy type from the analysis text
+ * Uses comprehensive scoring to determine the dominant policy type
  */
 export function detectPolicyType(analysisText: string): PolicyType {
-    const lowerAnalysis = analysisText.toLowerCase();
+    const detections = detectAllPolicyTypes(analysisText);
 
-    // Check for specific policy type indicators
-    if (lowerAnalysis.includes('auto') || lowerAnalysis.includes('vehicle') ||
-        lowerAnalysis.includes('car insurance') || lowerAnalysis.includes('automobile') ||
-        lowerAnalysis.includes('collision') || lowerAnalysis.includes('comprehensive coverage')) {
-        return 'auto';
-    }
-    if (lowerAnalysis.includes('homeowner') || lowerAnalysis.includes('home insurance') ||
-        lowerAnalysis.includes('dwelling') || lowerAnalysis.includes('ho-3') ||
-        lowerAnalysis.includes('ho-5') || lowerAnalysis.includes('property coverage')) {
-        return 'home';
-    }
-    if (lowerAnalysis.includes('renter') || lowerAnalysis.includes('tenant')) {
-        return 'renters';
-    }
-    if (lowerAnalysis.includes('umbrella') || lowerAnalysis.includes('excess liability')) {
-        return 'umbrella';
-    }
-    if (lowerAnalysis.includes('life insurance') || lowerAnalysis.includes('term life') ||
-        lowerAnalysis.includes('whole life') || lowerAnalysis.includes('death benefit')) {
-        return 'life';
-    }
-    if (lowerAnalysis.includes('health insurance') || lowerAnalysis.includes('medical') ||
-        lowerAnalysis.includes('hmo') || lowerAnalysis.includes('ppo')) {
-        return 'health';
+    if (detections.length === 0) {
+        return 'other';
     }
 
-    return 'other';
+    // Return the highest-scoring policy type
+    return detections[0].type;
+}
+
+/**
+ * Checks if a document contains multiple distinct policy types
+ * Returns true if there are 2+ policy types with medium or high confidence
+ */
+export function isMultiPolicyDocument(analysisText: string): boolean {
+    const detections = detectAllPolicyTypes(analysisText);
+    const significantDetections = detections.filter(d => d.confidence === 'high' || d.confidence === 'medium');
+    return significantDetections.length > 1;
 }
 
 /**
@@ -325,22 +457,44 @@ async function uploadToGCS(buffer: Buffer, fileName: string, contentType: string
 async function analyzePolicyText(extractedText: string, fileName: string): Promise<string> {
     console.log('🤖 Analyzing policy document...');
 
-    const prompt = `You are an expert insurance analyst. Analyze this extracted insurance document text and provide a helpful summary.
+    const prompt = `You are an expert insurance analyst. Carefully analyze this extracted insurance document text and provide a comprehensive summary.
 
 EXTRACTED DOCUMENT TEXT:
 ${extractedText}
 
-Please provide:
-1. **Policy Type**: What kind of insurance is this? (auto, home, renters, umbrella, etc.)
-2. **Carrier**: [Insurance company name only, e.g., "State Farm", "Allstate", "Progressive"]
-3. **Coverage Summary**: Key coverages included
-4. **Limits**: Important coverage limits (liability, property damage, etc.)
-5. **Deductibles**: Any deductibles mentioned
-6. **Premium**: Monthly/annual premium if shown
-7. **Effective Dates**: Policy period if mentioned
-8. **Notable Items**: Any special endorsements, exclusions, or concerns
+CRITICAL INSTRUCTION - POLICY TYPE DETECTION:
+Many insurance documents contain MULTIPLE policy types bundled together (e.g., a "home and auto bundle" or a declarations page showing multiple policies). You MUST carefully identify ALL distinct policy types present.
 
-IMPORTANT: For the Carrier field (#2), output ONLY the insurance company name after the colon (e.g., "2. **Carrier**: State Farm"). Do not include extra text like "The carrier is..." - just the company name.
+Look for these indicators of each policy type:
+- **AUTO**: VIN numbers, vehicle make/model/year, collision coverage, comprehensive coverage, bodily injury liability, property damage liability, uninsured/underinsured motorist, PIP, medical payments
+- **HOME**: Dwelling coverage, HO-3/HO-5/HO-8 forms, dwelling limit, other structures, personal property, loss of use, replacement cost dwelling, square footage, year built
+- **RENTERS**: HO-4 form, contents coverage only (no dwelling), tenant liability, apartment/lease references
+- **UMBRELLA**: Excess liability, underlying policy requirements, umbrella declarations
+- **LIFE**: Death benefit, beneficiary, term/whole/universal life, face amount, cash value
+- **HEALTH**: HMO/PPO/EPO, copay, coinsurance, out-of-pocket maximum, prescription coverage
+
+Please provide:
+
+1. **Policy Types Found**: List ALL distinct insurance types in this document. If multiple types exist, list them all separated by commas (e.g., "Auto, Home" or "Auto, Home, Umbrella"). Be thorough - check for bundled policies!
+
+2. **Carrier**: [Insurance company name only, e.g., "State Farm", "Allstate", "Progressive"]
+
+3. **Coverage Summary by Type**: For EACH policy type found, provide:
+   - The policy type name
+   - Key coverages included
+   - Coverage limits
+   - Deductibles
+
+4. **Premium**: Monthly/annual premium if shown (break down by policy type if applicable)
+
+5. **Effective Dates**: Policy period if mentioned
+
+6. **Notable Items**: Any special endorsements, exclusions, or concerns
+
+IMPORTANT FORMATTING:
+- For the Carrier field (#2), output ONLY the insurance company name after the colon
+- If this document contains MULTIPLE policy types, make sure to clearly indicate this in field #1 and provide separate coverage details for each type in field #3
+- If you see coverage for vehicles AND a dwelling/home, this is definitely a multi-policy document
 
 If any information is unclear or missing, note that. Keep your response concise but comprehensive.`;
 
@@ -429,89 +583,141 @@ export async function handleDocumentUpload(
         // 3. Analyze the extracted text
         const analysis = await analyzePolicyText(extractedText, originalName);
 
-        // 4. Detect policy type and carrier from the analysis
-        const policyType = detectPolicyType(analysis);
+        // 4. Detect ALL policy types present in the document
+        const allDetectedTypes = detectAllPolicyTypes(analysis);
         const carrier = extractCarrier(analysis);
-
-        // 5. Store the analysis (keyed by userId if available, otherwise sessionId)
         const storageKey = userId || sessionId;
-        const rawData: {
-            fileName: string;
-            extractedText: string;
-            gcsPath: string;
-            uploadedAt: string;
-            documentType: 'image' | 'pdf';
-            userId: string | null;
-            policyType: PolicyType;
-            carrier: string;
-            documentId?: number;
-        } = {
-            fileName: originalName,
-            extractedText,
-            gcsPath: gcsFileName,
-            uploadedAt: new Date().toISOString(),
-            documentType: docType,
-            userId: userId || null,
-            policyType,
-            carrier
-        };
+        const uploadedAt = new Date().toISOString();
 
-        // Store in new multi-policy structure
-        const storedPolicy: StoredPolicy = {
-            policyType,
-            carrier,
-            analysis,
-            rawData,
-            timestamp: Date.now()
-        };
-        storeUserPolicy(storageKey, storedPolicy);
+        // Filter to only significant detections (medium or high confidence)
+        const significantDetections = allDetectedTypes.filter(
+            d => d.confidence === 'high' || d.confidence === 'medium'
+        );
 
-        // Also store in legacy structure for backwards compatibility
+        // If no significant detections, fall back to the primary detection or 'other'
+        const policyTypesToStore: PolicyType[] = significantDetections.length > 0
+            ? significantDetections.map(d => d.type)
+            : [detectPolicyType(analysis)];
+
+        console.log(`📋 Detected ${policyTypesToStore.length} policy type(s): ${policyTypesToStore.join(', ')}`);
+        if (allDetectedTypes.length > 0) {
+            console.log(`   Detection details: ${JSON.stringify(allDetectedTypes.map(d => ({
+                type: d.type,
+                confidence: d.confidence,
+                score: d.score
+            })))}`);
+        }
+
+        // 5. Store each detected policy type separately
+        const documentIds: number[] = [];
+        let primaryDocumentId: number | undefined;
+
+        for (const policyType of policyTypesToStore) {
+            const rawData: {
+                fileName: string;
+                extractedText: string;
+                gcsPath: string;
+                uploadedAt: string;
+                documentType: 'image' | 'pdf';
+                userId: string | null;
+                policyType: PolicyType;
+                carrier: string;
+                documentId?: number;
+                isMultiPolicy?: boolean;
+                allDetectedTypes?: PolicyType[];
+            } = {
+                fileName: originalName,
+                extractedText,
+                gcsPath: gcsFileName,
+                uploadedAt,
+                documentType: docType,
+                userId: userId || null,
+                policyType,
+                carrier,
+                isMultiPolicy: policyTypesToStore.length > 1,
+                allDetectedTypes: policyTypesToStore
+            };
+
+            // Store in multi-policy structure
+            const storedPolicy: StoredPolicy = {
+                policyType,
+                carrier,
+                analysis,
+                rawData,
+                timestamp: Date.now()
+            };
+            storeUserPolicy(storageKey, storedPolicy);
+
+            console.log(`✅ Stored ${policyType} policy from ${carrier}`);
+            console.log(`   For ${userId ? `user ${userId}` : `session ${sessionId}`}`);
+
+            // 6. Persist to database if user is authenticated
+            if (userId) {
+                const dbResult = await persistDocumentToDatabase(userId, {
+                    fileName: originalName,
+                    fileType: mimeType,
+                    fileSize: buffer.length,
+                    gcsPath: gcsFileName,
+                    policyType,
+                    carrier,
+                    analysis,
+                    extractedData: {
+                        extractedText,
+                        uploadedAt,
+                        documentType: docType,
+                        isMultiPolicy: policyTypesToStore.length > 1,
+                        allDetectedTypes: policyTypesToStore,
+                        detectionConfidence: allDetectedTypes.find(d => d.type === policyType)?.confidence || 'low'
+                    }
+                });
+
+                if (dbResult.success && dbResult.documentId) {
+                    documentIds.push(dbResult.documentId);
+                    if (!primaryDocumentId) {
+                        primaryDocumentId = dbResult.documentId;
+                    }
+                    // Update rawData with documentId for cache consistency
+                    rawData.documentId = dbResult.documentId;
+                    storedPolicy.rawData.documentId = dbResult.documentId;
+                    console.log(`📊 ${policyType} policy linked to user account (ID: ${dbResult.documentId})`);
+                } else {
+                    // Log error but don't fail the upload - GCS storage succeeded
+                    console.warn(`⚠️ Database persistence failed: ${dbResult.error}`);
+                }
+            }
+        }
+
+        // Also store in legacy structure for backwards compatibility (use primary policy type)
+        const primaryPolicyType = policyTypesToStore[0];
         const policyData = {
             analysis,
-            rawData,
+            rawData: {
+                fileName: originalName,
+                extractedText,
+                gcsPath: gcsFileName,
+                uploadedAt,
+                documentType: docType,
+                userId: userId || null,
+                policyType: primaryPolicyType,
+                carrier,
+                documentId: primaryDocumentId,
+                isMultiPolicy: policyTypesToStore.length > 1,
+                allDetectedTypes: policyTypesToStore
+            },
             timestamp: Date.now()
         };
         analyzedPolicies.set(storageKey, policyData);
         setPendingPolicyResponse(analysis, policyData.rawData);
 
-        console.log(`✅ Document processed: ${policyType} policy from ${carrier}`);
-        console.log(`   Stored for ${userId ? `user ${userId}` : `session ${sessionId}`}`);
-
-        // 6. Persist to database if user is authenticated
-        let documentId: number | undefined;
-        if (userId) {
-            const dbResult = await persistDocumentToDatabase(userId, {
-                fileName: originalName,
-                fileType: mimeType,
-                fileSize: buffer.length,
-                gcsPath: gcsFileName,
-                policyType,
-                carrier,
-                analysis,
-                extractedData: {
-                    extractedText,
-                    uploadedAt: rawData.uploadedAt,
-                    documentType: docType,
-                }
-            });
-
-            if (dbResult.success) {
-                documentId = dbResult.documentId;
-                // Update rawData with documentId for cache consistency
-                rawData.documentId = documentId;
-                storedPolicy.rawData.documentId = documentId;
-                console.log(`📊 Document linked to user account (ID: ${documentId})`);
-            } else {
-                // Log error but don't fail the upload - GCS storage succeeded
-                console.warn(`⚠️ Database persistence failed: ${dbResult.error}`);
-            }
+        // Log summary
+        if (policyTypesToStore.length > 1) {
+            console.log(`📦 Multi-policy document processed: ${policyTypesToStore.join(', ')} (${documentIds.length} records created)`);
         }
 
         return {
             success: true,
             analysis,
-            documentId
+            documentId: primaryDocumentId
         };
 
     } catch (error) {

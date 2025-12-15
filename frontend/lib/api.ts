@@ -57,6 +57,17 @@ export interface StoredMessage {
     entities?: Record<string, unknown>;
 }
 
+export interface PaginationInfo {
+    hasMore: boolean;
+    oldestTimestamp: string | null;
+    limit: number;
+}
+
+export interface ChatHistoryResponse {
+    messages: StoredMessage[];
+    pagination?: PaginationInfo;
+}
+
 // Session storage keys
 const SESSION_ID_KEY = 'samurai_chat_session_id';
 const SESSION_UUID_KEY = 'samurai_chat_session_uuid';
@@ -143,9 +154,16 @@ export function clearStoredSession(): void {
 }
 
 /**
- * Fetch chat history for a session
+ * Fetch chat history for a session with pagination support
+ * @param sessionId - The session ID to fetch messages for
+ * @param userId - The user ID (for authorization)
+ * @param options - Pagination options: limit (default 50), before (timestamp cursor)
  */
-export async function getChatHistory(sessionId: number, userId: string): Promise<StoredMessage[]> {
+export async function getChatHistory(
+    sessionId: number,
+    userId: string,
+    options?: { limit?: number; before?: string }
+): Promise<ChatHistoryResponse> {
     try {
         const token = await getAuthToken();
         const headers: HeadersInit = {};
@@ -154,20 +172,36 @@ export async function getChatHistory(sessionId: number, userId: string): Promise
             headers['Authorization'] = `Bearer ${token}`;
         }
 
+        // Build URL with pagination params
+        const params = new URLSearchParams();
+        params.set('userId', userId);
+        if (options?.limit) params.set('limit', options.limit.toString());
+        if (options?.before) params.set('before', options.before);
+
         const response = await fetch(
-            `/api/chat-sessions/${sessionId}/messages?userId=${encodeURIComponent(userId)}`,
+            `/api/chat-sessions/${sessionId}/messages?${params.toString()}`,
             { headers }
         );
+
+        // Handle 404 (not found) and 403 (not authorized) gracefully
+        // These indicate stale session data - return empty to trigger cleanup
+        if (response.status === 404 || response.status === 403) {
+            console.warn(`Session ${sessionId} not accessible (status: ${response.status})`);
+            return { messages: [] };
+        }
 
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
 
         const data = await response.json();
-        return data.messages || [];
+        return {
+            messages: data.messages || [],
+            pagination: data.pagination
+        };
     } catch (error) {
         console.error("Error fetching chat history:", error);
-        return [];
+        return { messages: [] };
     }
 }
 

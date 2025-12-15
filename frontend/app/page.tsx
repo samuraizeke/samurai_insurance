@@ -43,10 +43,10 @@ export default function Home() {
 
   return (
     <div className={`${alteHaasGrotesk.className} min-h-screen flex flex-col`}>
-      <SiteHeader onSignUp={handleOpenModal} />
+      <SiteHeader />
 
       <main id="main-content" className="flex flex-1 flex-col">
-        <HeroSection onJoinWaitlist={handleOpenModal} />
+        <HeroSection />
         <ProcessSection />
         <StackedAgainstSection />
         <RenewalGuardFeature />
@@ -56,7 +56,7 @@ export default function Home() {
         <FaqSection />
       </main>
 
-      <MobileWaitlistButton onClick={handleOpenModal} />
+      <MobileWaitlistButton />
 
       <SiteFooter />
 

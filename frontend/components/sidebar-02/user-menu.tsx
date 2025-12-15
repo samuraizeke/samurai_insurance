@@ -51,15 +51,15 @@ export function UserMenu() {
             >
               <Avatar className="h-8 w-8">
                 <AvatarImage src={user.user_metadata?.avatar_url} alt={displayName} />
-                <AvatarFallback className="bg-[#333333] text-white text-sm font-bold font-[family-name:var(--font-alte-haas)]">
+                <AvatarFallback className="bg-[#333333] text-white text-sm font-bold font-(family-name:--font-alte-haas)">
                   {userInitials}
                 </AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold font-[family-name:var(--font-work-sans)]">
+                <span className="truncate font-semibold font-(family-name:--font-work-sans)">
                   {displayName}
                 </span>
-                <span className="truncate text-xs text-muted-foreground font-[family-name:var(--font-work-sans)]">
+                <span className="truncate text-xs text-muted-foreground font-(family-name:--font-work-sans)">
                   {displayEmail}
                 </span>
               </div>
@@ -72,7 +72,7 @@ export function UserMenu() {
             side={isMobile ? "bottom" : "right"}
             sideOffset={4}
           >
-            <DropdownMenuLabel className="font-[family-name:var(--font-work-sans)]">
+            <DropdownMenuLabel className="font-(family-name:--font-work-sans)">
               <div className="flex flex-col space-y-1">
                 <p className="text-sm font-medium leading-none">{displayName}</p>
                 <p className="text-xs leading-none text-muted-foreground">{displayEmail}</p>
@@ -82,13 +82,13 @@ export function UserMenu() {
             <DropdownMenuItem asChild className="gap-2 p-2 cursor-pointer hover:bg-[#333333]/5 focus:bg-[#333333]/5 rounded-lg">
               <Link href="/profile">
                 <FontAwesomeIcon icon={faUser} className="size-4" />
-                <span className="font-[family-name:var(--font-work-sans)]">Profile</span>
+                <span className="font-(family-name:--font-work-sans)">Profile</span>
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild className="gap-2 p-2 cursor-pointer hover:bg-[#333333]/5 focus:bg-[#333333]/5 rounded-lg">
               <Link href="/settings">
                 <FontAwesomeIcon icon={faGear} className="size-4" />
-                <span className="font-[family-name:var(--font-work-sans)]">Settings</span>
+                <span className="font-(family-name:--font-work-sans)">Settings</span>
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
@@ -97,7 +97,7 @@ export function UserMenu() {
               onClick={() => signOut()}
             >
               <FontAwesomeIcon icon={faRightFromBracket} className="size-4" />
-              <span className="font-[family-name:var(--font-work-sans)]">Sign out</span>
+              <span className="font-(family-name:--font-work-sans)">Sign out</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

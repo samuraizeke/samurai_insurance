@@ -1,12 +1,9 @@
 import { useRef } from "react";
+import Link from "next/link";
 import { workSans } from "@/lib/fonts";
 import { useAutoplayVideo } from "@/app/hooks/useAutoplayVideo";
 
-type HeroSectionProps = {
-  onJoinWaitlist: () => void;
-};
-
-export function HeroSection({ onJoinWaitlist }: HeroSectionProps) {
+export function HeroSection() {
   const heroVideoRef = useRef<HTMLVideoElement | null>(null);
 
   useAutoplayVideo(heroVideoRef);
@@ -23,15 +20,14 @@ export function HeroSection({ onJoinWaitlist }: HeroSectionProps) {
           >
             We handle everything on your car and home insurance so you can relax and save money. AI that shops for better rates, guides you through claims, and makes updates when you need it.
           </p>
-          <button
-            className="focus-outline-brand-sm mt-10 hidden rounded-full bg-[#de5e48] px-6 py-2 text-med font-bold text-[#f7f6f3] shadow-[0_3px_8px_rgba(222,94,72,0.18)] transition hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(222,94,72,0.24)] sm:inline-flex mx-auto lg:mx-0"
-            onClick={onJoinWaitlist}
-            type="button"
+          <Link
+            href="/signup"
+            className="mt-10 hidden rounded-full bg-[#333333] px-6 py-2 text-base font-bold text-[#f7f6f3] font-(family-name:--font-work-sans) transition hover:bg-[#333333]/90 sm:inline-flex mx-auto lg:mx-0"
           >
             Join the Waitlist
-          </button>
+          </Link>
         </div>
-        <div className="w-full lg:flex-[2]">
+        <div className="w-full lg:flex-2">
           <div className="relative aspect-video w-full overflow-hidden rounded-3xl">
             <video
               ref={heroVideoRef}

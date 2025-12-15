@@ -500,10 +500,15 @@ app.post('/api/chat-sessions', sessionLimiter, requireAuth, async (req, res) => 
 });
 
 // Get chat history for a session (Authenticated)
+// Supports pagination: ?limit=50&before=<timestamp> for loading older messages
 app.get('/api/chat-sessions/:sessionId/messages', requireAuth, async (req, res) => {
   try {
     const { sessionId } = req.params;
     const userId = req.user!.id;
+
+    // Pagination params: limit defaults to 50, before is optional cursor
+    const limit = Math.min(parseInt(req.query.limit as string) || 50, 100);
+    const before = req.query.before as string | undefined;
 
     // Look up internal user ID
     const { data: userData } = await supabase
@@ -527,19 +532,31 @@ app.get('/api/chat-sessions/:sessionId/messages', requireAuth, async (req, res) 
       return res.status(403).json({ error: 'Not authorized to view this session' });
     }
 
-    const { data: messages, error } = await supabase
+    // Build query with pagination - fetch most recent messages first
+    let query = supabase
       .from('conversations')
       .select('id, message, timestamp, intent, entities')
       .eq('session_id', sessionId)
-      .order('timestamp', { ascending: true });
+      .order('timestamp', { ascending: false })
+      .limit(limit);
+
+    // If 'before' cursor provided, get messages older than that timestamp
+    if (before) {
+      query = query.lt('timestamp', before);
+    }
+
+    const { data: messages, error } = await query;
 
     if (error) {
       logger.error('Failed to fetch chat history', error);
       return res.status(500).json({ error: 'Failed to fetch chat history' });
     }
 
+    // Reverse to get chronological order (oldest first) for display
+    const chronologicalMessages = (messages || []).reverse();
+
     // Transform to frontend format
-    const formattedMessages = messages.map((msg, index) => ({
+    const formattedMessages = chronologicalMessages.map((msg, index) => ({
       id: msg.id.toString(),
       content: msg.message,
       role: index % 2 === 0 ? 'user' : 'assistant',
@@ -548,7 +565,20 @@ app.get('/api/chat-sessions/:sessionId/messages', requireAuth, async (req, res) 
       entities: msg.entities
     }));
 
-    res.json({ messages: formattedMessages });
+    // Include pagination metadata
+    const hasMore = messages && messages.length === limit;
+    const oldestTimestamp = chronologicalMessages.length > 0
+      ? chronologicalMessages[0].timestamp
+      : null;
+
+    res.json({
+      messages: formattedMessages,
+      pagination: {
+        hasMore,
+        oldestTimestamp,
+        limit
+      }
+    });
 
   } catch (error) {
     logger.error('Error fetching chat history', error);
@@ -718,28 +748,55 @@ app.get('/api/users/:userId/chat-sessions', requireAuth, async (req, res) => {
       return res.status(500).json({ error: 'Failed to fetch sessions' });
     }
 
-    // For sessions without summaries, generate them
-    const sessionsWithPreviews = await Promise.all(
-      (sessions || []).map(async (session) => {
-        const { data: messages } = await supabase
-          .from('conversations')
-          .select('message')
-          .eq('session_id', session.id)
-          .order('timestamp', { ascending: true })
-          .limit(3);
+    if (!sessions || sessions.length === 0) {
+      return res.json({ sessions: [] });
+    }
 
-        let summary = session.summary;
-        if (!summary && messages && messages.length > 0) {
-          summary = await generateSessionSummary(session.id, messages);
+    // Optimization: Only fetch messages for sessions without summaries (avoid N+1 queries)
+    const sessionsNeedingSummary = sessions.filter(s => !s.summary);
+    const sessionIdsNeedingSummary = sessionsNeedingSummary.map(s => s.id);
+
+    // Batch fetch first messages for sessions needing summaries (single query instead of N queries)
+    let firstMessagesBySession: Record<number, string> = {};
+    if (sessionIdsNeedingSummary.length > 0) {
+      // Use a raw query to get the first message per session efficiently
+      const { data: firstMessages } = await supabase
+        .from('conversations')
+        .select('session_id, message')
+        .in('session_id', sessionIdsNeedingSummary)
+        .order('timestamp', { ascending: true });
+
+      // Group by session_id, taking only the first message for each
+      if (firstMessages) {
+        const seen = new Set<number>();
+        for (const msg of firstMessages) {
+          if (!seen.has(msg.session_id)) {
+            firstMessagesBySession[msg.session_id] = msg.message;
+            seen.add(msg.session_id);
+          }
         }
+      }
+    }
 
-        return {
-          ...session,
-          first_message: messages?.[0]?.message || null,
-          summary: summary || "New conversation"
-        };
-      })
-    );
+    // Generate summaries for sessions that need them (in parallel)
+    const summaryPromises = sessionsNeedingSummary.map(async (session) => {
+      const firstMessage = firstMessagesBySession[session.id];
+      if (firstMessage) {
+        const summary = await generateSessionSummary(session.id, [{ message: firstMessage }]);
+        return { sessionId: session.id, summary };
+      }
+      return { sessionId: session.id, summary: null };
+    });
+
+    const generatedSummaries = await Promise.all(summaryPromises);
+    const summaryMap = new Map(generatedSummaries.map(s => [s.sessionId, s.summary]));
+
+    // Build final response
+    const sessionsWithPreviews = sessions.map(session => ({
+      ...session,
+      first_message: firstMessagesBySession[session.id] || null,
+      summary: session.summary || summaryMap.get(session.id) || "New conversation"
+    }));
 
     res.json({ sessions: sessionsWithPreviews });
 

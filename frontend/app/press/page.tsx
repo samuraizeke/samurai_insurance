@@ -4,7 +4,7 @@ import { SiteFooter } from "@/app/components/SiteFooter";
 
 export default function PressPage() {
     return (
-        <div className="min-h-screen flex flex-col bg-[var(--background)]">
+        <div className="min-h-screen flex flex-col bg-(--background)">
             {/* Dark Header Section */}
             <div className="bg-[#333333] text-[#f7f6f3] pb-96 relative overflow-hidden">
                 {/* Custom Header with Inverted Logo */}
@@ -24,22 +24,22 @@ export default function PressPage() {
 
                 <div className="container mx-auto px-6 pt-12 flex flex-col items-center text-center relative z-10">
                     {/* News Badge */}
-                    <div className="mb-8 inline-block rounded-full border border-[var(--background)]/30 px-4 py-1 text-sm font-medium uppercase tracking-wider text-[var(--background)]">
+                    <div className="mb-8 inline-block rounded-full border border-(--background)/30 px-4 py-1 text-sm font-medium uppercase tracking-wider text-(--background)">
                         News
                     </div>
 
                     {/* Title */}
-                    <h1 className="mb-6 max-w-4xl text-4xl font-bold leading-tight uppercase md:text-6xl lg:text-7xl font-[family-name:var(--font-league-gothic)]">
+                    <h1 className="mb-6 max-w-4xl text-4xl font-bold leading-tight uppercase md:text-6xl lg:text-7xl font-(family-name:--font-league-gothic)">
                         Columbus Startup Launches AI Insurance Broker That Automatically Re-Shops Your Policy Every Year
                     </h1>
 
                     {/* Subtitle */}
-                    <p className="mb-8 max-w-2xl text-lg font-bold leading-relaxed text-[var(--background)]/80 md:text-xl font-[family-name:var(--font-alte-haas)]">
+                    <p className="mb-8 max-w-2xl text-lg font-bold leading-relaxed text-(--background)/80 md:text-xl font-(family-name:--font-alte-haas)">
                         Samurai Insurance eliminates the "rollover problem" costing Americans 12% annually; beta opens December
                     </p>
 
                     {/* Date */}
-                    <div className="text-sm font-bold uppercase tracking-widest text-[var(--background)]/60 font-[family-name:var(--font-work-sans)]">
+                    <div className="text-sm font-bold uppercase tracking-widest text-(--background)/60 font-(family-name:--font-work-sans)">
                         November 20, 2025
                     </div>
                 </div>
@@ -63,10 +63,10 @@ export default function PressPage() {
 
             {/* Press Release Content */}
             <div className="px-6 pb-24">
-                <div className="container mx-auto max-w-3xl font-[family-name:var(--font-work-sans)] text-[#333333]">
+                <div className="container mx-auto max-w-3xl font-(family-name:--font-work-sans) text-[#333333]">
                     <div className="space-y-6 text-lg leading-relaxed">
                         <p>
-                            <strong className="font-[family-name:var(--font-alte-haas)]">Columbus, OH – November 19, 2025</strong> – Americans spend $500 billion annually on auto and home insurance, yet 96% of insurance brokers never remind customers to shop for better rates. The result: prices quietly climb 12% per year while customers auto-renew, costing the average policyholder $3,600 over a decade.
+                            <strong className="font-(family-name:--font-alte-haas)">Columbus, OH – November 19, 2025</strong> – Americans spend $500 billion annually on auto and home insurance, yet 96% of insurance brokers never remind customers to shop for better rates. The result: prices quietly climb 12% per year while customers auto-renew, costing the average policyholder $3,600 over a decade.
                         </p>
 
                         <p>
@@ -97,15 +97,15 @@ export default function PressPage() {
                             Samurai is currently participating in Founder University, Jason Calacanis's startup accelerator program. The beta opens to the public in December at joinsamurai.com.
                         </p>
 
-                        <div className="pt-8 border-t border-[var(--foreground)]/20">
-                            <p className="font-bold text-xl mb-4 font-[family-name:var(--font-alte-haas)]">About Samurai Insurance</p>
+                        <div className="pt-8 border-t border-(--foreground)/20">
+                            <p className="font-bold text-xl mb-4 font-(family-name:--font-alte-haas)">About Samurai Insurance</p>
                             <p>
                                 Samurai Insurance is an AI-powered insurance broker that eliminates annual price increases by automatically re-shopping customers' auto and renters insurance policies every year. Founded in 2025 and based in Columbus, Ohio, Samurai provides free service to consumers through standard insurance commissions. Learn more at joinsamurai.com.
                             </p>
                         </div>
 
-                        <div className="pt-8 border-t border-[var(--foreground)]/20">
-                            <p className="font-bold text-xl mb-4 font-[family-name:var(--font-alte-haas)]">Media Contact:</p>
+                        <div className="pt-8 border-t border-(--foreground)/20">
+                            <p className="font-bold text-xl mb-4 font-(family-name:--font-alte-haas)">Media Contact:</p>
                             <p>Jeremy Kester, CBO</p>
                             <p>Samurai Insurance</p>
                             <p>5 W. Main St</p>
@@ -152,7 +152,7 @@ export default function PressPage() {
                 </div>
             </div>
 
-            <div className="flex-1 bg-[var(--background)]"></div>
+            <div className="flex-1 bg-(--background)"></div>
 
             <SiteFooter />
         </div>

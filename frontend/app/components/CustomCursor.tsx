@@ -205,7 +205,7 @@ export function CustomCursor() {
       ref={cursorRef}
       aria-hidden="true"
       className={[
-        "custom-cursor pointer-events-none fixed left-0 top-0 z-[9999] h-10 w-10 rounded-full",
+        "custom-cursor pointer-events-none fixed left-0 top-0 z-9999 h-10 w-10 rounded-full",
         "border border-[#0f0f0f]/30 bg-[#f7f6f3] opacity-90 mix-blend-difference",
         isHidden ? "opacity-0" : "opacity-90",
         isHoveringInteractive ? "custom-cursor--interactive" : "",

@@ -66,7 +66,7 @@ export default function DashboardNavigation({ routes }: { routes: Route[] }) {
                   >
                     <span className="text-[#de5e48]">{route.icon}</span>
                     {!isCollapsed && (
-                      <span className="ml-2 flex-1 text-sm font-medium font-[family-name:var(--font-work-sans)]">
+                      <span className="ml-2 flex-1 text-sm font-medium font-(family-name:--font-work-sans)">
                         {route.title}
                       </span>
                     )}
@@ -94,7 +94,7 @@ export default function DashboardNavigation({ routes }: { routes: Route[] }) {
                             <Link
                               href={subRoute.link}
                               prefetch={true}
-                              className="flex items-center rounded-md px-4 py-1.5 text-sm font-medium text-muted-foreground hover:bg-sidebar-muted hover:text-foreground font-[family-name:var(--font-work-sans)]"
+                              className="flex items-center rounded-md px-4 py-1.5 text-sm font-medium text-muted-foreground hover:bg-sidebar-muted hover:text-foreground font-(family-name:--font-work-sans)"
                             >
                               {subRoute.title}
                             </Link>
@@ -117,7 +117,7 @@ export default function DashboardNavigation({ routes }: { routes: Route[] }) {
                 >
                   <span className="text-[#de5e48]">{route.icon}</span>
                   {!isCollapsed && (
-                    <span className="ml-2 text-sm font-medium font-[family-name:var(--font-work-sans)]">
+                    <span className="ml-2 text-sm font-medium font-(family-name:--font-work-sans)">
                       {route.title}
                     </span>
                   )}

@@ -214,7 +214,7 @@ export default function ProfilePage() {
               <div className="w-full max-w-2xl space-y-6">
                 <div>
                   <h1 className="text-3xl font-semibold font-heading tracking-tight">Profile</h1>
-                  <p className="text-muted-foreground font-[family-name:var(--font-work-sans)] mt-1">
+                  <p className="text-muted-foreground font-(family-name:--font-work-sans) mt-1">
                     Manage your account information
                   </p>
                 </div>
@@ -222,7 +222,7 @@ export default function ProfilePage() {
                 <Card className="border-[#333333]/10 bg-[hsl(0_0%_98%)]">
                   <CardHeader>
                     <CardTitle className="font-heading">Your Profile</CardTitle>
-                    <CardDescription className="font-[family-name:var(--font-work-sans)]">
+                    <CardDescription className="font-(family-name:--font-work-sans)">
                       View and update your personal information
                     </CardDescription>
                   </CardHeader>
@@ -230,15 +230,15 @@ export default function ProfilePage() {
                     <div className="flex items-center gap-4">
                       <Avatar className="h-20 w-20">
                         <AvatarImage src={user.user_metadata?.avatar_url} alt={displayName} />
-                        <AvatarFallback className="bg-[#333333] text-white text-xl font-bold font-[family-name:var(--font-alte-haas)]">
+                        <AvatarFallback className="bg-[#333333] text-white text-xl font-bold font-(family-name:--font-alte-haas)">
                           {userInitials}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <p className="text-lg font-semibold font-[family-name:var(--font-work-sans)]">{displayName}</p>
-                        <p className="text-sm text-muted-foreground font-[family-name:var(--font-work-sans)]">{displayEmail}</p>
+                        <p className="text-lg font-semibold font-(family-name:--font-work-sans)">{displayName}</p>
+                        <p className="text-sm text-muted-foreground font-(family-name:--font-work-sans)">{displayEmail}</p>
                         {createdAt && (
-                          <p className="text-xs text-muted-foreground font-[family-name:var(--font-work-sans)] mt-1">
+                          <p className="text-xs text-muted-foreground font-(family-name:--font-work-sans) mt-1">
                             Member since {createdAt}
                           </p>
                         )}
@@ -249,7 +249,7 @@ export default function ProfilePage() {
 
                     <form onSubmit={handleUpdateProfile} className="space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor="fullName" className="font-[family-name:var(--font-work-sans)]">
+                        <Label htmlFor="fullName" className="font-(family-name:--font-work-sans)">
                           Full Name
                         </Label>
                         <Input
@@ -257,21 +257,21 @@ export default function ProfilePage() {
                           placeholder={displayName}
                           value={fullName}
                           onChange={(e) => setFullName(e.target.value)}
-                          className="h-11 font-[family-name:var(--font-work-sans)] border-[#333333]/10 bg-white rounded-lg"
+                          className="h-11 font-(family-name:--font-work-sans) border-[#333333]/10 bg-white rounded-lg"
                         />
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="email" className="font-[family-name:var(--font-work-sans)]">
+                        <Label htmlFor="email" className="font-(family-name:--font-work-sans)">
                           Email
                         </Label>
                         <Input
                           id="email"
                           value={displayEmail}
                           disabled
-                          className="h-11 font-[family-name:var(--font-work-sans)] border-[#333333]/10 bg-[#f7f6f3] rounded-lg"
+                          className="h-11 font-(family-name:--font-work-sans) border-[#333333]/10 bg-[#f7f6f3] rounded-lg"
                         />
-                        <p className="text-xs text-muted-foreground font-[family-name:var(--font-work-sans)]">
+                        <p className="text-xs text-muted-foreground font-(family-name:--font-work-sans)">
                           Email cannot be changed
                         </p>
                       </div>
@@ -279,7 +279,7 @@ export default function ProfilePage() {
                       {error && (
                         <div
                           role="alert"
-                          className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm font-[family-name:var(--font-work-sans)]"
+                          className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm font-(family-name:--font-work-sans)"
                         >
                           {error}
                         </div>
@@ -288,7 +288,7 @@ export default function ProfilePage() {
                       {saveSuccess && (
                         <div
                           role="status"
-                          className="p-3 rounded-lg bg-green-100 text-green-800 text-sm font-[family-name:var(--font-work-sans)]"
+                          className="p-3 rounded-lg bg-green-100 text-green-800 text-sm font-(family-name:--font-work-sans)"
                         >
                           Profile updated successfully
                         </div>
@@ -296,7 +296,7 @@ export default function ProfilePage() {
 
                       <Button
                         type="submit"
-                        className="h-11 bg-[#333333] hover:bg-[#333333]/90 text-[#f7f6f3] font-bold font-[family-name:var(--font-work-sans)] rounded-lg"
+                        className="h-11 bg-[#333333] hover:bg-[#333333]/90 text-[#f7f6f3] font-bold font-(family-name:--font-work-sans) rounded-lg"
                         disabled={isSaving || !fullName}
                       >
                         {isSaving ? (
@@ -317,13 +317,13 @@ export default function ProfilePage() {
                     <div className="flex items-center justify-between">
                       <div>
                         <CardTitle className="font-heading">Your Policies</CardTitle>
-                        <CardDescription className="font-[family-name:var(--font-work-sans)]">
+                        <CardDescription className="font-(family-name:--font-work-sans)">
                           Manage your uploaded insurance policies
                         </CardDescription>
                       </div>
                       <Button
                         asChild
-                        className="gap-2 bg-[#333333] hover:bg-[#333333]/90 text-[#f7f6f3] font-[family-name:var(--font-work-sans)] rounded-lg"
+                        className="gap-2 bg-[#333333] hover:bg-[#333333]/90 text-[#f7f6f3] font-(family-name:--font-work-sans) rounded-lg"
                       >
                         <Link href="/chat">
                           <FontAwesomeIcon icon={faPlus} className="size-4" />
@@ -342,10 +342,10 @@ export default function ProfilePage() {
                         <div className="mx-auto w-16 h-16 bg-[#333333]/5 rounded-full flex items-center justify-center mb-4">
                           <FontAwesomeIcon icon={faFile} className="size-6 text-[#333333]/40" />
                         </div>
-                        <p className="text-muted-foreground font-[family-name:var(--font-work-sans)]">
+                        <p className="text-muted-foreground font-(family-name:--font-work-sans)">
                           No policies uploaded yet
                         </p>
-                        <p className="text-sm text-muted-foreground font-[family-name:var(--font-work-sans)] mt-1">
+                        <p className="text-sm text-muted-foreground font-(family-name:--font-work-sans) mt-1">
                           Start a chat and upload your insurance documents
                         </p>
                       </div>
@@ -364,13 +364,13 @@ export default function ProfilePage() {
                                 />
                               </div>
                               <div>
-                                <p className="font-semibold font-[family-name:var(--font-work-sans)]">
+                                <p className="font-semibold font-(family-name:--font-work-sans)">
                                   {policyTypeLabels[policy.policyType]}
                                 </p>
-                                <p className="text-sm text-muted-foreground font-[family-name:var(--font-work-sans)]">
+                                <p className="text-sm text-muted-foreground font-(family-name:--font-work-sans)">
                                   {policy.carrier}
                                 </p>
-                                <p className="text-xs text-muted-foreground font-[family-name:var(--font-work-sans)]">
+                                <p className="text-xs text-muted-foreground font-(family-name:--font-work-sans)">
                                   {new Date(policy.uploadedAt).toLocaleDateString()}
                                 </p>
                               </div>
@@ -411,7 +411,7 @@ export default function ProfilePage() {
           <DialogContent className="border-[#333333]/10 bg-[hsl(0_0%_98%)]">
             <DialogHeader>
               <DialogTitle className="font-heading">Delete Policy</DialogTitle>
-              <DialogDescription className="font-[family-name:var(--font-work-sans)]">
+              <DialogDescription className="font-(family-name:--font-work-sans)">
                 Are you sure you want to delete your {policyToDelete && policyTypeLabels[policyToDelete.policyType].toLowerCase()}?
                 This action cannot be undone.
               </DialogDescription>
@@ -420,7 +420,7 @@ export default function ProfilePage() {
               <Button
                 variant="outline"
                 onClick={() => setDeleteDialogOpen(false)}
-                className="font-[family-name:var(--font-work-sans)] border-[#333333]/10 rounded-lg"
+                className="font-(family-name:--font-work-sans) border-[#333333]/10 rounded-lg"
               >
                 Cancel
               </Button>
@@ -428,7 +428,7 @@ export default function ProfilePage() {
                 variant="destructive"
                 onClick={handleDeletePolicy}
                 disabled={isDeleting}
-                className="gap-2 font-[family-name:var(--font-work-sans)] rounded-lg"
+                className="gap-2 font-(family-name:--font-work-sans) rounded-lg"
               >
                 {isDeleting ? (
                   <>
@@ -451,13 +451,13 @@ export default function ProfilePage() {
           <DialogContent className="border-[#333333]/10 bg-[hsl(0_0%_98%)]">
             <DialogHeader>
               <DialogTitle className="font-heading">Rename Carrier</DialogTitle>
-              <DialogDescription className="font-[family-name:var(--font-work-sans)]">
+              <DialogDescription className="font-(family-name:--font-work-sans)">
                 Update the carrier name for your {policyToRename && policyTypeLabels[policyToRename.policyType].toLowerCase()}.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="carrierName" className="font-[family-name:var(--font-work-sans)]">
+                <Label htmlFor="carrierName" className="font-(family-name:--font-work-sans)">
                   Carrier Name
                 </Label>
                 <Input
@@ -465,7 +465,7 @@ export default function ProfilePage() {
                   value={newCarrierName}
                   onChange={(e) => setNewCarrierName(e.target.value)}
                   placeholder="e.g., State Farm, Allstate"
-                  className="h-11 font-[family-name:var(--font-work-sans)] border-[#333333]/10 bg-white rounded-lg"
+                  className="h-11 font-(family-name:--font-work-sans) border-[#333333]/10 bg-white rounded-lg"
                 />
               </div>
             </div>
@@ -473,14 +473,14 @@ export default function ProfilePage() {
               <Button
                 variant="outline"
                 onClick={() => setRenameDialogOpen(false)}
-                className="font-[family-name:var(--font-work-sans)] border-[#333333]/10 rounded-lg"
+                className="font-(family-name:--font-work-sans) border-[#333333]/10 rounded-lg"
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleRenamePolicy}
                 disabled={isRenaming || !newCarrierName.trim()}
-                className="gap-2 bg-[#333333] hover:bg-[#333333]/90 text-[#f7f6f3] font-[family-name:var(--font-work-sans)] rounded-lg"
+                className="gap-2 bg-[#333333] hover:bg-[#333333]/90 text-[#f7f6f3] font-(family-name:--font-work-sans) rounded-lg"
               >
                 {isRenaming ? (
                   <>

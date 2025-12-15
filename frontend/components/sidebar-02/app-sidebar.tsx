@@ -210,7 +210,7 @@ export function DashboardSidebar() {
                 <FontAwesomeIcon icon={faPlus} className="size-4" />
               </span>
               {!isCollapsed && (
-                <span className="ml-2 text-sm font-medium font-[family-name:var(--font-work-sans)]">
+                <span className="ml-2 text-sm font-medium font-(family-name:--font-work-sans)">
                   New Chat
                 </span>
               )}
@@ -234,7 +234,7 @@ export function DashboardSidebar() {
                   <FontAwesomeIcon icon={faHistory} className="size-4" />
                 </span>
                 {!isCollapsed && (
-                  <span className="ml-2 text-sm font-medium font-[family-name:var(--font-work-sans)]">
+                  <span className="ml-2 text-sm font-medium font-(family-name:--font-work-sans)">
                     Chat History
                   </span>
                 )}
@@ -246,7 +246,7 @@ export function DashboardSidebar() {
         {/* Recents Section */}
         {!isCollapsed && recentSessions.length > 0 && (
           <SidebarGroup>
-            <SidebarGroupLabel className="text-xs font-bold text-muted-foreground font-[family-name:var(--font-work-sans)]">
+            <SidebarGroupLabel className="text-xs font-bold text-muted-foreground font-(family-name:--font-work-sans)">
               Recents
             </SidebarGroupLabel>
             <SidebarGroupContent>
@@ -276,7 +276,7 @@ export function DashboardSidebar() {
                             currentSessionId === session.id && "bg-[#333333]/10 text-foreground"
                           )}
                         >
-                          <p className="text-sm font-medium truncate font-[family-name:var(--font-work-sans)]">
+                          <p className="text-sm font-medium truncate font-(family-name:--font-work-sans)">
                             {getSessionPreview(session)}
                           </p>
                         </SidebarMenuButton>
@@ -296,7 +296,7 @@ export function DashboardSidebar() {
                             <TooltipContent
                               side="top"
                               sideOffset={4}
-                              className="bg-[#333333] text-[#f7f6f3] font-[family-name:var(--font-work-sans)]"
+                              className="bg-[#333333] text-[#f7f6f3] font-(family-name:--font-work-sans)"
                             >
                               More options
                             </TooltipContent>
@@ -306,7 +306,7 @@ export function DashboardSidebar() {
                             side="right"
                             sideOffset={8}
                             collisionPadding={16}
-                            className="z-[100] rounded-2xl p-1.5 border border-[#e5e5e5] shadow-xl font-[family-name:var(--font-work-sans)]"
+                            className="z-100 rounded-2xl p-1.5 border border-[#e5e5e5] shadow-xl font-(family-name:--font-work-sans)"
                             style={{ backgroundColor: '#ffffff' }}
                           >
                             <DropdownMenuItem
@@ -341,9 +341,9 @@ export function DashboardSidebar() {
 
       {/* Rename Dialog */}
       <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
-        <DialogContent className="sm:max-w-lg rounded-2xl font-[family-name:var(--font-work-sans)] p-8">
+        <DialogContent className="sm:max-w-lg rounded-2xl font-(family-name:--font-work-sans) p-8">
           <DialogHeader className="pb-4">
-            <DialogTitle className="font-[family-name:var(--font-alte-haas)] text-xl">Rename chat</DialogTitle>
+            <DialogTitle className="font-(family-name:--font-alte-haas) text-xl">Rename chat</DialogTitle>
           </DialogHeader>
           <div className="py-2">
             <input

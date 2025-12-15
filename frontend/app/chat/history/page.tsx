@@ -173,7 +173,7 @@ function ChatHistoryContent() {
     if (!user) {
         return (
             <div className="flex flex-col items-center justify-center h-full gap-4">
-                <p className="text-muted-foreground font-[family-name:var(--font-work-sans)]">
+                <p className="text-muted-foreground font-(family-name:--font-work-sans)">
                     Please sign in to view your chat history
                 </p>
                 <Button asChild>
@@ -187,10 +187,10 @@ function ChatHistoryContent() {
         <div className="flex flex-col min-h-full w-full max-w-3xl mx-auto bg-background">
             {/* Header */}
             <div className="flex items-center justify-between px-4 pt-4 md:pt-12 pb-4">
-                <h1 className="text-3xl font-bold font-[family-name:var(--font-alte-haas)] text-[#333333]">
+                <h1 className="text-3xl font-bold font-(family-name:--font-alte-haas) text-[#333333]">
                     Chat History
                 </h1>
-                <Button asChild className="bg-[#333333] hover:bg-[#333333]/90 font-[family-name:var(--font-work-sans)] font-bold text-white rounded-full">
+                <Button asChild className="bg-[#333333] hover:bg-[#333333]/90 font-(family-name:--font-work-sans) font-bold text-white rounded-full">
                     <Link href="/chat">
                         <FontAwesomeIcon icon={faPlus} className="size-3 -mr-1" />
                         New Chat
@@ -209,14 +209,14 @@ function ChatHistoryContent() {
                         placeholder="Search chats..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-10 text-base font-[family-name:var(--font-work-sans)] border-[#333333]/10 h-11 placeholder:text-base bg-[hsl(0_0%_98%)] rounded-full"
+                        className="pl-10 text-base font-(family-name:--font-work-sans) border-[#333333]/10 h-11 placeholder:text-base bg-[hsl(0_0%_98%)] rounded-full"
                     />
                 </div>
             </div>
 
             {/* Chat Count */}
             <div className="px-6 py-4">
-                <p className="text-sm text-muted-foreground font-[family-name:var(--font-work-sans)]">
+                <p className="text-sm text-muted-foreground font-(family-name:--font-work-sans)">
                     {filteredSessions.length} {filteredSessions.length === 1 ? "chat" : "chats"} with Sam
                     {searchQuery && ` matching "${searchQuery}"`}
                 </p>
@@ -236,7 +236,7 @@ function ChatHistoryContent() {
                 ) : filteredSessions.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-40 gap-2 p-4">
                         <FontAwesomeIcon icon={faMessage} className="size-8 text-muted-foreground/50" />
-                        <p className="text-base text-muted-foreground text-center font-[family-name:var(--font-work-sans)]">
+                        <p className="text-base text-muted-foreground text-center font-(family-name:--font-work-sans)">
                             {searchQuery ? "No chats match your search" : "No chats yet"}
                         </p>
                         {!searchQuery && (
@@ -256,10 +256,10 @@ function ChatHistoryContent() {
                                     onClick={() => continueSession(session.id)}
                                     className="flex-1 flex flex-col gap-1 text-left min-w-0"
                                 >
-                                    <p className="text-sm font-bold truncate font-[family-name:var(--font-work-sans)] text-[#333333]">
+                                    <p className="text-sm font-bold truncate font-(family-name:--font-work-sans) text-[#333333]">
                                         {getSessionTitle(session)}
                                     </p>
-                                    <span className="text-xs text-muted-foreground font-normal font-[family-name:var(--font-work-sans)]">
+                                    <span className="text-xs text-muted-foreground font-normal font-(family-name:--font-work-sans)">
                                         {formatRelativeTime(session.last_message_at)}
                                     </span>
                                 </button>
@@ -278,12 +278,12 @@ function ChatHistoryContent() {
                                         <TooltipContent
                                             side="top"
                                             sideOffset={4}
-                                            className="bg-[#333333] text-[#f7f6f3] font-[family-name:var(--font-work-sans)]"
+                                            className="bg-[#333333] text-[#f7f6f3] font-(family-name:--font-work-sans)"
                                         >
                                             More options
                                         </TooltipContent>
                                     </Tooltip>
-                                    <DropdownMenuContent align="end" side="bottom" className="rounded-2xl p-1.5 border-[#333333]/10 shadow-lg bg-[hsl(0_0%_98%)] font-[family-name:var(--font-work-sans)]">
+                                    <DropdownMenuContent align="end" side="bottom" className="rounded-2xl p-1.5 border-[#333333]/10 shadow-lg bg-[hsl(0_0%_98%)] font-(family-name:--font-work-sans)">
                                         <DropdownMenuItem
                                             onClick={(e) => handleOpenRenameDialog(e, session.id, getSessionTitle(session))}
                                             className="cursor-pointer hover:bg-[#333333]/5 focus:bg-[#333333]/5 rounded-lg"
@@ -308,9 +308,9 @@ function ChatHistoryContent() {
 
             {/* Rename Dialog */}
             <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
-                <DialogContent className="sm:max-w-lg rounded-2xl font-[family-name:var(--font-work-sans)] p-8">
+                <DialogContent className="sm:max-w-lg rounded-2xl font-(family-name:--font-work-sans) p-8">
                     <DialogHeader className="pb-4">
-                        <DialogTitle className="font-[family-name:var(--font-alte-haas)] text-xl">Rename chat</DialogTitle>
+                        <DialogTitle className="font-(family-name:--font-alte-haas) text-xl">Rename chat</DialogTitle>
                     </DialogHeader>
                     <div className="py-2">
                         <input

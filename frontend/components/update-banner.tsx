@@ -20,7 +20,7 @@ export function UpdateBanner({ checkInterval = 60000 }: UpdateBannerProps) {
   return (
     <div
       role="alert"
-      className="fixed bottom-4 right-4 z-[10000] flex items-center gap-3 rounded-2xl border border-[#333333]/10 bg-[hsl(0_0%_98%)] px-4 py-3 shadow-lg font-[family-name:var(--font-work-sans)]"
+      className="fixed bottom-4 right-4 z-10000 flex items-center gap-3 rounded-2xl border border-[#333333]/10 bg-[hsl(0_0%_98%)] px-4 py-3 shadow-lg font-(family-name:--font-work-sans)"
     >
       <FontAwesomeIcon icon={faRotate} className="size-4 text-[#de5e48]" />
       <span className="text-sm font-medium text-[#333333]">

@@ -6,10 +6,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
-import { JSX, SVGProps, useState } from "react";
+import { JSX, SVGProps, useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
 import Link from "next/link";
 import Image from "next/image";
+import WaitlistModal from "@/app/components/WaitlistModal";
 
 const GoogleIcon = (
   props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>
@@ -49,15 +50,60 @@ export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isBetaError, setIsBetaError] = useState(false);
   const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [isMicrosoftLoading, setIsMicrosoftLoading] = useState(false);
+  const [isWaitlistOpen, setIsWaitlistOpen] = useState(false);
   const { signInWithMagicLink, signInWithGoogle, signInWithMicrosoft } = useAuth();
+
+  const BETA_ERROR_MESSAGE = "You are not on the beta allowlist.";
+
+  // Pre-load reCAPTCHA script for waitlist modal
+  // Uses the same attribute as WaitlistModal to prevent duplicate script loading
+  useEffect(() => {
+    const RECAPTCHA_SCRIPT_DATA_ATTR = "data-waitlist-recaptcha-script";
+    const recaptchaSiteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+    const recaptchaVersion = process.env.NEXT_PUBLIC_RECAPTCHA_VERSION?.toLowerCase() ?? "v2";
+
+    if (!recaptchaSiteKey) return;
+
+    const scriptSrc = recaptchaVersion === "v3"
+      ? `https://www.google.com/recaptcha/api.js?render=${encodeURIComponent(recaptchaSiteKey)}`
+      : "https://www.google.com/recaptcha/api.js?render=explicit";
+
+    // Check using the same attribute that WaitlistModal uses
+    if (document.querySelector(`script[${RECAPTCHA_SCRIPT_DATA_ATTR}]`)) return;
+
+    const script = document.createElement("script");
+    script.src = scriptSrc;
+    script.async = true;
+    script.defer = true;
+    script.setAttribute(RECAPTCHA_SCRIPT_DATA_ATTR, "true");
+    document.body.appendChild(script);
+  }, []);
+
+  const handleError = (errorMessage: string) => {
+    // Supabase wraps trigger exceptions in generic messages, so we check for multiple patterns
+    const isBetaRestriction =
+      errorMessage.includes(BETA_ERROR_MESSAGE) ||
+      errorMessage.includes("beta allowlist") ||
+      errorMessage.includes("Database error saving new user");
+
+    if (isBetaRestriction) {
+      setIsBetaError(true);
+      setError(null);
+    } else {
+      setIsBetaError(false);
+      setError(errorMessage);
+    }
+  };
 
   const handleMagicLinkSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setIsBetaError(false);
 
     if (!agreedToTerms) {
       setError("You must agree to the terms of use and privacy policy");
@@ -69,7 +115,7 @@ export default function SignupPage() {
     try {
       const { error } = await signInWithMagicLink(email);
       if (error) {
-        setError(error.message);
+        handleError(error.message);
       } else {
         setSuccess(true);
       }
@@ -86,11 +132,14 @@ export default function SignupPage() {
       return;
     }
 
+    setError(null);
+    setIsBetaError(false);
     setIsGoogleLoading(true);
     try {
       await signInWithGoogle();
     } catch (err) {
-      setError("Failed to sign in with Google");
+      const errorMessage = err instanceof Error ? err.message : "Failed to sign in with Google";
+      handleError(errorMessage);
       setIsGoogleLoading(false);
     }
   };
@@ -101,11 +150,14 @@ export default function SignupPage() {
       return;
     }
 
+    setError(null);
+    setIsBetaError(false);
     setIsMicrosoftLoading(true);
     try {
       await signInWithMicrosoft();
     } catch (err) {
-      setError("Failed to sign in with Microsoft");
+      const errorMessage = err instanceof Error ? err.message : "Failed to sign in with Microsoft";
+      handleError(errorMessage);
       setIsMicrosoftLoading(false);
     }
   };
@@ -122,12 +174,12 @@ export default function SignupPage() {
                 </svg>
               </div>
               <h2 className="text-xl font-semibold font-heading">Check your email</h2>
-              <p className="text-muted-foreground font-[family-name:var(--font-work-sans)]">
+              <p className="text-muted-foreground font-(family-name:--font-work-sans)">
                 We&apos;ve sent a magic link to <strong>{email}</strong>. Click the link to complete your registration.
               </p>
               <Button
                 variant="outline"
-                className="mt-4 font-[family-name:var(--font-work-sans)] border-[#333333]/10"
+                className="mt-4 font-(family-name:--font-work-sans) border-[#333333]/10"
                 onClick={() => setSuccess(false)}
               >
                 Use a different email
@@ -151,7 +203,7 @@ export default function SignupPage() {
             className="mx-auto"
           />
           <h1 className="text-4xl font-semibold font-heading tracking-tight">Create your account</h1>
-          <p className="text-lg text-muted-foreground font-[family-name:var(--font-work-sans)]">
+          <p className="text-lg text-muted-foreground font-(family-name:--font-work-sans)">
             Get started with Samurai Insurance
           </p>
         </div>
@@ -159,7 +211,7 @@ export default function SignupPage() {
         <div className="space-y-6">
           <Button
             variant="outline"
-            className="w-full h-12 justify-start gap-3 text-sm font-normal font-[family-name:var(--font-work-sans)] bg-[hsl(0_0%_98%)] border-[#333333]/10 rounded-full !ps-6"
+            className="w-full h-12 justify-start gap-3 text-sm font-normal font-(family-name:--font-work-sans) bg-[hsl(0_0%_98%)] border-[#333333]/10 rounded-full ps-6!"
             onClick={handleGoogleSignIn}
             disabled={isGoogleLoading}
           >
@@ -173,7 +225,7 @@ export default function SignupPage() {
 
           <Button
             variant="outline"
-            className="w-full h-12 justify-start gap-3 text-sm font-normal font-[family-name:var(--font-work-sans)] bg-[hsl(0_0%_98%)] border-[#333333]/10 rounded-full !ps-6"
+            className="w-full h-12 justify-start gap-3 text-sm font-normal font-(family-name:--font-work-sans) bg-[hsl(0_0%_98%)] border-[#333333]/10 rounded-full ps-6!"
             onClick={handleMicrosoftSignIn}
             disabled={isMicrosoftLoading}
           >
@@ -187,16 +239,44 @@ export default function SignupPage() {
 
           <div className="flex items-center gap-3">
             <div className="flex-1 h-px bg-[#333333]/20" />
-            <span className="text-base text-muted-foreground font-[family-name:var(--font-work-sans)]">
+            <span className="text-base text-muted-foreground font-(family-name:--font-work-sans)">
               OR
             </span>
             <div className="flex-1 h-px bg-[#333333]/20" />
           </div>
 
-          {error && (
+          {isBetaError && (
+            <Card className="border-amber-200 bg-amber-50">
+              <CardContent className="pt-6 space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center shrink-0">
+                    <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m0 0v2m0-2h2m-2 0H10m11-7a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-semibold text-amber-900 font-heading">Closed Beta</h3>
+                </div>
+                <p className="text-amber-800 font-(family-name:--font-work-sans)">
+                  Samurai Insurance is currently in closed beta. You&apos;ll need an invitation to create an account.
+                </p>
+                <p className="text-sm text-amber-700 font-(family-name:--font-work-sans)">
+                  If you believe you should have access, please contact our team or check your email for an invitation.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setIsWaitlistOpen(true)}
+                  className="inline-block text-sm text-amber-800 underline font-(family-name:--font-work-sans)"
+                >
+                  Request access
+                </button>
+              </CardContent>
+            </Card>
+          )}
+
+          {error && !isBetaError && (
             <div
               role="alert"
-              className="p-4 rounded-md bg-destructive/10 text-destructive text-base font-[family-name:var(--font-work-sans)]"
+              className="p-4 rounded-md bg-destructive/10 text-destructive text-base font-(family-name:--font-work-sans)"
             >
               {error}
             </div>
@@ -208,12 +288,12 @@ export default function SignupPage() {
                 type="email"
                 id="email"
                 placeholder="Enter your email"
-                className="h-12 text-base font-[family-name:var(--font-work-sans)] border-[#333333]/10 bg-[hsl(0_0%_98%)] rounded-full px-6"
+                className="h-12 text-base font-(family-name:--font-work-sans) border-[#333333]/10 bg-[hsl(0_0%_98%)] rounded-full px-6"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
-              <p className="mt-2 text-sm text-muted-foreground font-[family-name:var(--font-work-sans)] text-center">
+              <p className="mt-2 text-sm text-muted-foreground font-(family-name:--font-work-sans) text-center">
                 We&apos;ll send you a magic link to create your account.
               </p>
             </div>
@@ -225,7 +305,7 @@ export default function SignupPage() {
                 onCheckedChange={(checked) => setAgreedToTerms(checked as boolean)}
                 className="mt-0.5"
               />
-              <Label htmlFor="terms" className="text-base leading-6 text-muted-foreground font-[family-name:var(--font-work-sans)]">
+              <Label htmlFor="terms" className="text-base leading-6 text-muted-foreground font-(family-name:--font-work-sans)">
                 I agree to the{" "}
                 <Link href="/terms" className="text-[#333333] underline">
                   Terms of Use
@@ -239,7 +319,7 @@ export default function SignupPage() {
 
             <Button
               type="submit"
-              className="w-full h-12 text-base bg-[#333333] hover:bg-[#333333]/90 text-[#f7f6f3] font-bold font-[family-name:var(--font-work-sans)] border-[#333333]/10 rounded-full"
+              className="w-full h-12 text-base bg-[#333333] hover:bg-[#333333]/90 text-[#f7f6f3] font-bold font-(family-name:--font-work-sans) border-[#333333]/10 rounded-full"
               disabled={isLoading}
             >
               {isLoading ? (
@@ -250,7 +330,7 @@ export default function SignupPage() {
             </Button>
           </form>
 
-          <div className="text-center text-base font-[family-name:var(--font-work-sans)]">
+          <div className="text-center text-base font-(family-name:--font-work-sans)">
             Already have an account?{" "}
             <Link href="/login" className="text-[#333333] underline">
               Sign in
@@ -258,6 +338,12 @@ export default function SignupPage() {
           </div>
         </div>
       </div>
+
+      <WaitlistModal
+        isOpen={isWaitlistOpen}
+        onClose={() => setIsWaitlistOpen(false)}
+        onSuccess={() => setIsWaitlistOpen(false)}
+      />
     </main>
   );
 }

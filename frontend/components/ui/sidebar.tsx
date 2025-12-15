@@ -261,14 +261,14 @@ function Sidebar({
             {/* Invisible overlay to capture clicks and close sidebar */}
             <div
               data-slot="sidebar-overlay"
-              className="fixed inset-0 z-[10001]"
+              className="fixed inset-0 z-10001"
               onClick={() => setOpenMobile(false)}
               aria-hidden="true"
             />
             <div
               data-slot="sidebar-container"
               className={cn(
-                "fixed inset-y-0 left-0 z-[10002] h-svh flex animate-in slide-in-from-left duration-200",
+                "fixed inset-y-0 left-0 z-10002 h-svh flex animate-in slide-in-from-left duration-200",
                 variant === "floating" || variant === "inset"
                   ? "p-2"
                   : "border-r",
@@ -400,7 +400,7 @@ function SidebarRail({ className, ...props }: React.ComponentProps<"button">) {
       onClick={toggleSidebar}
       title="Toggle Sidebar"
       className={cn(
-        "hover:after:bg-sidebar-border absolute inset-y-0 z-20 hidden w-4 -translate-x-1/2 transition-all ease-linear group-data-[side=left]:-right-4 group-data-[side=right]:left-0 after:absolute after:inset-y-0 after:left-1/2 after:w-[2px] sm:flex",
+        "hover:after:bg-sidebar-border absolute inset-y-0 z-20 hidden w-4 -translate-x-1/2 transition-all ease-linear group-data-[side=left]:-right-4 group-data-[side=right]:left-0 after:absolute after:inset-y-0 after:left-1/2 after:w-0.5 sm:flex",
         "in-data-[side=left]:cursor-w-resize in-data-[side=right]:cursor-e-resize",
         "[[data-side=left][data-state=collapsed]_&]:cursor-e-resize [[data-side=right][data-state=collapsed]_&]:cursor-w-resize",
         "hover:group-data-[collapsible=offcanvas]:bg-sidebar group-data-[collapsible=offcanvas]:translate-x-0 group-data-[collapsible=offcanvas]:after:left-full",
@@ -657,7 +657,7 @@ function SidebarMenuButton({
         side="right"
         align="center"
         hidden={state !== "collapsed" || isMobile}
-        className="bg-[#333333] text-[#f7f6f3] font-[family-name:var(--font-work-sans)]"
+        className="bg-[#333333] text-[#f7f6f3] font-(family-name:--font-work-sans)"
         {...tooltip}
       />
     </Tooltip>

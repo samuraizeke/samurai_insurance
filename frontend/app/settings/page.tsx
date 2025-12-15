@@ -93,7 +93,7 @@ export default function SettingsPage() {
               <div className="w-full max-w-2xl space-y-6">
                 <div>
                   <h1 className="text-3xl font-semibold font-heading tracking-tight">Settings</h1>
-                  <p className="text-muted-foreground font-[family-name:var(--font-work-sans)] mt-1">
+                  <p className="text-muted-foreground font-(family-name:--font-work-sans) mt-1">
                     Manage your account settings
                   </p>
                 </div>
@@ -101,15 +101,15 @@ export default function SettingsPage() {
                 <Card className="border-[#333333]/10 bg-[hsl(0_0%_98%)]">
                   <CardHeader>
                     <CardTitle className="font-heading">Account</CardTitle>
-                    <CardDescription className="font-[family-name:var(--font-work-sans)]">
+                    <CardDescription className="font-(family-name:--font-work-sans)">
                       Manage your account access
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="flex items-center justify-between p-4 rounded-lg bg-[#f7f6f3]">
                       <div>
-                        <p className="font-semibold font-[family-name:var(--font-work-sans)]">Sign out</p>
-                        <p className="text-sm text-muted-foreground font-[family-name:var(--font-work-sans)]">
+                        <p className="font-semibold font-(family-name:--font-work-sans)">Sign out</p>
+                        <p className="text-sm text-muted-foreground font-(family-name:--font-work-sans)">
                           Sign out of your account on this device
                         </p>
                       </div>
@@ -117,7 +117,7 @@ export default function SettingsPage() {
                         variant="outline"
                         onClick={handleSignOut}
                         disabled={isSigningOut}
-                        className="gap-2 font-[family-name:var(--font-work-sans)] border-[#333333]/10 rounded-lg"
+                        className="gap-2 font-(family-name:--font-work-sans) border-[#333333]/10 rounded-lg"
                       >
                         {isSigningOut ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
@@ -133,15 +133,15 @@ export default function SettingsPage() {
                 <Card className="border-destructive/20 bg-[hsl(0_0%_98%)]">
                   <CardHeader>
                     <CardTitle className="font-heading text-destructive">Danger Zone</CardTitle>
-                    <CardDescription className="font-[family-name:var(--font-work-sans)]">
+                    <CardDescription className="font-(family-name:--font-work-sans)">
                       Irreversible actions for your account
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="flex items-center justify-between p-4 rounded-lg bg-destructive/5 border border-destructive/20">
                       <div>
-                        <p className="font-semibold font-[family-name:var(--font-work-sans)]">Delete account</p>
-                        <p className="text-sm text-muted-foreground font-[family-name:var(--font-work-sans)]">
+                        <p className="font-semibold font-(family-name:--font-work-sans)">Delete account</p>
+                        <p className="text-sm text-muted-foreground font-(family-name:--font-work-sans)">
                           Permanently delete your account and all data
                         </p>
                       </div>
@@ -149,7 +149,7 @@ export default function SettingsPage() {
                         <DialogTrigger asChild>
                           <Button
                             variant="destructive"
-                            className="gap-2 font-[family-name:var(--font-work-sans)] rounded-lg"
+                            className="gap-2 font-(family-name:--font-work-sans) rounded-lg"
                           >
                             <FontAwesomeIcon icon={faTrash} className="size-4" />
                             Delete
@@ -158,7 +158,7 @@ export default function SettingsPage() {
                         <DialogContent className="border-[#333333]/10 bg-[hsl(0_0%_98%)]">
                           <DialogHeader>
                             <DialogTitle className="font-heading">Delete Account</DialogTitle>
-                            <DialogDescription className="font-[family-name:var(--font-work-sans)]">
+                            <DialogDescription className="font-(family-name:--font-work-sans)">
                               Are you sure you want to delete your account? This action cannot be undone.
                               All your data, including chat history and uploaded policies, will be permanently deleted.
                             </DialogDescription>
@@ -167,7 +167,7 @@ export default function SettingsPage() {
                             <Button
                               variant="outline"
                               onClick={() => setDeleteDialogOpen(false)}
-                              className="font-[family-name:var(--font-work-sans)] border-[#333333]/10 rounded-lg"
+                              className="font-(family-name:--font-work-sans) border-[#333333]/10 rounded-lg"
                             >
                               Cancel
                             </Button>
@@ -175,7 +175,7 @@ export default function SettingsPage() {
                               variant="destructive"
                               onClick={handleDeleteAccount}
                               disabled={isDeleting}
-                              className="gap-2 font-[family-name:var(--font-work-sans)] rounded-lg"
+                              className="gap-2 font-(family-name:--font-work-sans) rounded-lg"
                             >
                               {isDeleting ? (
                                 <>

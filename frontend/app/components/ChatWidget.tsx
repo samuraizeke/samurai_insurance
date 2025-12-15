@@ -44,7 +44,8 @@ import {
     getChatHistory,
     clearStoredSession,
     getUserPolicies,
-    UserPolicy
+    UserPolicy,
+    PaginationInfo
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { useChatContext } from "@/app/context/ChatContext";
@@ -78,7 +79,6 @@ export default function ChatWidget() {
     const [messages, setMessages] = useState<Message[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isUploadingPolicy, setIsUploadingPolicy] = useState(false);
-    const [error, setError] = useState<string | null>(null);
     const [showUploadModal, setShowUploadModal] = useState(false);
     const [sessionId, setSessionId] = useState<string>(() => `session_${Date.now()}_${Math.random().toString(36).substring(7)}`);
     const [dbSessionId, setDbSessionId] = useState<number | null>(null);
@@ -86,6 +86,8 @@ export default function ChatWidget() {
     const [userPolicies, setUserPolicies] = useState<UserPolicy[]>([]);
     const [selectedPolicy, setSelectedPolicy] = useState<UserPolicy | null>(null);
     const [isLoadingPolicies, setIsLoadingPolicies] = useState(false);
+    const [pagination, setPagination] = useState<PaginationInfo | null>(null);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const policyFileInputRef = useRef<HTMLInputElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -166,24 +168,36 @@ export default function ChatWidget() {
                 const storedSessionId = getStoredSessionId();
 
                 if (storedSessionId) {
-                    // Load existing session history
-                    setDbSessionId(storedSessionId);
-                    setCurrentSessionId(storedSessionId);
+                    // Try to load existing session history (most recent 50 messages)
+                    const response = await getChatHistory(storedSessionId, user!.id, { limit: 50 });
 
-                    const history = await getChatHistory(storedSessionId, user!.id);
-                    if (history.length > 0) {
-                        const loadedMessages: Message[] = history.map(msg => ({
+                    if (response.messages.length > 0) {
+                        // Valid session with messages - load it
+                        setDbSessionId(storedSessionId);
+                        setCurrentSessionId(storedSessionId);
+                        const loadedMessages: Message[] = response.messages.map(msg => ({
                             id: msg.id,
                             content: msg.content,
                             role: msg.role,
                             timestamp: new Date(msg.timestamp)
                         }));
                         setMessages(loadedMessages);
+                        setPagination(response.pagination || null);
+                    } else {
+                        // Session returned empty - could be stale/invalid, clear it
+                        console.warn('Stored session returned no messages, clearing stale session');
+                        clearStoredSession();
                     }
                 }
                 // Don't create a new session here - wait until first message is sent
             } catch (err) {
+                // If session not found or not authorized, clear stale session and start fresh
                 console.error('Failed to initialize session:', err);
+                clearStoredSession();
+                setDbSessionId(null);
+                setCurrentSessionId(null);
+                setMessages([]);
+                setPagination(null);
             } finally {
                 setIsLoadingHistory(false);
             }
@@ -200,6 +214,7 @@ export default function ChatWidget() {
         setDbSessionId(null);
         setCurrentSessionId(null);
         setSelectedPolicy(null); // Clear policy selection for new chat
+        setPagination(null); // Clear pagination state
         setSessionId(`session_${Date.now()}_${Math.random().toString(36).substring(7)}`);
         sessionInitialized.current = false; // Allow session creation on first message
     }, [setCurrentSessionId]);
@@ -215,18 +230,20 @@ export default function ChatWidget() {
             setDbSessionId(targetSessionId);
             setCurrentSessionId(targetSessionId);
 
-            // Load chat history for this session
-            const history = await getChatHistory(targetSessionId, user!.id);
-            if (history.length > 0) {
-                const loadedMessages: Message[] = history.map(msg => ({
+            // Load chat history for this session (most recent 50 messages)
+            const response = await getChatHistory(targetSessionId, user!.id, { limit: 50 });
+            if (response.messages.length > 0) {
+                const loadedMessages: Message[] = response.messages.map(msg => ({
                     id: msg.id,
                     content: msg.content,
                     role: msg.role,
                     timestamp: new Date(msg.timestamp)
                 }));
                 setMessages(loadedMessages);
+                setPagination(response.pagination || null);
             } else {
                 setMessages([]);
+                setPagination(null);
             }
         } catch (err) {
             console.error('Failed to load session:', err);
@@ -234,6 +251,35 @@ export default function ChatWidget() {
             setIsLoadingHistory(false);
         }
     }, [user?.id, setCurrentSessionId]);
+
+    // Function to load older messages (pagination)
+    const loadPreviousMessages = useCallback(async () => {
+        if (!user?.id || !dbSessionId || !pagination?.hasMore || !pagination?.oldestTimestamp || isLoadingMore) return;
+
+        setIsLoadingMore(true);
+        try {
+            const response = await getChatHistory(dbSessionId, user.id, {
+                limit: 50,
+                before: pagination.oldestTimestamp
+            });
+
+            if (response.messages.length > 0) {
+                const olderMessages: Message[] = response.messages.map(msg => ({
+                    id: msg.id,
+                    content: msg.content,
+                    role: msg.role,
+                    timestamp: new Date(msg.timestamp)
+                }));
+                // Prepend older messages to the beginning
+                setMessages(prev => [...olderMessages, ...prev]);
+                setPagination(response.pagination || null);
+            }
+        } catch (err) {
+            console.error('Failed to load previous messages:', err);
+        } finally {
+            setIsLoadingMore(false);
+        }
+    }, [user?.id, dbSessionId, pagination, isLoadingMore]);
 
     // Sync messages state with chat context for sidebar
     useEffect(() => {
@@ -373,7 +419,6 @@ export default function ChatWidget() {
             setAttachedFiles([]);
             setSelectedPolicy(null); // Clear policy selection after sending
             setIsLoading(true);
-            setError(null);
 
             try {
                 // Create session on first message if we don't have one
@@ -417,7 +462,6 @@ export default function ChatWidget() {
                 }
             } catch (err) {
                 console.error("Error sending message:", err);
-                setError("Failed to send message. Please try again.");
 
                 // Add error message to chat
                 const errorMessage: Message = {
@@ -566,7 +610,7 @@ export default function ChatWidget() {
                         <span className="animate-bounce text-2xl text-[#de5e48]" style={{ animationDelay: "150ms" }}>●</span>
                         <span className="animate-bounce text-2xl text-[#de5e48]" style={{ animationDelay: "300ms" }}>●</span>
                     </div>
-                    <p className="text-muted-foreground font-[family-name:var(--font-work-sans)]">Loading your chat...</p>
+                    <p className="text-muted-foreground font-(family-name:--font-work-sans)">Loading your chat...</p>
                 </div>
             ) : messages.length === 0 && !isUploadingPolicy ? (
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-6 max-w-2xl w-full mx-auto px-4">
@@ -599,10 +643,10 @@ export default function ChatWidget() {
                         aria-hidden="true"
                     />
                     <div className="flex flex-col items-center gap-2">
-                        <p className="text-lg font-medium text-foreground font-[family-name:var(--font-work-sans)]">
+                        <p className="text-lg font-medium text-foreground font-(family-name:--font-work-sans)">
                             Analyzing your policy document...
                         </p>
-                        <p className="text-sm text-muted-foreground font-[family-name:var(--font-work-sans)]">
+                        <p className="text-sm text-muted-foreground font-(family-name:--font-work-sans)">
                             This may take a moment
                         </p>
                         <div className="flex gap-1 mt-2" aria-hidden="true">
@@ -618,6 +662,27 @@ export default function ChatWidget() {
                     aria-live="polite"
                     aria-label="Chat messages"
                 >
+                    {/* Load Previous Messages Button */}
+                    {pagination?.hasMore && (
+                        <div className="flex justify-center pt-2 pb-4">
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={loadPreviousMessages}
+                                disabled={isLoadingMore}
+                                className="text-muted-foreground hover:text-foreground text-sm"
+                            >
+                                {isLoadingMore ? (
+                                    <>
+                                        <span className="animate-spin mr-2">●</span>
+                                        Loading...
+                                    </>
+                                ) : (
+                                    "Load previous messages"
+                                )}
+                            </Button>
+                        </div>
+                    )}
                     {messages.map((message) => {
                         const showUploadButton = hasUploadMarker(message.content);
                         const displayContent = showUploadButton ? removeUploadMarker(message.content) : message.content;
@@ -645,13 +710,13 @@ export default function ChatWidget() {
                                 )}
                                 <div className="flex flex-col gap-2">
                                     {message.attachedPolicy && (
-                                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-[family-name:var(--font-work-sans)]">
+                                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-(family-name:--font-work-sans)">
                                             <FontAwesomeIcon icon={faFileLines} className="size-3 text-[#de5e48]" />
                                             <span>Using {getPolicyDisplayName(message.attachedPolicy.policyType)}</span>
                                         </div>
                                     )}
                                     {message.role === "assistant" ? (
-                                        <div className="text-base font-[family-name:var(--font-work-sans)] prose prose-sm max-w-none">
+                                        <div className="text-base font-(family-name:--font-work-sans) prose prose-sm max-w-none">
                                             <ReactMarkdown
                                                 rehypePlugins={[rehypeSanitize]}
                                                 components={{
@@ -704,12 +769,12 @@ export default function ChatWidget() {
                                             </ReactMarkdown>
                                         </div>
                                     ) : (
-                                        <p className="text-base whitespace-pre-wrap font-[family-name:var(--font-work-sans)]">{displayContent}</p>
+                                        <p className="text-base whitespace-pre-wrap font-(family-name:--font-work-sans)">{displayContent}</p>
                                     )}
                                     {showUploadButton && (
                                         <Button
                                             onClick={() => setShowUploadModal(true)}
-                                            className="mt-2 bg-[#333333] hover:bg-[#333333]/90 font-bold text-[#f7f6f3] font-[family-name:var(--font-work-sans)] rounded-full"
+                                            className="mt-2 bg-[#333333] hover:bg-[#333333]/90 font-bold text-[#f7f6f3] font-(family-name:--font-work-sans) rounded-full"
                                         >
                                             <FontAwesomeIcon icon={faUpload} className="mr-2 size-4" />
                                             Upload Policy Document
@@ -720,7 +785,7 @@ export default function ChatWidget() {
                                     <div className="shrink-0 -mr-2">
                                         <Avatar className="h-6 w-6">
                                             <AvatarImage src={user?.user_metadata?.avatar_url} alt="User" />
-                                            <AvatarFallback className="bg-[#333333] text-white text-xs font-bold font-[family-name:var(--font-alte-haas)]">
+                                            <AvatarFallback className="bg-[#333333] text-white text-xs font-bold font-(family-name:--font-alte-haas)">
                                                 {getUserInitials()}
                                             </AvatarFallback>
                                         </Avatar>
@@ -823,7 +888,7 @@ export default function ChatWidget() {
                         <div className="flex items-center gap-2 mb-2 px-2">
                             <Badge
                                 variant="secondary"
-                                className="group relative h-7 cursor-pointer overflow-hidden text-xs transition-colors hover:bg-[#de5e48]/20 bg-[#de5e48]/10 border-[#de5e48]/20 pr-7 font-[family-name:var(--font-work-sans)]"
+                                className="group relative h-7 cursor-pointer overflow-hidden text-xs transition-colors hover:bg-[#de5e48]/20 bg-[#de5e48]/10 border-[#de5e48]/20 pr-7 font-(family-name:--font-work-sans)"
                             >
                                 <span className="flex h-full items-center gap-1.5 overflow-hidden font-normal">
                                     <FontAwesomeIcon icon={faFileLines} className="text-[#de5e48] size-3" />
@@ -844,7 +909,7 @@ export default function ChatWidget() {
                     )}
                     <Textarea
                         ref={textareaRef}
-                        className="max-h-50 min-h-14 resize-none rounded-none border-none bg-transparent! p-0 pl-2 pt-1 text-base md:text-base shadow-none focus-visible:border-transparent focus-visible:ring-0 font-[family-name:var(--font-work-sans)] placeholder:text-base placeholder:text-[#666666]"
+                        className="max-h-50 min-h-14 resize-none rounded-none border-none bg-transparent! p-0 pl-2 pt-1 text-base md:text-base shadow-none focus-visible:border-transparent focus-visible:ring-0 font-(family-name:--font-work-sans) placeholder:text-base placeholder:text-[#666666]"
                         onChange={handleTextareaChange}
                         onKeyDown={handleKeyDown}
                         placeholder="What can I help you with?"
@@ -868,7 +933,7 @@ export default function ChatWidget() {
                                     <TooltipTrigger asChild>
                                         <DropdownMenuTrigger asChild>
                                             <Button
-                                                className="ml-[-2px] h-7 w-7 rounded-full hover:bg-[#333333]/5 transition-colors"
+                                                className="-ml-0.5 h-7 w-7 rounded-full hover:bg-[#333333]/5 transition-colors"
                                                 size="icon"
                                                 type="button"
                                                 variant="ghost"
@@ -881,14 +946,14 @@ export default function ChatWidget() {
                                     <TooltipContent
                                         side="top"
                                         sideOffset={4}
-                                        className="bg-[#333333] text-[#f7f6f3] font-[family-name:var(--font-work-sans)]"
+                                        className="bg-[#333333] text-[#f7f6f3] font-(family-name:--font-work-sans)"
                                     >
                                         Add
                                     </TooltipContent>
                                 </Tooltip>
                                 <DropdownMenuContent
                                     align="start"
-                                    className="rounded-2xl p-1.5 border-[#333333]/10 shadow-lg bg-[hsl(0_0%_98%)] font-[family-name:var(--font-work-sans)]"
+                                    className="rounded-2xl p-1.5 border-[#333333]/10 shadow-lg bg-[hsl(0_0%_98%)] font-(family-name:--font-work-sans)"
                                 >
                                     <DropdownMenuItem
                                         className="cursor-pointer hover:bg-[#333333]/5 focus:bg-[#333333]/5 rounded-lg"
@@ -935,7 +1000,7 @@ export default function ChatWidget() {
                                     <TooltipContent
                                         side="top"
                                         sideOffset={4}
-                                        className="bg-[#333333] text-[#f7f6f3] font-[family-name:var(--font-work-sans)]"
+                                        className="bg-[#333333] text-[#f7f6f3] font-(family-name:--font-work-sans)"
                                     >
                                         {selectedPolicy
                                             ? getPolicyDisplayName(selectedPolicy.policyType)
@@ -944,7 +1009,7 @@ export default function ChatWidget() {
                                 </Tooltip>
                                 <DropdownMenuContent
                                     align="start"
-                                    className="w-56 rounded-2xl p-1.5 border-[#333333]/10 shadow-lg bg-[hsl(0_0%_98%)] font-[family-name:var(--font-work-sans)]"
+                                    className="w-56 rounded-2xl p-1.5 border-[#333333]/10 shadow-lg bg-[hsl(0_0%_98%)] font-(family-name:--font-work-sans)"
                                 >
                                     <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
                                         Select a policy for context
@@ -1019,7 +1084,7 @@ export default function ChatWidget() {
                                 <TooltipContent
                                     side="top"
                                     sideOffset={4}
-                                    className="bg-[#333333] text-[#f7f6f3] font-[family-name:var(--font-work-sans)]"
+                                    className="bg-[#333333] text-[#f7f6f3] font-(family-name:--font-work-sans)"
                                 >
                                     Send
                                 </TooltipContent>
