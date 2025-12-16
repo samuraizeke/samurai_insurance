@@ -2,9 +2,1427 @@
 > backend@1.0.0 dev
 > ts-node server.ts
 
-[dotenv@17.2.3] injecting env (12) from .env -- tip: ⚙️  write to custom object with { processEnv: myObject }
+[dotenv@17.2.3] injecting env (11) from .env -- tip: 📡 add observability to secrets: https://dotenvx.com/ops
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild
+ℹ️   Development mode: Using credentials file
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔑 add access controls to secrets: https://dotenvx.com/ops
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔄 add secrets lifecycle management: https://dotenvx.com/ops
 [dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  suppress all logs with { quiet: true }
-[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  enable debug logging with { debug: true }
-[dotenv@17.2.3] injecting env (0) from .env -- tip: 📡 add observability to secrets: https://dotenvx.com/ops
-[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  enable debug logging with { debug: true }
-🚀 Server listening on port 8080
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 👥 sync secrets across teammates & machines: https://dotenvx.com/ops
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔄 add secrets lifecycle management: https://dotenvx.com/ops
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com
+ℹ️   Server started
+ℹ️  [e74ed1b4] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> pending
+ℹ️  [1b44992f] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> pending
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+✅ Found 1 documents
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+ℹ️  [e74ed1b4][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> 304
+ℹ️  [c219eca1] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> pending
+✅ Found 1 documents
+📁 Stored home policy for user c4c34bc4-18ef-483b-98e4-156a80b921e7 (carrier: Unknown)
+📦 Loaded 1 documents into cache for user c4c34bc4-18ef-483b-98e4-156a80b921e7
+ℹ️  [c219eca1] Returning user policies from database
+ℹ️  [1b44992f][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> 200
+ℹ️  [6af0b775] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> pending
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+ℹ️  [c219eca1][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> 304
+✅ Found 1 documents
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+✅ Found 1 documents
+📁 Stored home policy for user c4c34bc4-18ef-483b-98e4-156a80b921e7 (carrier: Unknown)
+📦 Loaded 1 documents into cache for user c4c34bc4-18ef-483b-98e4-156a80b921e7
+ℹ️   Returning user policies from database
+ℹ️  [6af0b775][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> 304
+ℹ️  [caf722f2] Incoming request: DELETE /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies/home
+   DELETE /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies/home -> pending
+🗑️ Document 14 marked as deleted
+🗑️ Deleted home policy for user c4c34bc4-18ef-483b-98e4-156a80b921e7
+ℹ️  [caf722f2][user:c4c34bc4] Deleted user policy
+ℹ️  [caf722f2][user:c4c34bc4] DELETE /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies/home
+   DELETE /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies/home -> 200
+ℹ️  [0a60d3e6] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> pending
+ℹ️  [2706b781] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> pending
+ℹ️  [6c78bc1b] Incoming request: GET /api/chat-sessions/4/messages
+   GET /api/chat-sessions/4/messages?userId=c4c34bc4-18ef-483b-98e4-156a80b921e7&limit=50 -> pending
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+✅ Found 0 documents
+ℹ️  [2706b781][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> 200
+ℹ️  [ad263d46] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> pending
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+ℹ️  [6c78bc1b][user:c4c34bc4] GET /api/chat-sessions/4/messages
+   GET /api/chat-sessions/4/messages?userId=c4c34bc4-18ef-483b-98e4-156a80b921e7&limit=50 -> 304
+ℹ️  [0a60d3e6][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> 304
+ℹ️  [a5670cf4] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> pending
+✅ Found 0 documents
+ℹ️  [ad263d46][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> 304
+ℹ️  [d1feaecf] Incoming request: GET /api/feedback/chat/17
+   GET /api/feedback/chat/17 -> pending
+ℹ️  [a5670cf4][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> 304
+ℹ️  [d1feaecf][user:c4c34bc4] GET /chat/17
+   GET /api/feedback/chat/17 -> 304
+ℹ️  [7a7fb7b0] Incoming request: GET /api/feedback/chat/17
+   GET /api/feedback/chat/17 -> pending
+ℹ️  [7a7fb7b0][user:c4c34bc4] GET /chat/17
+   GET /api/feedback/chat/17 -> 304
+ℹ️  [dcc28739] Incoming request: POST /api/upload-policy
+   POST /api/upload-policy -> pending
+ℹ️  [dcc28739] Incoming document upload
+ℹ️  [dcc28739][user:c4c34bc4] Processing document upload
+
+📤 Processing document upload: Home Policy-2.pdf (application/pdf)
+👤 Associated with user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+📦 Step 1: Uploading to GCS - Policies/1765919839780_session_1765919835356_9qfnzd_Home_Policy-2.pdf
+☁️ Uploading to GCS: samurai-insurance-app/Policies/1765919839780_session_1765919835356_9qfnzd_Home_Policy-2.pdf
+✅ Successfully uploaded: Policies/1765919839780_session_1765919835356_9qfnzd_Home_Policy-2.pdf
+✅ Step 1 complete: GCS upload successful
+📦 Step 2: Extracting text from pdf
+📄 Extracting text from PDF using Gemini...
+✅ Extracted 1386 characters from PDF
+📋 EXTRACTED TEXT START ===
+Here's a structured extraction of all the text from the provided insurance document:
+
+---
+
+**Document 1: Important Notice - Roof Surface Rating (AD 91 41 04/16)**
+
+*   **Carrier:** WESTFIELD®
+*   **Document Title:** IMPORTANT NOTICE TO OUR POLICYHOLDERS
+*   **Subtitle:** ROOF SURFACE RATING
+*   **Content:**
+    *   This notice informs policyholders about a new rate factor based on the age and type of roof on their dwelling.
+    *   **Roof Age Determination:**
+        *   If the age of your home is less than 15 years old, the roof age is assumed to be the same as the home age.
+        *   If the age of your home is 15 years old or greater, the age is determined from one of several sources:
+            *   From a third-party source that provides this information.
+            *   Through a survey completed by you or an insured under your policy.
+            *   At the time of application, from your personal lines insurance agent.
+    *   **Action Required:**
+        *   Refer to the Declaration page under the homeowners rating information section to verify the roof age used is correct.
+        *   No action is needed unless the roof age is different from the Declaration page.
+        *   If your roof is replaced, contact your agent to ensure accurate rating.
+        *   Keep documentation (receipts or invoices) of roof replacement/updates for verification.
+    *   **
+=== EXTRACTED TEXT END
+✅ Step 2 complete: Extracted 1386 characters
+📦 Step 3: Analyzing policy text with AI
+🤖 Analyzing policy document...
+✅ Policy analysis complete
+✅ Step 3 complete: Analysis generated (1523 chars)
+📋 Detected 1 policy type(s): home
+   Detection details: [{"type":"home","confidence":"medium","score":16},{"type":"auto","confidence":"low","score":2}]
+📁 Stored home policy for user c4c34bc4-18ef-483b-98e4-156a80b921e7 (carrier: Unknown)
+✅ Stored home policy from Unknown
+   For user c4c34bc4-18ef-483b-98e4-156a80b921e7
+💾 Persisting document to database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+✅ Document persisted with ID: 15
+📊 home policy linked to user account (ID: 15)
+ℹ️  [dcc28739][user:c4c34bc4] Document upload processing completed
+ℹ️  [dcc28739][user:c4c34bc4] Sending success response to client
+ℹ️  [dcc28739][user:c4c34bc4] Success response sent
+ℹ️  [e72fcb7a] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> pending
+ℹ️  [c452cf3b] Incoming request: GET /api/chat-sessions/4/messages
+   GET /api/chat-sessions/4/messages?userId=c4c34bc4-18ef-483b-98e4-156a80b921e7&limit=50 -> pending
+ℹ️  [11ff3be7] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> pending
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+✅ Found 1 documents
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+✅ Found 1 documents
+📁 Stored home policy for user c4c34bc4-18ef-483b-98e4-156a80b921e7 (carrier: Unknown)
+📦 Loaded 1 documents into cache for user c4c34bc4-18ef-483b-98e4-156a80b921e7
+ℹ️  [11ff3be7] Returning user policies from database
+ℹ️  [11ff3be7][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> 200
+ℹ️  [e72fcb7a][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> 304
+ℹ️  [c452cf3b][user:c4c34bc4] GET /api/chat-sessions/4/messages
+   GET /api/chat-sessions/4/messages?userId=c4c34bc4-18ef-483b-98e4-156a80b921e7&limit=50 -> 304
+ℹ️  [6d769a6f] Incoming request: GET /api/feedback/chat/17
+   GET /api/feedback/chat/17 -> pending
+ℹ️  [6d769a6f][user:c4c34bc4] GET /chat/17
+   GET /api/feedback/chat/17 -> 304
+ℹ️  [6334d847] Incoming request: GET /api/feedback/chat/17
+   GET /api/feedback/chat/17 -> pending
+ℹ️  [6334d847][user:c4c34bc4] GET /chat/17
+   GET /api/feedback/chat/17 -> 304
+ℹ️  [31545e8b] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> pending
+ℹ️  [d0a94fe3] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> pending
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+✅ Found 1 documents
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+✅ Found 1 documents
+📁 Stored home policy for user c4c34bc4-18ef-483b-98e4-156a80b921e7 (carrier: Unknown)
+📦 Loaded 1 documents into cache for user c4c34bc4-18ef-483b-98e4-156a80b921e7
+ℹ️  [d0a94fe3] Returning user policies from database
+ℹ️  [d0a94fe3][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> 304
+ℹ️  [da716ebd] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> pending
+ℹ️  [31545e8b][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> 304
+ℹ️  [4d5c3cc8] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> pending
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+✅ Found 1 documents
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+✅ Found 1 documents
+📁 Stored home policy for user c4c34bc4-18ef-483b-98e4-156a80b921e7 (carrier: Unknown)
+📦 Loaded 1 documents into cache for user c4c34bc4-18ef-483b-98e4-156a80b921e7
+ℹ️  [4d5c3cc8] Returning user policies from database
+ℹ️  [da716ebd][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> 304
+ℹ️  [4d5c3cc8][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> 304
+ℹ️  [ed51cd8e] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> pending
+ℹ️  [00fd5d91] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> pending
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+✅ Found 1 documents
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+✅ Found 1 documents
+📁 Stored home policy for user c4c34bc4-18ef-483b-98e4-156a80b921e7 (carrier: Unknown)
+📦 Loaded 1 documents into cache for user c4c34bc4-18ef-483b-98e4-156a80b921e7
+ℹ️  [00fd5d91] Returning user policies from database
+ℹ️  [00fd5d91][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> 304
+ℹ️  [ed51cd8e][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> 304
+ℹ️  [82b3d7f1] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> pending
+ℹ️  [82b3d7f1][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> 304
+ℹ️  [a748397b] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> pending
+ℹ️  [0ee346c0] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> pending
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+✅ Found 1 documents
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+ℹ️  [a748397b][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> 304
+ℹ️  [997a3932] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> pending
+✅ Found 1 documents
+📁 Stored home policy for user c4c34bc4-18ef-483b-98e4-156a80b921e7 (carrier: Unknown)
+📦 Loaded 1 documents into cache for user c4c34bc4-18ef-483b-98e4-156a80b921e7
+ℹ️  [997a3932] Returning user policies from database
+ℹ️  [0ee346c0][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> 304
+ℹ️  [997a3932][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> 304
+ℹ️  [f10f3c25] Incoming request: DELETE /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies/home
+   DELETE /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies/home -> pending
+🗑️ Document 15 marked as deleted
+🗑️ Deleted home policy for user c4c34bc4-18ef-483b-98e4-156a80b921e7
+ℹ️  [f10f3c25][user:c4c34bc4] Deleted user policy
+ℹ️  [f10f3c25][user:c4c34bc4] DELETE /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies/home
+   DELETE /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies/home -> 200
+ℹ️  [95e137bd] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> pending
+ℹ️  [aa3b8b3c] Incoming request: GET /api/chat-sessions/4/messages
+   GET /api/chat-sessions/4/messages?userId=c4c34bc4-18ef-483b-98e4-156a80b921e7&limit=50 -> pending
+ℹ️  [9d51d52c] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> pending
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+✅ Found 0 documents
+ℹ️  [9d51d52c][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> 200
+ℹ️  [f1c52063] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> pending
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+ℹ️  [95e137bd][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> 304
+ℹ️  [7470b19c] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> pending
+ℹ️  [aa3b8b3c][user:c4c34bc4] GET /api/chat-sessions/4/messages
+   GET /api/chat-sessions/4/messages?userId=c4c34bc4-18ef-483b-98e4-156a80b921e7&limit=50 -> 304
+ℹ️  [77e5d8f8] Incoming request: GET /api/chat-sessions/4/messages
+   GET /api/chat-sessions/4/messages?userId=c4c34bc4-18ef-483b-98e4-156a80b921e7&limit=50 -> pending
+✅ Found 0 documents
+ℹ️  [f1c52063][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> 304
+ℹ️  [37341ebd] Incoming request: GET /api/feedback/chat/17
+   GET /api/feedback/chat/17 -> pending
+ℹ️  [7470b19c][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> 304
+ℹ️  [77e5d8f8][user:c4c34bc4] GET /api/chat-sessions/4/messages
+   GET /api/chat-sessions/4/messages?userId=c4c34bc4-18ef-483b-98e4-156a80b921e7&limit=50 -> 304
+ℹ️  [37341ebd][user:c4c34bc4] GET /chat/17
+   GET /api/feedback/chat/17 -> 304
+ℹ️  [ada46c7c] Incoming request: GET /api/feedback/chat/17
+   GET /api/feedback/chat/17 -> pending
+ℹ️  [ada46c7c][user:c4c34bc4] GET /chat/17
+   GET /api/feedback/chat/17 -> 304
+ℹ️  [6177479a] Incoming request: POST /api/upload-policy
+   POST /api/upload-policy -> pending
+ℹ️  [6177479a] Incoming document upload
+ℹ️  [6177479a][user:c4c34bc4] Processing document upload
+
+📤 Processing document upload: My Auto Policy.pdf (application/pdf)
+👤 Associated with user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+📦 Step 1: Uploading to GCS - Policies/1765920106127_session_1765920098518_7f70zt_My_Auto_Policy.pdf
+☁️ Uploading to GCS: samurai-insurance-app/Policies/1765920106127_session_1765920098518_7f70zt_My_Auto_Policy.pdf
+✅ Successfully uploaded: Policies/1765920106127_session_1765920098518_7f70zt_My_Auto_Policy.pdf
+✅ Step 1 complete: GCS upload successful
+📦 Step 2: Extracting text from pdf
+📄 Extracting text from PDF using Gemini...
+✅ Extracted 0 characters from PDF
+📋 EXTRACTED TEXT START ===
+
+=== EXTRACTED TEXT END
+✅ Step 2 complete: Extracted 0 characters
+ℹ️  [6177479a][user:c4c34bc4] Document upload processing completed
+❌ [6177479a][user:c4c34bc4] Sending error response to client
+ℹ️  [6177479a][user:c4c34bc4] Error response sent
+ℹ️  [d477c58f] Incoming request: POST /api/upload-policy
+   POST /api/upload-policy -> pending
+ℹ️  [d477c58f] Incoming document upload
+ℹ️  [d477c58f][user:c4c34bc4] Processing document upload
+
+📤 Processing document upload: Home Policy-2.pdf (application/pdf)
+👤 Associated with user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+📦 Step 1: Uploading to GCS - Policies/1765920367033_session_1765920098518_7f70zt_Home_Policy-2.pdf
+☁️ Uploading to GCS: samurai-insurance-app/Policies/1765920367033_session_1765920098518_7f70zt_Home_Policy-2.pdf
+✅ Successfully uploaded: Policies/1765920367033_session_1765920098518_7f70zt_Home_Policy-2.pdf
+✅ Step 1 complete: GCS upload successful
+📦 Step 2: Extracting text from pdf
+📄 Extracting text from PDF using Gemini...
+✅ Extracted 1912 characters from PDF
+📋 EXTRACTED TEXT START ===
+Here's a structured extraction of all the information from the provided insurance document:
+
+---
+
+**Document 1: Important Notice To Our Policyholders - Roof Surface Rating (Page 1)**
+
+*   **Carrier:** Westfield
+*   **Document Type:** Important Notice to Policyholders
+*   **Subject:** Roof Surface Rating
+*   **Key Information:**
+    *   A new rate factor will be applied based on the age and type of roof on your dwelling.
+    *   If the age of your home is less than 15 years old, the roof age is assumed to be the same as the home age.
+    *   If the age of your home is 15 years old or greater, the roof age was determined from one of several sources:
+        *   From a third party source that provides this information.
+        *   Through a survey completed by you or an insured under your policy.
+        *   At the time of application, from your personal lines insurance agent.
+    *   **Action Required:** Refer to the Declaration page under the homeowners rating information section to verify the age used is correct. No action is needed unless the roof age is different. Contact your agent if your roof is replaced. Keep documentation (receipts/invoices) for verification.
+*   **Form ID:** AD 91 41 04/16
+
+---
+
+**Document 2: Important Notice To Our Policyholders - Required Wind/Hail Deductible (Page 2)**
+
+*   **Carrier:** Westfield
+*   **Company:** American Select Insurance Company
+*   **Date:** 10/07/25 (Likely a date format, e.g., October 7, 2025)
+*   **Document Type:** Important Notice to Policyholders
+*   **Subject:** Required Wind/Hail Deductible
+*   **Key Information:**
+    *   Wind/hail deductible may have been adjusted to meet mandatory limits.
+    *   A wind/hail deductible has been added or adjusted based on Coverage A and Roof Age criteria:
+        *   **$2,500 deductible:** Coverage A ≤ $750,000 AND roof age < 15 years.
+        *   **$5,000 deductible:** Coverage A ≤ $750,000
+=== EXTRACTED TEXT END
+✅ Step 2 complete: Extracted 1912 characters
+📦 Step 3: Analyzing policy text with AI
+🤖 Analyzing policy document...
+✅ Policy analysis complete
+✅ Step 3 complete: Analysis generated (1645 chars)
+📋 Detected 1 policy type(s): home
+   Detection details: [{"type":"home","confidence":"low","score":6},{"type":"auto","confidence":"low","score":2}]
+📁 Stored home policy for user c4c34bc4-18ef-483b-98e4-156a80b921e7 (carrier: Westfield)
+✅ Stored home policy from Westfield
+   For user c4c34bc4-18ef-483b-98e4-156a80b921e7
+💾 Persisting document to database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+✅ Document persisted with ID: 16
+📊 home policy linked to user account (ID: 16)
+ℹ️  [d477c58f][user:c4c34bc4] Document upload processing completed
+ℹ️  [d477c58f][user:c4c34bc4] Sending success response to client
+ℹ️  [d477c58f][user:c4c34bc4] Success response sent
+ℹ️  [c2724e4e] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> pending
+ℹ️  [0adfe4aa] Incoming request: GET /api/chat-sessions/4/messages
+   GET /api/chat-sessions/4/messages?userId=c4c34bc4-18ef-483b-98e4-156a80b921e7&limit=50 -> pending
+ℹ️  [ce761f96] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> pending
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+✅ Found 1 documents
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+✅ Found 1 documents
+📁 Stored home policy for user c4c34bc4-18ef-483b-98e4-156a80b921e7 (carrier: Westfield)
+📦 Loaded 1 documents into cache for user c4c34bc4-18ef-483b-98e4-156a80b921e7
+ℹ️  [ce761f96] Returning user policies from database
+ℹ️  [ce761f96][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> 200
+ℹ️  [ba5c7a57] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> pending
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+ℹ️  [c2724e4e][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> 304
+ℹ️  [4b8368aa] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> pending
+ℹ️  [0adfe4aa][user:c4c34bc4] GET /api/chat-sessions/4/messages
+   GET /api/chat-sessions/4/messages?userId=c4c34bc4-18ef-483b-98e4-156a80b921e7&limit=50 -> 304
+✅ Found 1 documents
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+ℹ️  [3074a38a] Incoming request: GET /api/feedback/chat/17
+   GET /api/feedback/chat/17 -> pending
+✅ Found 1 documents
+📁 Stored home policy for user c4c34bc4-18ef-483b-98e4-156a80b921e7 (carrier: Westfield)
+📦 Loaded 1 documents into cache for user c4c34bc4-18ef-483b-98e4-156a80b921e7
+ℹ️  [3074a38a] Returning user policies from database
+ℹ️  [ba5c7a57][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> 304
+ℹ️  [4b8368aa][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> 304
+ℹ️  [3074a38a][user:c4c34bc4] GET /chat/17
+   GET /api/feedback/chat/17 -> 304
+ℹ️  [a0c6cc9e] Incoming request: GET /api/feedback/chat/17
+   GET /api/feedback/chat/17 -> pending
+ℹ️  [a0c6cc9e][user:c4c34bc4] GET /chat/17
+   GET /api/feedback/chat/17 -> 304
+ℹ️  [55c5e9a0] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> pending
+ℹ️  [7d71b161] Incoming request: GET /api/chat-sessions/4/messages
+   GET /api/chat-sessions/4/messages?userId=c4c34bc4-18ef-483b-98e4-156a80b921e7&limit=50 -> pending
+ℹ️  [7f915bf6] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> pending
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+✅ Found 1 documents
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+✅ Found 1 documents
+📁 Stored home policy for user c4c34bc4-18ef-483b-98e4-156a80b921e7 (carrier: Westfield)
+📦 Loaded 1 documents into cache for user c4c34bc4-18ef-483b-98e4-156a80b921e7
+ℹ️  [7f915bf6] Returning user policies from database
+ℹ️  [7f915bf6][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> 304
+ℹ️  [b369b93b] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> pending
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+ℹ️  [55c5e9a0][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> 304
+ℹ️  [36b75935] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> pending
+ℹ️  [7d71b161][user:c4c34bc4] GET /api/chat-sessions/4/messages
+   GET /api/chat-sessions/4/messages?userId=c4c34bc4-18ef-483b-98e4-156a80b921e7&limit=50 -> 304
+✅ Found 1 documents
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+✅ Found 1 documents
+📁 Stored home policy for user c4c34bc4-18ef-483b-98e4-156a80b921e7 (carrier: Westfield)
+📦 Loaded 1 documents into cache for user c4c34bc4-18ef-483b-98e4-156a80b921e7
+ℹ️   Returning user policies from database
+ℹ️  [b369b93b][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> 304
+ℹ️  [90ea62fe] Incoming request: GET /api/feedback/chat/17
+   GET /api/feedback/chat/17 -> pending
+ℹ️  [36b75935][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> 304
+ℹ️  [90ea62fe][user:c4c34bc4] GET /chat/17
+   GET /api/feedback/chat/17 -> 304
+ℹ️  [64226676] Incoming request: GET /api/feedback/chat/17
+   GET /api/feedback/chat/17 -> pending
+ℹ️  [64226676][user:c4c34bc4] GET /chat/17
+   GET /api/feedback/chat/17 -> 304
+ℹ️  [2507ca59] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> pending
+ℹ️  [47188d51] Incoming request: GET /api/chat-sessions/4/messages
+   GET /api/chat-sessions/4/messages?userId=c4c34bc4-18ef-483b-98e4-156a80b921e7&limit=50 -> pending
+ℹ️  [1147bc4e] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> pending
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+✅ Found 1 documents
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+✅ Found 1 documents
+📁 Stored home policy for user c4c34bc4-18ef-483b-98e4-156a80b921e7 (carrier: Westfield)
+📦 Loaded 1 documents into cache for user c4c34bc4-18ef-483b-98e4-156a80b921e7
+ℹ️  [1147bc4e] Returning user policies from database
+ℹ️  [1147bc4e][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> 304
+ℹ️  [cad97292] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> pending
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+ℹ️  [47188d51][user:c4c34bc4] GET /api/chat-sessions/4/messages
+   GET /api/chat-sessions/4/messages?userId=c4c34bc4-18ef-483b-98e4-156a80b921e7&limit=50 -> 304
+ℹ️  [2507ca59][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> 304
+ℹ️  [3a22e3e6] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> pending
+✅ Found 1 documents
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+ℹ️  [ecd91668] Incoming request: GET /api/feedback/chat/17
+   GET /api/feedback/chat/17 -> pending
+✅ Found 1 documents
+📁 Stored home policy for user c4c34bc4-18ef-483b-98e4-156a80b921e7 (carrier: Westfield)
+📦 Loaded 1 documents into cache for user c4c34bc4-18ef-483b-98e4-156a80b921e7
+ℹ️  [ecd91668] Returning user policies from database
+ℹ️  [cad97292][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> 304
+ℹ️  [3a22e3e6][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> 304
+ℹ️  [ecd91668][user:c4c34bc4] GET /chat/17
+   GET /api/feedback/chat/17 -> 304
+ℹ️  [0afc1d06] Incoming request: GET /api/feedback/chat/17
+   GET /api/feedback/chat/17 -> pending
+ℹ️  [0afc1d06][user:c4c34bc4] GET /chat/17
+   GET /api/feedback/chat/17 -> 304
+ℹ️  [bd2bf815] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> pending
+ℹ️  [8cb2f0ca] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> pending
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+✅ Found 1 documents
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+✅ Found 1 documents
+📁 Stored home policy for user c4c34bc4-18ef-483b-98e4-156a80b921e7 (carrier: Westfield)
+📦 Loaded 1 documents into cache for user c4c34bc4-18ef-483b-98e4-156a80b921e7
+ℹ️  [8cb2f0ca] Returning user policies from database
+ℹ️  [8cb2f0ca][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> 304
+ℹ️  [b830bd5f] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> pending
+ℹ️  [bd2bf815][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> 304
+ℹ️  [f638121b] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> pending
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+✅ Found 1 documents
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+✅ Found 1 documents
+📁 Stored home policy for user c4c34bc4-18ef-483b-98e4-156a80b921e7 (carrier: Westfield)
+📦 Loaded 1 documents into cache for user c4c34bc4-18ef-483b-98e4-156a80b921e7
+ℹ️  [f638121b] Returning user policies from database
+ℹ️  [b830bd5f][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> 304
+ℹ️  [f638121b][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> 304
+ℹ️  [2bb92ebb] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> pending
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+✅ Found 1 documents
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+✅ Found 1 documents
+📁 Stored home policy for user c4c34bc4-18ef-483b-98e4-156a80b921e7 (carrier: Westfield)
+📦 Loaded 1 documents into cache for user c4c34bc4-18ef-483b-98e4-156a80b921e7
+ℹ️  [2bb92ebb] Returning user policies from database
+ℹ️  [2bb92ebb][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> 304
+ℹ️  [7d959618] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> pending
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+✅ Found 1 documents
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+✅ Found 1 documents
+📁 Stored home policy for user c4c34bc4-18ef-483b-98e4-156a80b921e7 (carrier: Westfield)
+📦 Loaded 1 documents into cache for user c4c34bc4-18ef-483b-98e4-156a80b921e7
+ℹ️  [7d959618] Returning user policies from database
+ℹ️  [7d959618][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> 304
+ℹ️  [f77ee936] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> pending
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+✅ Found 1 documents
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+✅ Found 1 documents
+📁 Stored home policy for user c4c34bc4-18ef-483b-98e4-156a80b921e7 (carrier: Westfield)
+📦 Loaded 1 documents into cache for user c4c34bc4-18ef-483b-98e4-156a80b921e7
+ℹ️  [f77ee936] Returning user policies from database
+ℹ️  [f77ee936][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> 304
+ℹ️  [29902930] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> pending
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+✅ Found 1 documents
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+✅ Found 1 documents
+📁 Stored home policy for user c4c34bc4-18ef-483b-98e4-156a80b921e7 (carrier: Westfield)
+📦 Loaded 1 documents into cache for user c4c34bc4-18ef-483b-98e4-156a80b921e7
+ℹ️  [29902930] Returning user policies from database
+ℹ️  [29902930][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> 304
+ℹ️  [6d29d36a] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> pending
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+✅ Found 1 documents
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+✅ Found 1 documents
+📁 Stored home policy for user c4c34bc4-18ef-483b-98e4-156a80b921e7 (carrier: Westfield)
+📦 Loaded 1 documents into cache for user c4c34bc4-18ef-483b-98e4-156a80b921e7
+ℹ️  [6d29d36a] Returning user policies from database
+ℹ️  [6d29d36a][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> 304
+ℹ️  [8544b885] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> pending
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+✅ Found 1 documents
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+✅ Found 1 documents
+📁 Stored home policy for user c4c34bc4-18ef-483b-98e4-156a80b921e7 (carrier: Westfield)
+📦 Loaded 1 documents into cache for user c4c34bc4-18ef-483b-98e4-156a80b921e7
+ℹ️  [8544b885] Returning user policies from database
+ℹ️  [8544b885][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> 304
+ℹ️  [0e8c7d61] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> pending
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+✅ Found 1 documents
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+✅ Found 1 documents
+📁 Stored home policy for user c4c34bc4-18ef-483b-98e4-156a80b921e7 (carrier: Westfield)
+📦 Loaded 1 documents into cache for user c4c34bc4-18ef-483b-98e4-156a80b921e7
+ℹ️  [0e8c7d61] Returning user policies from database
+ℹ️  [0e8c7d61][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> 304
+ℹ️  [68da8741] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> pending
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+✅ Found 1 documents
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+✅ Found 1 documents
+📁 Stored home policy for user c4c34bc4-18ef-483b-98e4-156a80b921e7 (carrier: Westfield)
+📦 Loaded 1 documents into cache for user c4c34bc4-18ef-483b-98e4-156a80b921e7
+ℹ️  [68da8741] Returning user policies from database
+ℹ️  [68da8741][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> 304
+ℹ️  [964a4726] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> pending
+ℹ️  [7580aec6] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> pending
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+✅ Found 1 documents
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+✅ Found 1 documents
+📁 Stored home policy for user c4c34bc4-18ef-483b-98e4-156a80b921e7 (carrier: Westfield)
+📦 Loaded 1 documents into cache for user c4c34bc4-18ef-483b-98e4-156a80b921e7
+ℹ️  [7580aec6] Returning user policies from database
+ℹ️  [7580aec6][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> 200
+ℹ️  [828d7bb7] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> pending
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+✅ Found 1 documents
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+ℹ️  [964a4726][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> 200
+ℹ️  [488fbc8b] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> pending
+✅ Found 1 documents
+📁 Stored home policy for user c4c34bc4-18ef-483b-98e4-156a80b921e7 (carrier: Westfield)
+📦 Loaded 1 documents into cache for user c4c34bc4-18ef-483b-98e4-156a80b921e7
+ℹ️  [488fbc8b] Returning user policies from database
+ℹ️  [828d7bb7][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> 304
+ℹ️  [ef25f045] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> pending
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+ℹ️  [488fbc8b][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> 304
+✅ Found 1 documents
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+✅ Found 1 documents
+📁 Stored home policy for user c4c34bc4-18ef-483b-98e4-156a80b921e7 (carrier: Westfield)
+📦 Loaded 1 documents into cache for user c4c34bc4-18ef-483b-98e4-156a80b921e7
+ℹ️   Returning user policies from database
+ℹ️  [ef25f045][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> 304
+ℹ️  [09ae4cb4] Incoming request: DELETE /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies/home
+   DELETE /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies/home -> pending
+🗑️ Document 16 marked as deleted
+🗑️ Deleted home policy for user c4c34bc4-18ef-483b-98e4-156a80b921e7
+ℹ️  [09ae4cb4][user:c4c34bc4] Deleted user policy
+ℹ️  [09ae4cb4][user:c4c34bc4] DELETE /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies/home
+   DELETE /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies/home -> 200
+ℹ️  [304aa2b4] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> pending
+ℹ️  [8e7d004f] Incoming request: GET /api/chat-sessions/4/messages
+   GET /api/chat-sessions/4/messages?userId=c4c34bc4-18ef-483b-98e4-156a80b921e7&limit=50 -> pending
+ℹ️  [867541db] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> pending
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+✅ Found 0 documents
+ℹ️  [867541db][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> 200
+ℹ️  [8744b520] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> pending
+ℹ️  [304aa2b4][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> 304
+ℹ️  [f012054d] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> pending
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+✅ Found 0 documents
+ℹ️  [8744b520][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> 304
+ℹ️  [8e7d004f][user:c4c34bc4] GET /api/chat-sessions/4/messages
+   GET /api/chat-sessions/4/messages?userId=c4c34bc4-18ef-483b-98e4-156a80b921e7&limit=50 -> 200
+ℹ️  [f012054d][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> 304
+ℹ️  [9838c233] Incoming request: GET /api/feedback/chat/17
+   GET /api/feedback/chat/17 -> pending
+ℹ️  [9838c233][user:c4c34bc4] GET /chat/17
+   GET /api/feedback/chat/17 -> 304
+ℹ️  [7f74348b] Incoming request: GET /api/feedback/chat/17
+   GET /api/feedback/chat/17 -> pending
+ℹ️  [7f74348b][user:c4c34bc4] GET /chat/17
+   GET /api/feedback/chat/17 -> 304
+ℹ️  [7d9b7689] Incoming request: POST /api/upload-policy
+   POST /api/upload-policy -> pending
+ℹ️  [7d9b7689] Incoming document upload
+ℹ️  [7d9b7689][user:c4c34bc4] Processing document upload
+
+📤 Processing document upload: Home Policy-2.pdf (application/pdf)
+👤 Associated with user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+📦 Step 1: Uploading to GCS - Policies/1765920870767_session_1765920858356_u9jwmf_Home_Policy-2.pdf
+☁️ Uploading to GCS: samurai-insurance-app/Policies/1765920870767_session_1765920858356_u9jwmf_Home_Policy-2.pdf
+✅ Successfully uploaded: Policies/1765920870767_session_1765920858356_u9jwmf_Home_Policy-2.pdf
+✅ Step 1 complete: GCS upload successful
+📦 Step 2: Extracting text from pdf
+📄 Extracting text from PDF using Gemini...
+✅ Extracted 0 characters from PDF
+📋 EXTRACTED TEXT START ===
+
+=== EXTRACTED TEXT END
+✅ Step 2 complete: Extracted 0 characters
+ℹ️  [7d9b7689][user:c4c34bc4] Document upload processing completed
+❌ [7d9b7689][user:c4c34bc4] Sending error response to client
+ℹ️  [7d9b7689][user:c4c34bc4] Error response sent
+ℹ️  [7d9b7689][user:c4c34bc4] POST /api/upload-policy
+   POST /api/upload-policy -> 400
+ℹ️  [ee8c5c83] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> pending
+ℹ️  [e4be6e67] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> pending
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+✅ Found 0 documents
+ℹ️  [e4be6e67][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> 304
+ℹ️  [4d29cbe7] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> pending
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+✅ Found 0 documents
+ℹ️  [4d29cbe7][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> 304
+ℹ️  [ee8c5c83][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> 304
+ℹ️  [2f943b8e] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> pending
+ℹ️  [2f943b8e][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> 304
+ℹ️  [d39455a6] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> pending
+ℹ️  [e4057138] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> pending
+ℹ️  [5ab7c68a] Incoming request: GET /api/chat-sessions/4/messages
+   GET /api/chat-sessions/4/messages?userId=c4c34bc4-18ef-483b-98e4-156a80b921e7&limit=50 -> pending
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+✅ Found 0 documents
+ℹ️  [e4057138][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> 304
+ℹ️  [aafc0f39] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> pending
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+✅ Found 0 documents
+ℹ️  [aafc0f39][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> 304
+ℹ️  [5ab7c68a][user:c4c34bc4] GET /api/chat-sessions/4/messages
+   GET /api/chat-sessions/4/messages?userId=c4c34bc4-18ef-483b-98e4-156a80b921e7&limit=50 -> 304
+ℹ️  [d39455a6][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> 304
+ℹ️  [1b182fa9] Incoming request: GET /api/chat-sessions/4/messages
+   GET /api/chat-sessions/4/messages?userId=c4c34bc4-18ef-483b-98e4-156a80b921e7&limit=50 -> pending
+ℹ️  [02401e30] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> pending
+ℹ️  [58d1a851] Incoming request: GET /api/feedback/chat/17
+   GET /api/feedback/chat/17 -> pending
+ℹ️  [02401e30][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> 304
+ℹ️  [1b182fa9][user:c4c34bc4] GET /api/chat-sessions/4/messages
+   GET /api/chat-sessions/4/messages?userId=c4c34bc4-18ef-483b-98e4-156a80b921e7&limit=50 -> 304
+ℹ️  [58d1a851][user:c4c34bc4] GET /chat/17
+   GET /api/feedback/chat/17 -> 304
+ℹ️  [479f1010] Incoming request: GET /api/feedback/chat/17
+   GET /api/feedback/chat/17 -> pending
+ℹ️  [479f1010][user:c4c34bc4] GET /chat/17
+   GET /api/feedback/chat/17 -> 304
+ℹ️  [e535dae7] Incoming request: GET /api/chat-sessions/3/messages
+   GET /api/chat-sessions/3/messages?userId=c4c34bc4-18ef-483b-98e4-156a80b921e7&limit=50 -> pending
+ℹ️  [e535dae7][user:c4c34bc4] GET /api/chat-sessions/3/messages
+   GET /api/chat-sessions/3/messages?userId=c4c34bc4-18ef-483b-98e4-156a80b921e7&limit=50 -> 200
+ℹ️  [46fcacc4] Incoming request: GET /api/feedback/chat/11
+   GET /api/feedback/chat/11 -> pending
+ℹ️  [8d8b1561] Incoming request: GET /api/feedback/chat/9
+   GET /api/feedback/chat/9 -> pending
+ℹ️  [420db0de] Incoming request: GET /api/feedback/chat/13
+   GET /api/feedback/chat/13 -> pending
+ℹ️  [bb04ac7a] Incoming request: GET /api/feedback/chat/15
+   GET /api/feedback/chat/15 -> pending
+ℹ️  [46fcacc4][user:c4c34bc4] GET /chat/11
+   GET /api/feedback/chat/11 -> 304
+ℹ️  [420db0de][user:c4c34bc4] GET /chat/13
+   GET /api/feedback/chat/13 -> 304
+ℹ️  [80cf4f2b] Incoming request: GET /api/feedback/chat/11
+   GET /api/feedback/chat/11 -> pending
+ℹ️  [9f446738] Incoming request: GET /api/feedback/chat/13
+   GET /api/feedback/chat/13 -> pending
+ℹ️  [bb04ac7a][user:c4c34bc4] GET /chat/15
+   GET /api/feedback/chat/15 -> 200
+ℹ️  [6e54027f] Incoming request: GET /api/feedback/chat/15
+   GET /api/feedback/chat/15 -> pending
+ℹ️  [8d8b1561][user:c4c34bc4] GET /chat/9
+   GET /api/feedback/chat/9 -> 304
+ℹ️  [2f42558e] Incoming request: GET /api/feedback/chat/9
+   GET /api/feedback/chat/9 -> pending
+ℹ️  [6e54027f][user:c4c34bc4] GET /chat/15
+   GET /api/feedback/chat/15 -> 304
+ℹ️  [80cf4f2b][user:c4c34bc4] GET /chat/11
+   GET /api/feedback/chat/11 -> 304
+ℹ️  [2f42558e][user:c4c34bc4] GET /chat/9
+   GET /api/feedback/chat/9 -> 304
+ℹ️  [9f446738][user:c4c34bc4] GET /chat/13
+   GET /api/feedback/chat/13 -> 304
+ℹ️  [ad31d306] Incoming request: GET /api/chat-sessions/2/messages
+   GET /api/chat-sessions/2/messages?userId=c4c34bc4-18ef-483b-98e4-156a80b921e7&limit=50 -> pending
+ℹ️  [ad31d306][user:c4c34bc4] GET /api/chat-sessions/2/messages
+   GET /api/chat-sessions/2/messages?userId=c4c34bc4-18ef-483b-98e4-156a80b921e7&limit=50 -> 200
+ℹ️  [cf372dc7] Incoming request: GET /api/feedback/chat/3
+   GET /api/feedback/chat/3 -> pending
+ℹ️  [9a7f77c9] Incoming request: GET /api/feedback/chat/5
+   GET /api/feedback/chat/5 -> pending
+ℹ️  [1b6b938e] Incoming request: GET /api/feedback/chat/7
+   GET /api/feedback/chat/7 -> pending
+ℹ️  [cf372dc7][user:c4c34bc4] GET /chat/3
+   GET /api/feedback/chat/3 -> 304
+ℹ️  [51103bba] Incoming request: GET /api/feedback/chat/3
+   GET /api/feedback/chat/3 -> pending
+ℹ️  [1b6b938e][user:c4c34bc4] GET /chat/7
+   GET /api/feedback/chat/7 -> 304
+ℹ️  [612897af] Incoming request: GET /api/feedback/chat/7
+   GET /api/feedback/chat/7 -> pending
+ℹ️  [b347ddd4] Incoming request: GET /api/chat-sessions/4/messages
+   GET /api/chat-sessions/4/messages?userId=c4c34bc4-18ef-483b-98e4-156a80b921e7&limit=50 -> pending
+ℹ️  [9a7f77c9][user:c4c34bc4] GET /chat/5
+   GET /api/feedback/chat/5 -> 304
+ℹ️  [2c4854a2] Incoming request: GET /api/feedback/chat/5
+   GET /api/feedback/chat/5 -> pending
+ℹ️  [612897af][user:c4c34bc4] GET /chat/7
+   GET /api/feedback/chat/7 -> 304
+ℹ️  [51103bba][user:c4c34bc4] GET /chat/3
+   GET /api/feedback/chat/3 -> 304
+ℹ️  [b347ddd4][user:c4c34bc4] GET /api/chat-sessions/4/messages
+   GET /api/chat-sessions/4/messages?userId=c4c34bc4-18ef-483b-98e4-156a80b921e7&limit=50 -> 304
+ℹ️  [d7841177] Incoming request: GET /api/feedback/chat/17
+   GET /api/feedback/chat/17 -> pending
+ℹ️  [2c4854a2][user:c4c34bc4] GET /chat/5
+   GET /api/feedback/chat/5 -> 304
+ℹ️  [d7841177][user:c4c34bc4] GET /chat/17
+   GET /api/feedback/chat/17 -> 304
+ℹ️  [e04e56ac] Incoming request: GET /api/feedback/chat/17
+   GET /api/feedback/chat/17 -> pending
+ℹ️  [e04e56ac][user:c4c34bc4] GET /chat/17
+   GET /api/feedback/chat/17 -> 304
+ℹ️  [79802441] Incoming request: GET /api/chat-sessions/4/messages
+   GET /api/chat-sessions/4/messages?userId=c4c34bc4-18ef-483b-98e4-156a80b921e7&limit=50 -> pending
+ℹ️  [f4aa765d] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> pending
+ℹ️  [62bc0200] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> pending
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+✅ Found 0 documents
+ℹ️  [62bc0200][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> 304
+ℹ️  [f4aa765d][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/chat-sessions?limit=20 -> 304
+ℹ️  [79802441][user:c4c34bc4] GET /api/chat-sessions/4/messages
+   GET /api/chat-sessions/4/messages?userId=c4c34bc4-18ef-483b-98e4-156a80b921e7&limit=50 -> 304
+ℹ️  [cc8ad3bf] Incoming request: GET /api/feedback/chat/17
+   GET /api/feedback/chat/17 -> pending
+ℹ️  [cc8ad3bf][user:c4c34bc4] GET /chat/17
+   GET /api/feedback/chat/17 -> 304
+ℹ️  [4fa0d4bf] Incoming request: GET /api/feedback/chat/17
+   GET /api/feedback/chat/17 -> pending
+ℹ️  [4fa0d4bf][user:c4c34bc4] GET /chat/17
+   GET /api/feedback/chat/17 -> 304
+ℹ️  [d037fbcb] Incoming request: POST /api/upload-policy
+   POST /api/upload-policy -> pending
+ℹ️  [d037fbcb] Incoming document upload
+ℹ️  [d037fbcb][user:c4c34bc4] Processing document upload
+
+📤 Processing document upload: fcd63178-11aa-4d26-848c-077c3424e453__Declaration.pdf (application/pdf)
+👤 Associated with user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+📦 Step 1: Uploading to GCS - Policies/1765920970046_session_1765920962606_0qi93l_fcd63178-11aa-4d26-848c-077c3424e453__Declaration.pdf
+☁️ Uploading to GCS: samurai-insurance-app/Policies/1765920970046_session_1765920962606_0qi93l_fcd63178-11aa-4d26-848c-077c3424e453__Declaration.pdf
+✅ Successfully uploaded: Policies/1765920970046_session_1765920962606_0qi93l_fcd63178-11aa-4d26-848c-077c3424e453__Declaration.pdf
+✅ Step 1 complete: GCS upload successful
+📦 Step 2: Extracting text from pdf
+📄 Extracting text from PDF using Gemini...
+✅ Extracted 23140 characters from PDF
+📋 EXTRACTED TEXT START ===
+Here's a structured extraction of all visible text from the provided insurance document:
+
+---
+
+**Page 1: Cover Page**
+
+*   **Agent Information:**
+    *   HUMMEL & PLUM INS AGY INC
+    *   116 W FRANKLIN ST
+    *   PO BOX 877
+    *   CIRCLEVILLE, OH 43113-0877
+    *   740-477-3311
+*   **Policy Number:** WNP 184415H
+*   **Policyholder Information:**
+    *   EZEQUIEL N MORALES
+    *   CELINA SILVA
+    *   1282 BELLE MEADE PL
+    *   WESTERVILLE OH 43081-1142
+*   **Carrier:** WESTFIELD®
+
+---
+
+**Page 2: About Your Insurance Policy**
+
+*   **Member Company:** Trusted Choice®
+*   **Carrier:** WESTFIELD®
+*   **Message Summary:**
+    *   Westfield provides peace of mind and protection for covered losses.
+    *   Policy includes a declarations page summarizing coverage and premium.
+    *   Contact independent agent for questions.
+    *   Agents explain coverage clearly and recommend solutions to reduce risk.
+    *   Claims service is fast and accurate.
+    *   **Claims Contact:** 866.937.2663 (Customer Care Center) or contact agent.
+    *   Westfield supports teen driver safety and academic excellence.
+    *   **Website:** westfieldinsurance.com
+    *   Company founded in 1848, committed to ethical conduct, financial integrity, and respect for people.
+*   **Signatory:**
+    *   Edward J. Largent III
+    *   President
+*   **Slogan:** Sharing Knowledge. Building Trust.®
+*   **Document ID:** AD 89 89 12/09
+
+---
+
+**Page 3-4: Westfield Privacy Notice to US Insurance Customers**
+
+*   **Carrier:** WESTFIELD®
+*   **Effective Date:** 2024 April 1
+*   **Commitment:** Committed to protecting your privacy.
+*   **Summary of Information Practices:**
+    *   **Information Collection:** Directly from you¹, from transactions with us, and from outside sources.
+    *   **Information Use:** To provide insurance, investigate/resolve claims, improve products/services.
+    *   **Information Sharing:** With independent agent/broker you chose, and third-parties helping deliver services.
+    *   **No Sale of Personal Information:** We do not sell your personal information.
+    *   **No Marketing Sharing:** We do not share your information with other companies for their marketing purposes.
+    *   **Information Protection:** Measures taken to protect information in our custody; third-parties also required to protect information.
+*   **Information We Collect:**
+    *   From application and other forms (name, address, date of birth, email, driver's license number, vehicle/property type).
+    *   About transactions with us, affiliates, or others (coverages, limits, rates, payment/claims history, billing info).
+    *   From third parties (driving record, claims history with other insurers, credit information).
+    *   About online interactions (IP address, device type, visit time, pages visited) to deliver/improve online services.
+    *   De-identified aggregate information used to measure reader interest and website use; not personally identifiable.
+*   **Information About Minors:**
+    *   Do not sell to or intentionally communicate with children under 16.
+    *   May request specific child information from parents for quoting, identity verification, or requested transactions.
+    *   Do not retain minor information beyond what's necessary for requested services.
+    *   ¹ For personal lines, this includes information from head of household or other family member buying insurance that covers you. For commercial lines, this includes information from your company's representative.
+*   **Information We Disclose:**
+    *   Do not sell or rent personal information. Disclose only as permitted by law:
+        *   To process transactions or service policy.
+        *   To investigate and pay claims.
+        *   To prevent fraud.
+        *   To perform marketing services on our behalf (do NOT allow third-parties to use info for their own marketing).
+        *   To comply with legal requirements.
+    *   **Recipients:** Employees, claims representatives, agents/brokers, service providers, auditors, consumer reporting agencies, government agencies, law enforcement, courts.
+*   **How We Protect Your Information:**
+    *   Restrict access to nonpublic personal information to those who need to know.
+    *   Use of information restricted by law, employee code of conduct, and written agreements.
+    *   Maintain physical, electronic, and procedural safeguards.
+    *   **Security Issue Reporting:** InfosecAlerts@Westfieldgrp.com (describe issue, date, time, reproduction steps, include name/contact info).
+*   **Social Media and Online Engagement:**
+    *   Use social media (Facebook, X, LinkedIn, Instagram) for communication.
+    *   Third-party platforms not operated/controlled by us; read their privacy policies.
+    *   Employees will not use, share, or retain personal information from social media except as necessary to respond to messages/requests, provide services, or comply with legal requirements.
+*   **Former Customers:** Policies and practices described in this privacy promise continue as long as we have your information.
+*   **Privacy Contact Information:**
+    *   **Phone:** 1-800-552-9139
+    *   **Email:** privacy@westfieldgrp.com
+    *   **Mail:** Privacy Officer, Westfield Insurance, One Park Circle, PO Box 5001, Westfield Center, OH 44251
+*   **Document ID:** AD 83 86 04 24 (Page 1 of 2, Page 2 of 2)
+
+---
+
+**Page 5: Important Notice to Our Policyholders - Fraud Hot-Line**
+
+*   **Carrier:** WESTFIELD®
+*   **Notice:** Fraudulent insurance claims cost money.
+*   **Call to Action:** Call if you have information concerning a fraudulent insurance claim.
+*   **Confidentiality:** All information will be kept confidential.
+*   **Reporting:** Discuss with a trained investigator or leave anonymous message.
+*   **Fraud Hot-Line Number:** 1-800-654-6482
+*   **Detach and Retain Information:**
+    *   Fraud Hot-Line: 1-800-654-6482
+    *   WESTFIELD®
+    *   Westfield Center, Ohio 44251
+    *   www.westfieldinsurance.com
+*   **Document ID:** AD 8522 (08-10)
+
+---
+
+**Page 6: Important Notice to Our Policyholders - Credit Card Fee**
+
+*   **Carrier:** WESTFIELD®
+*   **Subject:** Upcoming change to payment terms.
+*   **What's Changing:**
+    *   Effective April 1, 2025, a fee of up to 3% will be applied to all credit card payments (where permissible).
+    *   Fee charged by payment processing vendor to cover costs.
+*   **How to Avoid the New Credit Card Fee:**
+    *   **Electronic Funds Transfer (EFT):** Direct payment from checking/savings account. Set up via MyWestfield or by calling Billing Team at 800.243.0210, option 2.
+    *   **Check:** Paying by check or other available payment method.
+*   **Contact for Questions:** Billing Team at 800.243.0210, option 2 or email billing@westfieldgrp.com.
+*   **Document ID:** AD 94 20 01 25
+*   **Company Address:** One Park Circle PO Box 5001 Westfield Center OH 44251-5001
+*   **Phone:** 1.800.243.0210
+*   **Fax:** 330.887.0840
+*   **Website:** www.westfieldinsurance.com
+
+---
+
+**Page 7: Important Notice to Our Policyholders - Roof Surface Rating**
+
+*   **Carrier:** WESTFIELD®
+*   **Subject:** New rate factor based on age and type of roof.
+*   **Roof Age Determination:**
+    *   If home age < 15 years, roof age assumed same as home age.
+    *   If home age ≥ 15 years, age determined from several sources.
+*   **Methods for Roof Age on Declaration Page:**
+    *   Third-party source.
+    *   Survey completed by you or an insured.
+    *   Personal lines insurance agent at application.
+*   **Action Required:** No action needed unless roof age is different from Declaration page.
+*   **Roof Replacement/Updates:** Contact agent and keep documentation (receipts/invoices) for verification.
+*   **Questions:** Contact your agent.
+*   **Document ID:** AD 91 41 04/16
+
+---
+
+**Page 8: Important Notice to Our Policyholders - Required Wind/Hail Deductible**
+
+*   **Carrier:** AMERICAN SELECT INSURANCE COMPANY (WESTFIELD®)
+*   **Date:** 10/07/25
+*   **Subject:** Changes to Homeowner Policy regarding Wind/Hail Deductible.
+*   **Outline:** Not a policy, a guide to understanding changes. Review Declaration Page for complete information.
+*   **Wind/Hail Deductible Adjustment:** Adjusted to meet mandatory limit.
+*   **Criteria for Wind/Hail Deductible Application:**
+    *   **Coverage A ≤ $750,000:**
+        *   Roof Age < 15 years: $2,500 deductible.
+        *   Roof Age ≥ 15 years: $5,000 deductible.
+    *   **Coverage A > $750,000:**
+        *   Roof Age < 15 years: $5,000 deductible.
+        *   Roof Age ≥ 15 years: $10,000 deductible.
+*   **Questions:** Contact your personal lines agent.
+*   **Document ID:** AD 93 89 04 25
+*   **Company Address:** One Park Circle PO Box 5001 Westfield Center OH 44251-5001
+*   **Phone:** 1.800.243.0210
+*   **Fax:** 330.887.0840
+*   **Website:** www.westfieldinsurance.com
+
+---
+
+**Page 9: Important Notice to Our Policy Holders - Your New Auto Identification Cards Are Enclosed**
+
+*   **Carrier:** WESTFIELD®
+*   **Subject:** Auto Identification Cards and Proof of Financial Responsibility.
+*   **Requirement:** Law requires proof of financial responsibility.
+*   **Enclosure:** Certificates of Insurance (I.D. Cards) for each licensed vehicle.
+*   **Action:** Detach and keep I.D. Card in the vehicle described at all times.
+*   **Replacement:** Contact Agent if I.D. Card is destroyed or misplaced.
+*   **Validity:** I.D. Card is no longer valid if insurance policy is not in effect.
+*   **When to Show Proof:**
+    *   Whenever requested by a police officer.
+    *   At vehicle inspection stops.
+    *   Upon every traffic court appearance.
+    *   After every motor vehicle accident.
+    *   Upon random checks by the Bureau of Motor Vehicles.
+*   **Penalties for Failure to Show Proof:** Loss of driving privileges, vehicle registration, fines, special financial responsibility filings.
+*   **Document ID:** AD 8134 (03-09)
+
+---
+
+**Page 10-11: Important Notice to Our Policyholders - Advisory Notice to Personal Automobile Policyholders - Recreational Vehicle Exclusions**
+
+*   **Carrier:** AMERICAN SELECT INSURANCE COMPANY (WESTFIELD®)
+*   **Date:** 10/07/25
+*   **Subject:** Changes to your Recreational Vehicle Policy.
+*   **Outline:** Not a policy, a guide to understanding changes. Review Declaration Page for complete information.
+*   **Part A - Liability Coverage:**
+    *   **Exclusion B.5. Revised:**
+        *   Addresses participating in, competing in, practicing, or preparing for certain events (racing, speed contest, hill climbing exhibition, stunting, speed or demolition contest or activity).
+        *   Wording added to clarify driving activity on permanent/temporary racetrack, racecourse, drag strip, or at any location/during any open/closed events, including street racing; or while used in performance testing on closed road/racetrack/testing facility where insured is not competing.
+        *   **This is a reduction in coverage.**
+*   **Part B - Medical Payments Coverage:**
+    *   **Exclusion K. Revised:**
+        *   Addresses participating in, competing in, practicing, or preparing for certain events (racing, speed contest, hill climbing exhibition, stunting, speed or demolition contest or activity).
+        *   Wording added to clarify driving activity on permanent/temporary racetrack, racecourse, drag strip, or at any location/during any open/closed events, including street racing; or while used in performance testing on closed road/racetrack/testing facility where insured is not competing.
+        *   **This is a reduction in coverage.**
+*   **Part D - Coverage For Damage To Your Recreational Vehicle:**
+    *   **Exclusion B. Revised:**
+        *   Includes exclusions intended to be covered by wear and tear, freezing, mechanical breakdown/failure exclusions, and specifically stated for ease of understanding.
+        *   Added exclusion for hoarding, illegal drug production, manufacturing defects.
+    *   **Exclusion C. Added:** Addresses when coverage is excluded.
+    *   **Exclusion D. Added:** Excludes damage due to birds, vermin, rodents, insects, or animals.
+    *   **This is a reduction in coverage.**
+    *   **Exclusion M. Revised:**
+        *   Addresses participating in, competing in, practicing, or preparing for certain events (racing, speed contest, hill climbing exhibition, stunting, speed or demolition contest or activity).
+        *   Wording added to clarify driving activity on permanent/temporary racetrack, racecourse, drag strip, or at any location/during any open/closed events, including street racing; or while used in performance testing on closed road/racetrack/testing facility where insured is not competing.
+        *   **This is a reduction in coverage.**
+*   **Document ID:** AD 94 19 01 25 (Page 1 of 2, Page 2 of 2)
+*   **Company Address:** One Park Circle PO Box 5001 Westfield Center OH 44251-5001
+*   **Phone:** 1.800.243.0210
+*   **Fax:** 330.887.0840
+*   **Website:** www.westfieldinsurance.com
+
+---
+
+**Page 12: Important Notice to Our Policyholders - Auto and Recreational Vehicle Loan/Lease Coverage Amendment**
+
+*   **Carrier:** AMERICAN SELECT INSURANCE COMPANY (WESTFIELD®)
+*   **Date:** 10/07/25
+*   **Subject:** Changes to Loan/Lease Coverage.
+*   **Loan/Lease Coverage (PA0335):** Optional coverage for personal auto or recreational vehicle policy. Included under Section VI Additional Coverage, Provision A.5 for Wespak or Wespak Estate policies.
+*   **Added Provisions:**
+    *   Coverage will be excess over any other collectible sources (e.g., lessor, financial institution).
+    *   Coverages, charges, and service contracts financed as part of purchase/lease contract will be deducted from paid claim amount.
+*   **Outline:** Not a policy, a guide to understanding changes. Review Declaration Page for complete information.
+*   **Document ID:** AD 94 23 01 25
+*   **Company Address:** One Park Circle PO Box 5001 Westfield Center OH 44251-5001
+*   **Phone:** 1.800.243.0210
+*   **Fax:** 330.887.0840
+*   **Website:** www.westfieldinsurance.com
+
+---
+
+**Page 13: WESPAK POLICY DECLARATIONS PAGE (Homeowners)**
+
+*   **Carrier:** WESTFIELD®
+*   **Document Type:** WESPAK POLICY DECLARATIONS PAGE
+*   **Date:** 10/06/25 22
+*   **Policy Number:** WNP 184415H
+*   **Renewal of Policy:** WNP 184415H
+*   **Renewal Declaration Effective:** 11/12/25
+*   **Policy Period:**
+    *   **From:** 11/12/25
+    *   **To:** 11/12/26
+*   **Named Insured and Address:**
+    *   EZEQUIEL N MORALES
+    *   CELINA SILVA
+    *   1282 BELLE MEADE PL
+    *   WESTERVILLE OH 43081-1142
+*   **Company Providing Coverage:** AMERICAN SELECT INSURANCE COMPANY
+*   **Agency:** HUMMEL & PLUM INS AGY INC
+    *   **Telephone:** 740-477-3311
+    *   **PO BOX:** 877
+    *   **CIRCLEVILLE OH:** 43113-0877
+*   **WIC Account No.:** 3470674345
+*   **Statement of Premium:**
+    *   Homeowners Sections II & III: $1,302.00
+    *   Auto Sections IV, V & VI: $1,933.00
+    *   **Total Premium for These Policy Sections:** $3,235.00
+*   **Billing Note:** Mortgagee will be billed for Homeowners portion; separate monthly billing for Auto portion.
+*   **Policy Period (Detailed):** Begins and ends at 12:01 AM Standard Time at the premises of the insured.
+*   **Homeowners Rating Information:**
+    *   **Frame:** FRAME
+    *   **Territory:** 25
+    *   **County:** FRANKLIN COUNTY
+    *   **Location Factor:** Based on Census Tract 006990, 1 Family
+    *   **Type of Roof:** ASPHALT/COMPOSITION
+    *   **Roof Year:** 2017
+    *   **Year Built:** 1976
+    *   **Protection Status:** PROTECTED, Distance to Fire Station is 5 Miles or Less
+    *   **Discounts:** Supporting Auto Discount Applies, Loyalty Discount, Alarm/Protective Devices Credit, Back-up of Sewer or Drain Protective Device Discount, Advance Quote Discount.
+*   **Homeowners Coverages:**
+    *   **Deductible:** $1500 Section II Loss Deductible (applies to other than Windstorm or Hail Losses).
+    *   **Windstorm or Hail Loss Deductible:** $2,500.
+    *   **Coverage at described location provided only where limit of liability is shown or premium is stated.**
+    *   **Section II - Property Coverages:**
+        *   **A. Dwelling:** $344,500
+        *   **B. Other Structures:** $34,450
+        *   **C. Personal Property:** $258,375
+        *   **D. Loss of Use:** $137,800
+        *   **Premiums (Section II):** $1,122
+    *   **Section III - Liability Coverages:**
+        *   **E. Personal Liability:** $300,000 Each Occurrence
+        *   **F. Medical Pay. To Others:** $1,000 Each Person
+    *   **Adjusted Basic Premium:** $1,122.00
+*   **Additional Premiums or Credits:**
+    *   **Back-up of Sewer or Drain Selected Limit:** $65
+    *   **Matching of Undamaged Roof Surface, Siding or Windows:** $115
+*   **Total Annual Premium (Homeowners):** $1,302.00
+*   **Page:** 01 of 04
+*   **Form:** 2805 (Ed. 11-05)
+
+---
+
+**Page 14: WESPAK POLICY DECLARATIONS PAGE (Auto)**
+
+*   **Carrier:** WESTFIELD® (AMERICAN SELECT INSURANCE COMPANY)
+*   **Document Type:** WESPAK POLICY DECLARATIONS PAGE
+*   **Date:** 10/06/25 22
+*   **Policy Number:** WNP 184415H
+*   **Renewal Declaration Effective:** 11/12/25
+*   **Policy Period:**
+    *   **From:** 11/12/25
+    *   **To:** 11/12/26
+*   **Named Insured and Address:**
+    *   EZEQUIEL N MORALES
+    *   CELINA SILVA
+    *   1282 BELLE MEADE PL
+    *   WESTERVILLE OH 43081-1142
+*   **Agency:** HUMMEL & PLUM INS AGY INC
+    *   **Telephone:** 740-477-3311
+    *   **PO BOX:** 877
+    *   **CIRCLEVILLE OH:** 43113-0877
+*   **Credits/Discounts:**
+    *   **Silver Loyalty Discount:** 8% discount applies on Unit 01, 02.
+    *   **Multi-Car Discount:** Applies to Unit 01, 02.
+    *   **Passive Restraint Disc:** 30% applies to Unit 01, 02.
+    *   **Anti-Theft Device Disc:** 15% applies to Unit 01, 02.
+    *   **Anti-Lock Braking System Discount:** 5% applies to Unit 01, 02.
+    *   **Advance Quote Discount:** Applies to Unit 01, 02.
+*   **Vehicle Location Factors:**
+    *   **Unit 001:** Location Factor based on Census Tract 006990.
+    *   **Unit 002:** Location Factor based on Census Tract 006990.
+*   **Vehicles Covered:**
+    *   **Unit 001:**
+        *   **ST TER YR MAKE-DESCRIPTION:** OH 153 20 TSLA MODEL 3 STAN
+        *   **VEHICLE ID NUMBER:** 5YJ3E1EA5LF662703
+        *   **COST NEW:** 39
+        *   **CLASS:** 54
+        *   **CMP:** 8AFA50
+        *   **COL:** 8AFA50
+        *   **SYM:** 8AFA50
+    *   **Unit 002:**
+        *   **ST TER YR MAKE-DESCRIPTION:** OH 153 18 KIA SPORTAGE LX A
+        *   **VEHICLE ID NUMBER:** KNDPMCAC6J7472693
+        *   **COST NEW:** 23
+        *   **CLASS:** 17
+        *   **CMP:** 8AEA50
+        *   **COL:** 8AEA50
+        *   **SYM:** 8AEA50
+*   **Drivers:**
+    *   **Driver 01:** EZEQUIEL N MORALES, Birthdate: 06/08/97
+    *   **Driver 02:** CELINA SILVA, Birthdate: 09/20/97
+*   **Personal Auto Insurance Coverages (Premiums by Unit):**
+    *   **Section IV - Auto Liability:**
+        *   **G. Liability:**
+            *   **Bodily Injury:** $100,000 EA PERSON / $300,000 EA ACC
+                *   Unit 1: 112
+                *   Unit 2: 142
+            *   **Property Damage:** $100,000 EACH ACCIDENT
+                *   Unit 1: 171
+                *   Unit 2: 218
+        *   **H. Medical Payments:** $5,000 EACH PERSON
+            *   Unit 1: 18
+            *   Unit 2: 22
+    *   **Section V - Uninsured/Underinsured Motorists:**
+        *   **Bodily Injury:** $100,000 EA PERSON / $300,000 EA ACC
+            *   Unit 1: 22
+            *   Unit 2: 22
+    *   **Section VI - Damage to Your Auto:**
+        *   **K. Damage to Your Auto:**
+            *   **Other Than Collision:** ACV LESS $500 DED (WITH FULL COV SAFETY GLASS)
+                *   Unit 1: 223
+                *   Unit 2: 169
+            *   **Collision:** ACV LESS $500 DEDUCTIBLE
+                *   Unit 1: 499
+                *   Unit 2: 297
+*   **Page:** 02 of 04
+*   **Form:** 2805 (Ed. 11-05)
+
+---
+
+**Page 15: WESPAK POLICY DECLARATIONS PAGE (Auto Continued)**
+
+*   **Carrier:** WESTFIELD® (AMERICAN SELECT INSURANCE COMPANY)
+*   **Document Type:** WESPAK POLICY DECLARATIONS PAGE
+*   **Date:** 10/06/25 22
+*   **Policy Number:** WNP 184415H
+*   **Renewal Declaration Effective:** 11/12/25
+*   **Policy Period:**
+    *   **From:** 11/12/25
+    *   **To:** 11/12/26
+*   **Named Insured and Address:**
+    *   EZEQUIEL N MORALES
+    *   CELINA SILVA
+    *   1282 BELLE MEADE PL
+    *   WESTERVILLE OH 43081-1142
+*   **Agency:** HUMMEL & PLUM INS AGY INC
+    *   **Telephone:** 740-477-3311
+    *   **PO BOX:** 877
+    *   **CIRCLEVILLE OH:** 43113-0877
+*   **Personal Auto Insurance Coverages (Premiums by Unit):**
+    *   **$100 Roadside Assistance:**
+        *   Unit 1: 9
+        *   Unit 2: 9
+    *   **WESPAK Auto Package Coverages:**
+        *   $5,000/$2,000 Death Benefit: INCL (Unit 1), INCL (Unit 2)
+        *   $500 Personal Contents Coverage: INCL (Unit 1), INCL (Unit 2)
+        *   $150 Per Day/$600 Max. Trip Interruption Coverage: INCL (Unit 1), INCL (Unit 2)
+        *   Loan/Lease Coverage: INCL (Unit 1), INCL (Unit 2)
+        *   $1,000 Limited Customizing Equipment Coverage: INCL (Unit 1), INCL (Unit 2)
+        *   $2,500 Airbag Replacement Coverage: INCL (Unit 1), INCL (Unit 2)
+        *   $150 Locksmith Service: INCL (Unit 1), INCL (Unit 2)
+        *   1-Year Replacement Cost on New Autos: INCL (Unit 1), INCL (Unit 2)
+    *   **Transportation Expenses:** $40 PER DAY/$1200 MAXIMUM
+        *   Unit 1: INCL
+        *   Unit 2: INCL
+*   **Total Premium by Unit:**
+    *   Unit 1: 1054
+    *   Unit 2: 879
+*   **Section IV, V, VI Total Premium:** $1,933.00
+*   **Page:** 03 of 04
+*   **Form:** 2805 (Ed. 11-05)
+
+---
+
+**Page 16: WESPAK POLICY DECLARATIONS PAGE (Forms & Signatures)**
+
+*   **Carrier:** WESTFIELD® (AMERICAN SELECT INSURANCE COMPANY)
+*   **Document Type:** WESPAK POLICY DECLARATIONS PAGE
+*   **Date:** 10/06/25 22
+*   **Policy Number:** WNP 184415H
+*   **Renewal Declaration Effective:** 11/12/25
+*   **Policy Period:**
+    *   **From:** 11/12/25
+    *   **To:** 11/12/26
+*   **Named Insured and Address:**
+    *   EZEQUIEL N MORALES
+    *   CELINA SILVA
+    *   1282 BELLE MEADE PL
+    *   WESTERVILLE OH 43081-1142
+*   **Agency:** HUMMEL & PLUM INS AGY INC
+    *   **Telephone:** 740-477-3311
+    *   **PO BOX:** 877
+    *   **CIRCLEVILLE OH:** 43113-0877
+*   **Applicable Forms:**
+    *   WN5034 01/25
+    *   HO2025 09/15
+    *   HO0496 08/05
+    *   HO0495 11/18
+    *   HO2040 07/23
+    *   PA0482 02/20
+    *   PA1345 07/05
+*   **Form Units:**
+    *   WN5034 01/25: 001, 002
+    *   PA0482 02/20: 001, 002
+    *   PA1345 07/05: 001, 002
+*   **Additional Interests:**
+    *   **Mortgagee:** NATIONSTAR MORTGAGE LLC, ISAOA, PO BOX 7729, SPRINGFIELD OH 45001-7729
+        *   **LN#:** 0689800282
+    *   **Loss Payee for Unit #001:** KEMBA FINANCIAL, KEMBA FINANCIAL, 555 OFFICENTER PL, COLUMBUS OH 43230-5314
+*   **Code:** 00323500P1500000000000000000000P000
+*   **Authorized Representative:** HUMMEL & PLUM INS AGY INC
+*   **Date:** 10/06/25
+*   **Signatures:**
+    *   Kath Gh (Secretary)
+    *   Edward J. Largent III (President)
+*   **Page:** 04 of 04
+*   **Form:** 2805 (Ed. 11-05)
+
+---
+
+**Page 17:
+=== EXTRACTED TEXT END
+✅ Step 2 complete: Extracted 23140 characters
+📦 Step 3: Analyzing policy text with AI
+🤖 Analyzing policy document...
+✅ Policy analysis complete
+✅ Step 3 complete: Analysis generated (34 chars)
+📋 Detected 1 policy type(s): other
+📁 Stored other policy for user c4c34bc4-18ef-483b-98e4-156a80b921e7 (carrier: Unknown)
+✅ Stored other policy from Unknown
+   For user c4c34bc4-18ef-483b-98e4-156a80b921e7
+💾 Persisting document to database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+✅ Document persisted with ID: 17
+📊 other policy linked to user account (ID: 17)
+ℹ️  [d037fbcb][user:c4c34bc4] Document upload processing completed
+ℹ️  [d037fbcb][user:c4c34bc4] Sending success response to client
+ℹ️  [d037fbcb][user:c4c34bc4] Success response sent
+ℹ️  [d037fbcb][user:c4c34bc4] POST /api/upload-policy
+   POST /api/upload-policy -> 200
+ℹ️  [93e28936] Incoming request: GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> pending
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+✅ Found 1 documents
+📚 Fetching documents from database for user: c4c34bc4-18ef-483b-98e4-156a80b921e7
+✅ Found 1 documents
+📁 Stored other policy for user c4c34bc4-18ef-483b-98e4-156a80b921e7 (carrier: Unknown)
+📦 Loaded 1 documents into cache for user c4c34bc4-18ef-483b-98e4-156a80b921e7
+ℹ️  [93e28936] Returning user policies from database
+ℹ️  [93e28936][user:c4c34bc4] GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies
+   GET /api/users/c4c34bc4-18ef-483b-98e4-156a80b921e7/policies -> 200
+ℹ️  [2684c154] Incoming request: GET /api/chat-sessions/3/messages
+   GET /api/chat-sessions/3/messages?userId=c4c34bc4-18ef-483b-98e4-156a80b921e7&limit=50 -> pending
+ℹ️  [2684c154][user:c4c34bc4] GET /api/chat-sessions/3/messages
+   GET /api/chat-sessions/3/messages?userId=c4c34bc4-18ef-483b-98e4-156a80b921e7&limit=50 -> 304
+ℹ️  [d5815504] Incoming request: GET /api/feedback/chat/9
+   GET /api/feedback/chat/9 -> pending
+ℹ️  [4811d82e] Incoming request: GET /api/feedback/chat/11
+   GET /api/feedback/chat/11 -> pending
+ℹ️  [68a8f4ab] Incoming request: GET /api/feedback/chat/13
+   GET /api/feedback/chat/13 -> pending
+ℹ️  [1559214e] Incoming request: GET /api/feedback/chat/15
+   GET /api/feedback/chat/15 -> pending
+ℹ️  [4811d82e][user:c4c34bc4] GET /chat/11
+   GET /api/feedback/chat/11 -> 304
+ℹ️  [d92d4703] Incoming request: GET /api/feedback/chat/11
+   GET /api/feedback/chat/11 -> pending
+ℹ️  [1559214e][user:c4c34bc4] GET /chat/15
+   GET /api/feedback/chat/15 -> 304
+ℹ️  [d5815504][user:c4c34bc4] GET /chat/9
+   GET /api/feedback/chat/9 -> 304
+ℹ️  [0c4ce873] Incoming request: GET /api/feedback/chat/15
+   GET /api/feedback/chat/15 -> pending
+ℹ️  [42fe9e51] Incoming request: GET /api/feedback/chat/9
+   GET /api/feedback/chat/9 -> pending
+ℹ️  [68a8f4ab][user:c4c34bc4] GET /chat/13
+   GET /api/feedback/chat/13 -> 304
+ℹ️  [d64b6622] Incoming request: GET /api/feedback/chat/13
+   GET /api/feedback/chat/13 -> pending
+ℹ️  [d92d4703][user:c4c34bc4] GET /chat/11
+   GET /api/feedback/chat/11 -> 304
+ℹ️  [0c4ce873][user:c4c34bc4] GET /chat/15
+   GET /api/feedback/chat/15 -> 304
+ℹ️  [42fe9e51][user:c4c34bc4] GET /chat/9
+   GET /api/feedback/chat/9 -> 304
+ℹ️  [d64b6622][user:c4c34bc4] GET /chat/13
+   GET /api/feedback/chat/13 -> 304
+ℹ️  [a34dfde6] Incoming request: GET /api/chat-sessions/4/messages
+   GET /api/chat-sessions/4/messages?userId=c4c34bc4-18ef-483b-98e4-156a80b921e7&limit=50 -> pending
+ℹ️  [a34dfde6][user:c4c34bc4] GET /api/chat-sessions/4/messages
+   GET /api/chat-sessions/4/messages?userId=c4c34bc4-18ef-483b-98e4-156a80b921e7&limit=50 -> 304
+ℹ️  [2e5aab4e] Incoming request: GET /api/feedback/chat/17
+   GET /api/feedback/chat/17 -> pending
+ℹ️  [2e5aab4e][user:c4c34bc4] GET /chat/17
+   GET /api/feedback/chat/17 -> 304
+ℹ️  [34740f09] Incoming request: GET /api/feedback/chat/17
+   GET /api/feedback/chat/17 -> pending
+ℹ️  [34740f09][user:c4c34bc4] GET /chat/17
+   GET /api/feedback/chat/17 -> 304

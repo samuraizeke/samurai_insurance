@@ -63,6 +63,7 @@ import {
   loadUserDocumentsToCache
 } from './services/document-upload';
 import { generateSessionSummary, regenerateSummary } from './services/session-summary';
+import feedbackRoutes from './routes/feedback';
 
 const app = express();
 const port = process.env.PORT || 8080;
@@ -114,11 +115,15 @@ const allowedOrigins = isProduction
       process.env.FRONTEND_URL,
     ].filter(Boolean) as string[];
 
+// In development, also allow ngrok domains for mobile testing
+const isNgrokOrigin = (origin: string) =>
+  !isProduction && origin.endsWith('.ngrok-free.dev');
+
 app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (like mobile apps, curl, or same-origin)
     if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) {
+    if (allowedOrigins.includes(origin) || isNgrokOrigin(origin)) {
       return callback(null, true);
     }
     // Log rejected origins for monitoring
@@ -139,11 +144,31 @@ app.use(requestLogger);
 // Apply general rate limiter to all routes
 app.use(generalLimiter);
 
+// Mount feedback routes
+app.use('/api/feedback', feedbackRoutes);
+
 // ============================================
 // HEALTH CHECK (Public)
 // ============================================
 app.get('/', (req, res) => {
   res.send('Samurai Insurance Backend is active and healthy');
+});
+
+// Diagnostic endpoint (development only)
+app.get('/api/diagnostics', (req, res) => {
+  if (process.env.NODE_ENV !== 'development') {
+    return res.status(404).json({ error: 'Not found' });
+  }
+
+  res.json({
+    env: process.env.NODE_ENV,
+    hasGoogleCredsBase64: !!process.env.GOOGLE_CREDENTIALS_BASE64,
+    hasGoogleAppCreds: !!process.env.GOOGLE_APPLICATION_CREDENTIALS,
+    googleAppCredsPath: process.env.GOOGLE_APPLICATION_CREDENTIALS,
+    gcsBucket: process.env.GCS_BUCKET_NAME,
+    projectId: process.env.GOOGLE_PROJECT_ID,
+    timestamp: new Date().toISOString()
+  });
 });
 
 // ============================================
@@ -174,25 +199,95 @@ app.post('/api/upload-policy', uploadLimiter, requireAuth, upload.single('docume
 
     const result = await handleDocumentUpload(buffer, originalname, mimetype, sessionId, userId);
 
+    logger.info('Document upload processing completed', { success: result.success });
+
     if (result.success) {
+      logger.info('Sending success response to client');
       res.json({
         success: true,
         message: "Great news! I've analyzed your policy document. Here's what I found:\n\n" + result.analysis,
         analysis: result.analysis
       });
+      logger.info('Success response sent');
     } else {
+      logger.error('Sending error response to client', { error: result.error });
       res.status(400).json({
         success: false,
         error: result.error
       });
+      logger.info('Error response sent');
     }
 
   } catch (error) {
     logger.error('Error in upload endpoint', error);
+    // Log detailed error information for debugging
+    if (error instanceof Error) {
+      logger.error('Detailed error info', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      });
+    }
     res.status(500).json({
-      error: 'Document processing failed. Please try again.'
+      error: 'Document processing failed. Please try again.',
+      // In development, include error details
+      ...(process.env.NODE_ENV === 'development' && error instanceof Error ? {
+        debug: error.message
+      } : {})
     });
   }
+});
+
+// Multer error handler - must come immediately after upload route
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+app.use((error: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  // Only handle multer errors for upload endpoints
+  if (req.path === '/api/upload-policy') {
+    // Check if it's a multer error
+    if (error instanceof multer.MulterError) {
+      logger.error('Multer error during upload', {
+        code: error.code,
+        field: error.field,
+        message: error.message
+      });
+
+      // Return user-friendly error messages
+      switch (error.code) {
+        case 'LIMIT_FILE_SIZE':
+          return res.status(400).json({
+            error: 'File too large. Maximum file size is 20MB.'
+          });
+        case 'LIMIT_UNEXPECTED_FILE':
+          return res.status(400).json({
+            error: 'Unexpected file field. Please use the "document" field.'
+          });
+        default:
+          return res.status(400).json({
+            error: 'File upload error. Please try again.'
+          });
+      }
+    }
+
+    // Handle custom fileFilter errors
+    if (error.message && error.message.includes('Invalid file type')) {
+      logger.error('Invalid file type uploaded', { message: error.message });
+      return res.status(400).json({
+        error: error.message
+      });
+    }
+
+    // Other errors during upload
+    logger.error('Upload endpoint error', error);
+    return res.status(500).json({
+      error: 'Upload failed. Please try again.',
+      ...(process.env.NODE_ENV === 'development' && error instanceof Error ? {
+        debug: error.message
+      } : {})
+    });
+  }
+
+  // Pass to next error handler
+  next(error);
 });
 
 // ============================================
@@ -458,7 +553,9 @@ app.post('/api/chat-sessions', sessionLimiter, requireAuth, async (req, res) => 
           name: authUser?.user?.user_metadata?.full_name ||
                 authUser?.user?.user_metadata?.name ||
                 'User',
-          email: authUser?.user?.email || `${userId.slice(0, 8)}@auth.local`
+          email: authUser?.user?.email || `${userId.slice(0, 8)}@auth.local`,
+          // Password hash is required by schema but not used for Supabase auth users
+          password_hash: 'supabase_auth_managed'
         })
         .select('id')
         .single();

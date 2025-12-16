@@ -88,6 +88,39 @@ export const uploadPolicyBodySchema = z.object({
 }).strict(); // SECURITY: Reject unknown keys
 
 // ============================================
+// Feedback Schemas
+// ============================================
+
+export const feedbackTypeSchema = z.enum(['bug', 'suggestion', 'question', 'other']);
+
+export const generalFeedbackSchema = z.object({
+  rating: z.number().int().min(1).max(5, 'Rating must be between 1 and 5'),
+  comment: safeStringSchema(2000).optional(),
+  feedback_type: feedbackTypeSchema.optional(),
+  conversation_id: dbIdSchema.optional(),
+  session_id: dbIdSchema.optional() // Can pass session_id instead - backend will resolve to latest conversation
+}).strict();
+
+export type GeneralFeedbackRequest = z.infer<typeof generalFeedbackSchema>;
+
+export const chatFeedbackSchema = z.object({
+  conversation_id: dbIdSchema,
+  vote: z.number().int().refine((v) => v === -1 || v === 1, {
+    message: 'Vote must be -1 (thumbs down) or 1 (thumbs up)'
+  })
+}); // Note: Not using .strict() because middleware may add userId
+
+export type ChatFeedbackRequest = z.infer<typeof chatFeedbackSchema>;
+
+export const sessionFeedbackSchema = z.object({
+  session_id: dbIdSchema,
+  rating: z.number().int().min(1).max(5, 'Rating must be between 1 and 5'),
+  comment: safeStringSchema(2000).optional()
+}).strict();
+
+export type SessionFeedbackRequest = z.infer<typeof sessionFeedbackSchema>;
+
+// ============================================
 // Helper Functions
 // ============================================
 

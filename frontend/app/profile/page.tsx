@@ -439,7 +439,7 @@ export default function ProfilePage() {
                 variant="destructive"
                 onClick={handleDeletePolicy}
                 disabled={isDeleting}
-                className="gap-2 font-(family-name:--font-work-sans) rounded-lg"
+                className="gap-2 font-(family-name:--font-work-sans) rounded-lg bg-red-600 hover:bg-red-700 text-white"
               >
                 {isDeleting ? (
                   <>

@@ -562,9 +562,12 @@ export async function handleDocumentUpload(
         const sanitizedName = originalName.replace(/[^a-zA-Z0-9.-]/g, '_');
         const gcsFileName = `Policies/${timestamp}_${sessionId}_${sanitizedName}`;
 
+        console.log(`📦 Step 1: Uploading to GCS - ${gcsFileName}`);
         await uploadToGCS(buffer, gcsFileName, mimeType);
+        console.log(`✅ Step 1 complete: GCS upload successful`);
 
         // 2. Extract text based on document type
+        console.log(`📦 Step 2: Extracting text from ${docType}`);
         let extractedText: string;
 
         if (docType === 'image') {
@@ -572,6 +575,7 @@ export async function handleDocumentUpload(
         } else {
             extractedText = await extractTextFromPDF(buffer, mimeType);
         }
+        console.log(`✅ Step 2 complete: Extracted ${extractedText.length} characters`);
 
         if (!extractedText || extractedText.length < 50) {
             return {
@@ -581,7 +585,9 @@ export async function handleDocumentUpload(
         }
 
         // 3. Analyze the extracted text
+        console.log(`📦 Step 3: Analyzing policy text with AI`);
         const analysis = await analyzePolicyText(extractedText, originalName);
+        console.log(`✅ Step 3 complete: Analysis generated (${analysis.length} chars)`);
 
         // 4. Detect ALL policy types present in the document
         const allDetectedTypes = detectAllPolicyTypes(analysis);
@@ -722,6 +728,14 @@ export async function handleDocumentUpload(
 
     } catch (error) {
         console.error('❌ Error processing document:', error);
+        // Log detailed error info for debugging
+        if (error instanceof Error) {
+            console.error('❌ Error details:', {
+                name: error.name,
+                message: error.message,
+                stack: error.stack
+            });
+        }
         return {
             success: false,
             error: error instanceof Error ? error.message : 'Failed to process document'

@@ -3,6 +3,19 @@
 
 import { createClient } from './supabase';
 
+// Get backend URL from environment variable
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080';
+
+/**
+ * Construct full backend API URL
+ * Uses absolute URL to bypass Next.js proxy and avoid timeout issues
+ */
+function getBackendUrl(path: string): string {
+    // Remove leading slash if present to avoid double slashes
+    const cleanPath = path.startsWith('/') ? path.slice(1) : path;
+    return `${BACKEND_URL}/${cleanPath}`;
+}
+
 export interface ChatMessage {
     role: "user" | "assistant";
     content: string;
@@ -109,14 +122,22 @@ export async function createChatSession(userId: string): Promise<{ sessionId: nu
     try {
         const headers = await getAuthHeaders();
 
-        const response = await fetch('/api/chat-sessions', {
+        const response = await fetch(getBackendUrl('/api/chat-sessions'), {
             method: "POST",
             headers,
             body: JSON.stringify({ userId }),
         });
 
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            // Try to parse error as JSON, fallback to text
+            const contentType = response.headers.get("content-type");
+            if (contentType && contentType.includes("application/json")) {
+                const error = await response.json();
+                throw new Error(error.error || `HTTP error! status: ${response.status}`);
+            } else {
+                const text = await response.text();
+                throw new Error(text || `HTTP error! status: ${response.status}`);
+            }
         }
 
         const data = await response.json();
@@ -179,7 +200,7 @@ export async function getChatHistory(
         if (options?.before) params.set('before', options.before);
 
         const response = await fetch(
-            `/api/chat-sessions/${sessionId}/messages?${params.toString()}`,
+            getBackendUrl(`/api/chat-sessions/${sessionId}/messages?${params.toString()}`),
             { headers }
         );
 
@@ -218,11 +239,20 @@ export async function getUserSessions(userId: string, limit: number = 10): Promi
         }
 
         const response = await fetch(
-            `/api/users/${userId}/chat-sessions?limit=${limit}`,
+            getBackendUrl(`/api/users/${userId}/chat-sessions?limit=${limit}`),
             { headers }
         );
 
         if (!response.ok) {
+            const contentType = response.headers.get("content-type");
+            if (contentType && contentType.includes("application/json")) {
+                try {
+                    const error = await response.json();
+                    throw new Error(error.error || `HTTP error! status: ${response.status}`);
+                } catch {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+            }
             throw new Error(`HTTP error! status: ${response.status}`);
         }
 
@@ -241,7 +271,7 @@ export async function renameSession(sessionId: number, userId: string, newName: 
     try {
         const headers = await getAuthHeaders();
 
-        const response = await fetch(`/api/chat-sessions/${sessionId}`, {
+        const response = await fetch(getBackendUrl(`/api/chat-sessions/${sessionId}`), {
             method: "PATCH",
             headers,
             body: JSON.stringify({ userId, summary: newName }),
@@ -267,7 +297,7 @@ export async function deleteSession(sessionId: number, userId: string): Promise<
     try {
         const headers = await getAuthHeaders();
 
-        const response = await fetch(`/api/chat-sessions/${sessionId}`, {
+        const response = await fetch(getBackendUrl(`/api/chat-sessions/${sessionId}`), {
             method: "DELETE",
             headers,
             body: JSON.stringify({ userId }),
@@ -298,7 +328,7 @@ export async function sendChatMessage(
     try {
         const headers = await getAuthHeaders();
 
-        const response = await fetch('/api/chat', {
+        const response = await fetch(getBackendUrl('/api/chat'), {
             method: "POST",
             headers,
             body: JSON.stringify({
@@ -310,7 +340,19 @@ export async function sendChatMessage(
         });
 
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            // Try to parse error as JSON, fallback to text
+            const contentType = response.headers.get("content-type");
+            if (contentType && contentType.includes("application/json")) {
+                try {
+                    const error = await response.json();
+                    throw new Error(error.error || `HTTP error! status: ${response.status}`);
+                } catch {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+            } else {
+                const text = await response.text();
+                throw new Error(text || `HTTP error! status: ${response.status}`);
+            }
         }
 
         const data: ChatResponse = await response.json();
@@ -347,26 +389,31 @@ export async function uploadPolicyDocument(
         }
         // Note: Don't set Content-Type for FormData - browser will set it with boundary
 
-        const response = await fetch('/api/upload-policy', {
-            method: "POST",
-            headers,
-            body: formData,
-        });
+        // Create AbortController with 2 minute timeout for long-running document processing
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minutes
 
-        const data = await response.json();
+        try {
+            const response = await fetch(getBackendUrl('/api/upload-policy'), {
+                method: "POST",
+                headers,
+                body: formData,
+                signal: controller.signal,
+            });
 
-        if (!response.ok) {
-            return {
-                success: false,
-                error: data.error || `Upload failed with status ${response.status}`
-            };
+            clearTimeout(timeoutId);
+
+            return await handleUploadResponse(response);
+        } catch (error) {
+            clearTimeout(timeoutId);
+            if (error instanceof Error && error.name === 'AbortError') {
+                return {
+                    success: false,
+                    error: 'Upload is taking longer than expected. Your document is still being processed. Please refresh the page in a moment to see your policy.'
+                };
+            }
+            throw error;
         }
-
-        return {
-            success: true,
-            message: data.message,
-            analysis: data.analysis
-        };
     } catch (error) {
         console.error("Error uploading policy document:", error);
         return {
@@ -374,6 +421,40 @@ export async function uploadPolicyDocument(
             error: error instanceof Error ? error.message : "Failed to upload document"
         };
     }
+}
+
+// Helper function to handle upload response
+async function handleUploadResponse(response: Response): Promise<UploadResponse> {
+    if (!response.ok) {
+        // Try to parse error as JSON, fallback to generic error
+        const contentType = response.headers.get("content-type");
+        let errorMessage = `Upload failed with status ${response.status}`;
+
+        if (contentType && contentType.includes("application/json")) {
+            try {
+                const data = await response.json();
+                errorMessage = data.error || errorMessage;
+            } catch {
+                // If JSON parsing fails, use generic error
+            }
+        } else {
+            // Non-JSON error (e.g., HTML error page)
+            const text = await response.text();
+            errorMessage = text || errorMessage;
+        }
+
+        return {
+            success: false,
+            error: errorMessage
+        };
+    }
+
+    const data = await response.json();
+    return {
+        success: true,
+        message: data.message,
+        analysis: data.analysis
+    };
 }
 
 /**
@@ -389,11 +470,20 @@ export async function getUserPolicies(userId: string): Promise<UserPolicy[]> {
         }
 
         const response = await fetch(
-            `/api/users/${userId}/policies`,
+            getBackendUrl(`/api/users/${userId}/policies`),
             { headers }
         );
 
         if (!response.ok) {
+            const contentType = response.headers.get("content-type");
+            if (contentType && contentType.includes("application/json")) {
+                try {
+                    const error = await response.json();
+                    throw new Error(error.error || `HTTP error! status: ${response.status}`);
+                } catch {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+            }
             throw new Error(`HTTP error! status: ${response.status}`);
         }
 
@@ -413,7 +503,7 @@ export async function deleteUserPolicy(userId: string, policyType: PolicyType): 
         const headers = await getAuthHeaders();
 
         const response = await fetch(
-            `/api/users/${userId}/policies/${policyType}`,
+            getBackendUrl(`/api/users/${userId}/policies/${policyType}`),
             {
                 method: 'DELETE',
                 headers
@@ -441,7 +531,7 @@ export async function renameUserPolicy(userId: string, policyType: PolicyType, n
         const headers = await getAuthHeaders();
 
         const response = await fetch(
-            `/api/users/${userId}/policies/${policyType}`,
+            getBackendUrl(`/api/users/${userId}/policies/${policyType}`),
             {
                 method: 'PATCH',
                 headers,

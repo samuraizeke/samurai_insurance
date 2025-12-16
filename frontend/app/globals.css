@@ -936,15 +936,26 @@ button:disabled {
   padding-top: env(safe-area-inset-top, 0px);
 }
 
+/* Mobile header with safe area + extra padding */
+/* Uses max() to ensure minimum 59px padding (Dynamic Island height + extra) when safe area isn't available */
+.mobile-header-safe {
+  padding-top: 12px;
+}
+
+@media (max-width: 767px) {
+  .mobile-header-safe {
+    padding-top: max(calc(env(safe-area-inset-top, 0px) + 12px), 59px);
+  }
+}
+
 /* Mobile-only safe area padding - applies only on mobile screens */
 @media (max-width: 767px) {
   .mobile-safe-area-top {
     padding-top: env(safe-area-inset-top, 0px) !important;
   }
 
-  /* Apply safe area to sidebar-inset on mobile */
+  /* Background color for sidebar-inset on mobile */
   [data-slot="sidebar-inset"] {
-    padding-top: env(safe-area-inset-top, 0px) !important;
     background-color: #f7f6f3 !important;
   }
 }

@@ -49,6 +49,7 @@ import {
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { useChatContext } from "@/app/context/ChatContext";
+import { MessageFeedback } from "@/components/feedback";
 
 interface AttachedFile {
     id: string;
@@ -211,13 +212,16 @@ export default function ChatWidget() {
         // Clear current session - new session will be created when first message is sent
         clearStoredSession();
         setMessages([]);
+        setHasMessages(false); // Immediately update context to fix header padding
         setDbSessionId(null);
         setCurrentSessionId(null);
         setSelectedPolicy(null); // Clear policy selection for new chat
         setPagination(null); // Clear pagination state
         setSessionId(`session_${Date.now()}_${Math.random().toString(36).substring(7)}`);
         sessionInitialized.current = false; // Allow session creation on first message
-    }, [setCurrentSessionId]);
+        // Reset scroll position to top to prevent header appearing cut off
+        window.scrollTo(0, 0);
+    }, [setCurrentSessionId, setHasMessages]);
 
     // Function to load a specific session (called from sidebar)
     const loadSession = useCallback(async (targetSessionId: number) => {
@@ -687,6 +691,9 @@ export default function ChatWidget() {
                         const showUploadButton = hasUploadMarker(message.content);
                         const displayContent = showUploadButton ? removeUploadMarker(message.content) : message.content;
 
+                        // Check if message ID is a database ID (numeric string) for feedback
+                        const isPersistedMessage = /^\d+$/.test(message.id);
+
                         return (
                             <div
                                 key={message.id}
@@ -779,6 +786,13 @@ export default function ChatWidget() {
                                             <FontAwesomeIcon icon={faUpload} className="mr-2 size-4" />
                                             Upload Policy Document
                                         </Button>
+                                    )}
+                                    {/* Feedback buttons for assistant messages - only for persisted messages */}
+                                    {message.role === "assistant" && isPersistedMessage && (
+                                        <MessageFeedback
+                                            conversationId={parseInt(message.id, 10)}
+                                            className="mt-1"
+                                        />
                                     )}
                                 </div>
                                 {message.role === "user" && (

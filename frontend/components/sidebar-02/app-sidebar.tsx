@@ -40,6 +40,7 @@ import { useChatContext } from "@/app/context/ChatContext";
 import { useAuth } from "@/lib/auth-context";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
+import { FeedbackButton } from "@/components/feedback";
 
 // Helper to get session preview text
 function getSessionPreview(session: { summary?: string; conversation_context?: string; first_message?: string; started_at: string }): string {
@@ -243,6 +244,9 @@ export function DashboardSidebar() {
           </SidebarMenuItem>
         </SidebarMenu>
 
+        {/* Feedback Button */}
+        <FeedbackButton collapsed={isCollapsed} sessionId={currentSessionId} />
+
         {/* Recents Section */}
         {!isCollapsed && recentSessions.length > 0 && (
           <SidebarGroup>
@@ -302,11 +306,11 @@ export function DashboardSidebar() {
                             </TooltipContent>
                           </Tooltip>
                           <DropdownMenuContent
-                            align="start"
-                            side="right"
-                            sideOffset={8}
+                            align="end"
+                            side="bottom"
+                            sideOffset={4}
                             collisionPadding={16}
-                            className="z-100 rounded-2xl p-1.5 border border-[#e5e5e5] shadow-xl font-(family-name:--font-work-sans)"
+                            className="z-10000 rounded-2xl p-1.5 border border-[#e5e5e5] shadow-xl font-(family-name:--font-work-sans) min-w-32"
                             style={{ backgroundColor: '#ffffff' }}
                           >
                             <DropdownMenuItem

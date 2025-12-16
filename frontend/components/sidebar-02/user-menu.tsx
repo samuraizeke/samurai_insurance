@@ -67,10 +67,11 @@ export function UserMenu() {
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-2xl p-1.5 mb-4 border-[#333333]/10 shadow-lg bg-[hsl(0_0%_98%)]"
-            align="start"
-            side={isMobile ? "bottom" : "right"}
-            sideOffset={4}
+            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-2xl p-1.5 border-[#333333]/10 shadow-xl bg-[hsl(0_0%_98%)] z-10000"
+            align="end"
+            side="top"
+            sideOffset={8}
+            collisionPadding={16}
           >
             <DropdownMenuLabel className="font-(family-name:--font-work-sans)">
               <div className="flex flex-col space-y-1">
