@@ -115,15 +115,22 @@ const allowedOrigins = isProduction
       process.env.FRONTEND_URL,
     ].filter(Boolean) as string[];
 
-// In development, also allow ngrok domains for mobile testing
+// Helper functions for dynamic origin validation
 const isNgrokOrigin = (origin: string) =>
   !isProduction && origin.endsWith('.ngrok-free.dev');
+
+// Allow Vercel preview deployments (staging/preview branches)
+const isVercelPreviewOrigin = (origin: string) => {
+  // Match Vercel preview URLs: https://*.vercel.app
+  // Only allow for samurai-insurance project
+  return origin.match(/^https:\/\/samurai-insurance.*\.vercel\.app$/);
+};
 
 app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (like mobile apps, curl, or same-origin)
     if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin) || isNgrokOrigin(origin)) {
+    if (allowedOrigins.includes(origin) || isNgrokOrigin(origin) || isVercelPreviewOrigin(origin)) {
       return callback(null, true);
     }
     // Log rejected origins for monitoring
