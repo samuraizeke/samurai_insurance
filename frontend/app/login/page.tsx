@@ -3,6 +3,11 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+} from "@/components/ui/input-otp";
 import { Loader2 } from "lucide-react";
 import { JSX, SVGProps, useState, useEffect } from "react";
 import { EnvelopeClosedIcon } from "@radix-ui/react-icons";
@@ -49,12 +54,14 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isBetaError, setIsBetaError] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpCode, setOtpCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [isMicrosoftLoading, setIsMicrosoftLoading] = useState(false);
   const [isWaitlistOpen, setIsWaitlistOpen] = useState(false);
-  const { signInWithMagicLink, signInWithGoogle, signInWithMicrosoft } = useAuth();
+  const { sendOtp, verifyOtp, signInWithGoogle, signInWithMicrosoft } = useAuth();
 
   const BETA_ERROR_MESSAGE = "You are not on the beta allowlist.";
 
@@ -98,18 +105,52 @@ export default function LoginPage() {
     }
   };
 
-  const handleMagicLinkSignIn = async (e: React.FormEvent) => {
+  const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setIsBetaError(false);
     setIsLoading(true);
 
     try {
-      const { error } = await signInWithMagicLink(email);
+      const { error } = await sendOtp(email);
       if (error) {
         handleError(error.message);
       } else {
-        setSuccess(true);
+        setOtpSent(true);
+      }
+    } catch (err) {
+      setError("An unexpected error occurred");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setIsVerifying(true);
+
+    try {
+      const { error } = await verifyOtp(email, otpCode);
+      if (error) {
+        setError(error.message);
+      }
+      // On success, the auth context will handle redirect
+    } catch (err) {
+      setError("An unexpected error occurred");
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    setError(null);
+    setIsLoading(true);
+
+    try {
+      const { error } = await sendOtp(email);
+      if (error) {
+        handleError(error.message);
       }
     } catch (err) {
       setError("An unexpected error occurred");
@@ -144,28 +185,85 @@ export default function LoginPage() {
     }
   };
 
-  if (success) {
+  if (otpSent) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-[#f7f6f3]">
         <div className="mx-auto w-full max-w-md px-4">
           <Card className="border-[#333333]/10">
-            <CardContent className="pt-6 text-center space-y-4">
+            <CardContent className="pt-6 text-center space-y-6">
               <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
                 <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
               </div>
-              <h2 className="text-xl font-semibold font-heading">Check your email</h2>
-              <p className="text-muted-foreground font-(family-name:--font-work-sans)">
-                We&apos;ve sent a magic link to <strong>{email}</strong>. Click the link to sign in.
-              </p>
-              <Button
-                variant="outline"
-                className="mt-4 font-(family-name:--font-work-sans) border-[#333333]/10"
-                onClick={() => setSuccess(false)}
-              >
-                Use a different email
-              </Button>
+              <div className="space-y-2">
+                <h2 className="text-xl font-semibold font-heading">Enter verification code</h2>
+                <p className="text-muted-foreground font-(family-name:--font-work-sans)">
+                  We&apos;ve sent a 6-digit code to <strong>{email}</strong>
+                </p>
+              </div>
+
+              {error && (
+                <div
+                  role="alert"
+                  className="p-4 rounded-md bg-destructive/10 text-destructive text-base font-(family-name:--font-work-sans)"
+                >
+                  {error}
+                </div>
+              )}
+
+              <form onSubmit={handleVerifyOtp} className="space-y-6">
+                <div className="flex justify-center">
+                  <InputOTP
+                    maxLength={6}
+                    value={otpCode}
+                    onChange={(value) => setOtpCode(value)}
+                  >
+                    <InputOTPGroup>
+                      <InputOTPSlot index={0} className="h-12 w-12 text-lg" />
+                      <InputOTPSlot index={1} className="h-12 w-12 text-lg" />
+                      <InputOTPSlot index={2} className="h-12 w-12 text-lg" />
+                      <InputOTPSlot index={3} className="h-12 w-12 text-lg" />
+                      <InputOTPSlot index={4} className="h-12 w-12 text-lg" />
+                      <InputOTPSlot index={5} className="h-12 w-12 text-lg" />
+                    </InputOTPGroup>
+                  </InputOTP>
+                </div>
+
+                <Button
+                  type="submit"
+                  className="w-full h-12 text-base bg-[#333333] hover:bg-[#333333]/90 text-[#f7f6f3] font-bold font-(family-name:--font-work-sans) rounded-full"
+                  disabled={isVerifying || otpCode.length !== 6}
+                >
+                  {isVerifying ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : (
+                    "Verify"
+                  )}
+                </Button>
+              </form>
+
+              <div className="flex flex-col gap-2">
+                <button
+                  type="button"
+                  onClick={handleResendOtp}
+                  disabled={isLoading}
+                  className="text-sm text-muted-foreground hover:text-foreground font-(family-name:--font-work-sans) disabled:opacity-50"
+                >
+                  {isLoading ? "Sending..." : "Didn't receive a code? Resend"}
+                </button>
+                <Button
+                  variant="outline"
+                  className="font-(family-name:--font-work-sans) border-[#333333]/10"
+                  onClick={() => {
+                    setOtpSent(false);
+                    setOtpCode("");
+                    setError(null);
+                  }}
+                >
+                  Use a different email
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -264,7 +362,7 @@ export default function LoginPage() {
             </div>
           )}
 
-          <form onSubmit={handleMagicLinkSignIn} className="space-y-7">
+          <form onSubmit={handleSendOtp} className="space-y-7">
             <div>
               <div className="relative">
                 <Input
@@ -281,7 +379,7 @@ export default function LoginPage() {
                 </div>
               </div>
               <p className="mt-2 text-sm text-muted-foreground font-(family-name:--font-work-sans) text-center">
-                We&apos;ll send you a magic link to sign in instantly.
+                We&apos;ll send you a verification code to sign in.
               </p>
             </div>
 
@@ -293,7 +391,7 @@ export default function LoginPage() {
               {isLoading ? (
                 <Loader2 className="h-5 w-5 animate-spin" />
               ) : (
-                "Send magic link"
+                "Send verification code"
               )}
             </Button>
           </form>
