@@ -72,6 +72,23 @@ export default function SignupPage() {
   const supabase = createClient();
 
   const BETA_ERROR_MESSAGE = "You are not on the beta allowlist.";
+  const SIGNUP_STATE_KEY = "signup_needs_name";
+
+  // Restore signup state from sessionStorage (survives page refresh from auth state change)
+  useEffect(() => {
+    const savedState = sessionStorage.getItem(SIGNUP_STATE_KEY);
+    if (savedState) {
+      try {
+        const { email: savedEmail, showNameForm: savedShowNameForm } = JSON.parse(savedState);
+        if (savedShowNameForm) {
+          setEmail(savedEmail);
+          setShowNameForm(true);
+        }
+      } catch {
+        sessionStorage.removeItem(SIGNUP_STATE_KEY);
+      }
+    }
+  }, []);
 
   // Pre-load reCAPTCHA script for waitlist modal
   // Uses the same attribute as WaitlistModal to prevent duplicate script loading
@@ -149,6 +166,10 @@ export default function SignupPage() {
       if (error) {
         setError(error.message);
       } else {
+        // Set cookie to tell middleware we're completing profile (prevents redirect)
+        document.cookie = "signup_completing_profile=true; path=/; max-age=600"; // 10 min expiry
+        // Save state to sessionStorage (survives page refresh from auth state change)
+        sessionStorage.setItem(SIGNUP_STATE_KEY, JSON.stringify({ email, showNameForm: true }));
         // Show the name form instead of redirecting
         setShowNameForm(true);
       }
@@ -195,6 +216,10 @@ export default function SignupPage() {
       await supabase.auth.updateUser({
         data: { full_name: fullName.trim() }
       });
+
+      // Clear signup state from sessionStorage and cookie
+      sessionStorage.removeItem(SIGNUP_STATE_KEY);
+      document.cookie = "signup_completing_profile=; path=/; max-age=0";
 
       // Redirect to chat
       router.push("/chat");

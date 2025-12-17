@@ -55,7 +55,9 @@ export async function middleware(request: NextRequest) {
   }
 
   // Redirect authenticated users away from auth pages
-  if (isAuthRoute && user) {
+  // Exception: Allow staying on /signup if completing profile (name entry)
+  const isCompletingProfile = request.cookies.get("signup_completing_profile")?.value === "true";
+  if (isAuthRoute && user && !isCompletingProfile) {
     const url = request.nextUrl.clone();
     url.pathname = "/chat";
     return NextResponse.redirect(url);
