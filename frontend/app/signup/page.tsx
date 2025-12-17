@@ -13,6 +13,7 @@ import { Loader2 } from "lucide-react";
 import { JSX, SVGProps, useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase";
+import { checkEmailExists } from "@/lib/api";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -67,6 +68,7 @@ export default function SignupPage() {
   const [showNameForm, setShowNameForm] = useState(false);
   const [fullName, setFullName] = useState("");
   const [isSavingName, setIsSavingName] = useState(false);
+  const [isEmailExistsError, setIsEmailExistsError] = useState(false);
   const { sendOtp, verifyOtp, signInWithGoogle, signInWithMicrosoft } = useAuth();
   const router = useRouter();
   const supabase = createClient();
@@ -134,6 +136,7 @@ export default function SignupPage() {
     e.preventDefault();
     setError(null);
     setIsBetaError(false);
+    setIsEmailExistsError(false);
 
     if (!agreedToTerms) {
       setError("You must agree to the terms of use and privacy policy");
@@ -143,6 +146,18 @@ export default function SignupPage() {
     setIsLoading(true);
 
     try {
+      // Check if the email already exists before sending OTP
+      const { exists, error: checkError } = await checkEmailExists(email);
+
+      if (checkError) {
+        // If we can't verify, proceed with signup attempt (let Supabase handle it)
+        console.warn("Could not verify email existence:", checkError);
+      } else if (exists) {
+        setIsEmailExistsError(true);
+        setIsLoading(false);
+        return;
+      }
+
       const { error } = await sendOtp(email);
       if (error) {
         handleError(error.message);
@@ -482,6 +497,33 @@ export default function SignupPage() {
             <div className="flex-1 h-px bg-[#333333]/20" />
           </div>
 
+          {isEmailExistsError && (
+            <Card className="border-amber-200 bg-amber-50">
+              <CardContent className="pt-6 space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center shrink-0">
+                    <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-semibold text-amber-900 font-heading">Account Exists</h3>
+                </div>
+                <p className="text-amber-800 font-(family-name:--font-work-sans)">
+                  An account with this email already exists.
+                </p>
+                <p className="text-sm text-amber-700 font-(family-name:--font-work-sans)">
+                  Please sign in to your existing account instead.
+                </p>
+                <Link
+                  href="/login"
+                  className="inline-block text-sm text-amber-800 underline font-(family-name:--font-work-sans)"
+                >
+                  Sign in to your account
+                </Link>
+              </CardContent>
+            </Card>
+          )}
+
           {isBetaError && (
             <Card className="border-amber-200 bg-amber-50">
               <CardContent className="pt-6 space-y-3">
@@ -510,7 +552,7 @@ export default function SignupPage() {
             </Card>
           )}
 
-          {error && !isBetaError && (
+          {error && !isBetaError && !isEmailExistsError && (
             <div
               role="alert"
               className="p-4 rounded-md bg-destructive/10 text-destructive text-base font-(family-name:--font-work-sans)"
@@ -527,7 +569,13 @@ export default function SignupPage() {
                 placeholder="Enter your email"
                 className="h-12 text-base font-(family-name:--font-work-sans) border-[#333333]/10 bg-[hsl(0_0%_98%)] rounded-full px-6"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  // Clear email exists error when user changes email
+                  if (isEmailExistsError) {
+                    setIsEmailExistsError(false);
+                  }
+                }}
                 required
               />
               <p className="mt-2 text-sm text-muted-foreground font-(family-name:--font-work-sans) text-center">

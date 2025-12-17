@@ -45,7 +45,8 @@ import {
     clearStoredSession,
     getUserPolicies,
     UserPolicy,
-    PaginationInfo
+    PaginationInfo,
+    ChatResponse
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { useChatContext } from "@/app/context/ChatContext";
@@ -403,9 +404,12 @@ export default function ChatWidget() {
                 messageToSend = policyContext + userMessageContent;
             }
 
+            // Create a temporary user message ID (will be replaced with DB ID if available)
+            const tempUserMessageId = generateFileId();
+
             // Add user message (show original message to user, not the one with context)
             const userMessage: Message = {
-                id: generateFileId(),
+                id: tempUserMessageId,
                 content: userMessageContent,
                 role: "user",
                 timestamp: new Date(),
@@ -443,17 +447,26 @@ export default function ChatWidget() {
                 }));
 
                 // Call the backend API with session tracking (send message with policy context)
-                const response = await sendChatMessage(
+                const chatResponse: ChatResponse = await sendChatMessage(
                     messageToSend,
                     history,
                     user?.id,
                     currentDbSessionId ?? undefined
                 );
 
-                // Add assistant response
+                // Update user message with database ID if available (enables feedback)
+                if (chatResponse.userMessageId) {
+                    setMessages((prev) => prev.map(msg =>
+                        msg.id === tempUserMessageId
+                            ? { ...msg, id: chatResponse.userMessageId!.toString() }
+                            : msg
+                    ));
+                }
+
+                // Add assistant response with database ID for immediate feedback
                 const assistantMessage: Message = {
-                    id: generateFileId(),
-                    content: response,
+                    id: chatResponse.assistantMessageId?.toString() || generateFileId(),
+                    content: chatResponse.response,
                     role: "assistant",
                     timestamp: new Date(),
                 };

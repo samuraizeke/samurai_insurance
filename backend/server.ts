@@ -161,6 +161,63 @@ app.get('/', (req, res) => {
   res.send('Samurai Insurance Backend is active and healthy');
 });
 
+// ============================================
+// AUTH ENDPOINTS
+// ============================================
+
+// Check if an email already exists (for signup validation)
+app.post('/api/auth/check-email', generalLimiter, async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email || typeof email !== 'string') {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+
+    // Normalize email
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Check if user exists in our users table
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('id')
+      .eq('email', normalizedEmail)
+      .maybeSingle();
+
+    if (userError) {
+      logger.error('Error checking user table', userError);
+      return res.status(500).json({ error: 'Failed to check email' });
+    }
+
+    // If found in users table, they definitely exist
+    if (userData) {
+      return res.json({ exists: true });
+    }
+
+    // Also check Supabase Auth for users who haven't completed profile setup
+    // Use listUsers and filter in code (admin API doesn't support email filter)
+    const { data: authData, error: authError } = await supabase.auth.admin.listUsers({
+      perPage: 1000
+    });
+
+    if (authError) {
+      logger.error('Error checking auth users', authError);
+      // Fall back to just the users table check
+      return res.json({ exists: false });
+    }
+
+    const authUserExists = authData.users?.some(
+      u => u.email?.toLowerCase() === normalizedEmail
+    );
+
+    res.json({ exists: authUserExists });
+
+  } catch (error) {
+    logger.error('Error in check-email endpoint', error);
+    res.status(500).json({ error: 'Failed to check email' });
+  }
+});
+
 // Diagnostic endpoint (development only)
 app.get('/api/diagnostics', (req, res) => {
   if (process.env.NODE_ENV !== 'development') {
@@ -973,9 +1030,10 @@ app.post('/api/chat', chatLimiter, optionalAuth, async (req, res) => {
     }
 
     // Save user message to database (only if session ownership verified)
+    let userMessageId: number | undefined;
     if (verifiedSessionId) {
       try {
-        await supabase
+        const { data: userMsgData } = await supabase
           .from('conversations')
           .insert({
             session_id: verifiedSessionId,
@@ -983,7 +1041,10 @@ app.post('/api/chat', chatLimiter, optionalAuth, async (req, res) => {
             language: 'en',
             channel: 'web',
             timestamp: new Date().toISOString()
-          });
+          })
+          .select('id')
+          .single();
+        userMessageId = userMsgData?.id;
       } catch (dbError) {
         logger.warn('Failed to save user message', { error: dbError });
       }
@@ -997,9 +1058,10 @@ app.post('/api/chat', chatLimiter, optionalAuth, async (req, res) => {
     logger.info('Sam completed, sending response');
 
     // Save assistant response to database (only if session ownership verified)
+    let assistantMessageId: number | undefined;
     if (verifiedSessionId) {
       try {
-        await supabase
+        const { data: assistantMsgData } = await supabase
           .from('conversations')
           .insert({
             session_id: verifiedSessionId,
@@ -1007,7 +1069,10 @@ app.post('/api/chat', chatLimiter, optionalAuth, async (req, res) => {
             language: 'en',
             channel: 'web',
             timestamp: new Date().toISOString()
-          });
+          })
+          .select('id')
+          .single();
+        assistantMessageId = assistantMsgData?.id;
 
         // Update session metadata
         const messageCount = (history?.length || 0) + 2;
@@ -1030,7 +1095,11 @@ app.post('/api/chat', chatLimiter, optionalAuth, async (req, res) => {
       }
     }
 
-    res.json({ response: finalResponse });
+    res.json({
+      response: finalResponse,
+      userMessageId,
+      assistantMessageId
+    });
 
   } catch (error) {
     logger.error('Critical error in /chat endpoint', error);

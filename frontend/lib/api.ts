@@ -30,6 +30,8 @@ export interface ChatRequest {
 
 export interface ChatResponse {
     response: string;
+    userMessageId?: number;
+    assistantMessageId?: number;
 }
 
 export interface UploadResponse {
@@ -318,13 +320,14 @@ export async function deleteSession(sessionId: number, userId: string): Promise<
 
 /**
  * Send a chat message with session tracking
+ * Returns the response text and optional message IDs for feedback
  */
 export async function sendChatMessage(
     message: string,
     history: ChatMessage[] = [],
     userId?: string,
     sessionId?: number
-): Promise<string> {
+): Promise<ChatResponse> {
     try {
         const headers = await getAuthHeaders();
 
@@ -356,7 +359,7 @@ export async function sendChatMessage(
         }
 
         const data: ChatResponse = await response.json();
-        return data.response;
+        return data;
     } catch (error) {
         console.error("Error sending chat message:", error);
         throw error;
@@ -549,5 +552,37 @@ export async function renameUserPolicy(userId: string, policyType: PolicyType, n
     } catch (error) {
         console.error("Error renaming policy:", error);
         return false;
+    }
+}
+
+/**
+ * Check if an email already exists in the system (for signup validation)
+ * @param email - The email to check
+ * @returns Object with exists boolean and optional error
+ */
+export async function checkEmailExists(email: string): Promise<{ exists: boolean; error?: string }> {
+    try {
+        const response = await fetch(getBackendUrl('/api/auth/check-email'), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email }),
+        });
+
+        if (!response.ok) {
+            const contentType = response.headers.get("content-type");
+            if (contentType && contentType.includes("application/json")) {
+                const data = await response.json();
+                return { exists: false, error: data.error || 'Failed to check email' };
+            }
+            return { exists: false, error: 'Failed to check email' };
+        }
+
+        const data = await response.json();
+        return { exists: data.exists };
+    } catch (error) {
+        console.error("Error checking email:", error);
+        return { exists: false, error: 'Failed to check email' };
     }
 }
