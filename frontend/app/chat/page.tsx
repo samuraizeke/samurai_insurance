@@ -17,7 +17,7 @@ function MobileHeader() {
     if (openMobile) return null;
 
     return (
-        <header className={`md:hidden shrink-0 bg-[#f7f6f3] ${hasMessages ? 'mobile-header-safe' : 'pt-3'}`}>
+        <header className="md:hidden shrink-0 bg-[#f7f6f3] mobile-header-safe">
             <div className="flex items-center justify-between h-14 px-4">
                 <SidebarTrigger className="h-7 w-7 bg-[#333333] hover:bg-[#333333]/90 text-[#f7f6f3] hover:text-[#f7f6f3] rounded-full [&_svg]:size-4" />
                 <Image
@@ -49,11 +49,11 @@ export default function ChatPage() {
     return (
         <ChatProvider>
             <SidebarProvider>
-                <div className="relative flex h-screen w-full">
+                <div className="relative flex h-svh w-full">
                     <DashboardSidebar />
                     <SidebarInset className="flex flex-col overflow-hidden">
                         <MobileHeader />
-                        <main id="main-content" className="flex flex-1 flex-col items-center justify-center p-4 overflow-hidden">
+                        <main id="main-content" className="flex flex-1 flex-col items-center justify-center p-4 overflow-hidden min-h-0">
                             <h1 className="sr-only">Chat with Sam - Insurance Assistant</h1>
                             <ChatWidget />
                         </main>

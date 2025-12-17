@@ -135,7 +135,7 @@ function SidebarProvider({
             {
               "--sidebar-width": SIDEBAR_WIDTH,
               "--sidebar-width-icon": SIDEBAR_WIDTH_ICON,
-              ...(isMobile ? { height: 'calc(100svh + env(safe-area-inset-top, 0px))' } : {}),
+              ...(isMobile ? { height: '100svh' } : {}),
               ...style,
             } as React.CSSProperties
           }

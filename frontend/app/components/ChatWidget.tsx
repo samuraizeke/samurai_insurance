@@ -662,7 +662,7 @@ export default function ChatWidget() {
                 </div>
             ) : (
                 <div
-                    className="flex-1 overflow-y-auto pb-4 space-y-4 max-w-2xl w-full mx-auto scrollbar-hide px-2 sm:px-0"
+                    className="flex-1 overflow-y-auto pb-4 space-y-4 max-w-2xl w-full mx-auto scrollbar-hide px-2 sm:px-0 min-h-0"
                     aria-live="polite"
                     aria-label="Chat messages"
                 >
