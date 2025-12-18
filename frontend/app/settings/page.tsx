@@ -107,6 +107,9 @@ export default function SettingsPage() {
       if (result.success) {
         // Account deleted successfully - sign out and redirect
         await signOut();
+      } else if (result.error === "User account not found") {
+        // Account was already deleted - just sign out
+        await signOut();
       } else {
         setDeleteError(result.error || "Failed to delete account. Please try again.");
         setIsDeleting(false);

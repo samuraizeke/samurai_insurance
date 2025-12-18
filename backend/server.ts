@@ -991,11 +991,25 @@ app.delete('/api/account', generalLimiter, requireAuth, async (req, res) => {
     const internalUserId = await getInternalUserId(authUserId);
 
     if (!internalUserId) {
-      logger.error('User not found in database for deletion', { authUserId });
-      return res.status(404).json({ error: 'User account not found' });
+      // User has auth account but no internal user record (e.g., registered but never used the app)
+      // Just delete the Supabase Auth user
+      logger.info('No internal user record found, deleting auth user only', { authUserId });
+
+      const { error: authDeleteError } = await supabase.auth.admin.deleteUser(authUserId);
+
+      if (authDeleteError) {
+        logger.error('Failed to delete auth user', { authUserId, error: authDeleteError.message });
+        return res.status(500).json({ error: 'Failed to delete account' });
+      }
+
+      return res.json({
+        success: true,
+        message: 'Your account has been permanently deleted',
+        deletedRecords: { authUser: 1 }
+      });
     }
 
-    // Perform the deletion
+    // Perform the full deletion (has internal data to clean up)
     const result = await deleteUserAccount(authUserId, internalUserId, userEmail, ipAddress);
 
     if (result.success) {
