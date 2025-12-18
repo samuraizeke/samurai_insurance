@@ -1,0 +1,297 @@
+{
+  "meta": {
+    "version": "2.3",
+    "lastUpdated": "2025-12",
+    "dataContext": "Averages as of late 2025 (November/December data), reflecting recent rate trends and stabilizations.",
+    "sources": [
+      "Bankrate (November 2025 rates)",
+      "NerdWallet (November 2025 analysis)",
+      "Insurify (Q4 2025 data)",
+      "Forbes Advisor (2025 reports)",
+      "Beinsure/S&P Global (December 2025)",
+      "NAIC and State Insurance Departments"
+    ],
+    "disclaimer": "These figures are estimated industry averages for educational purposes only. They are NOT offers of coverage. Actual premiums vary significantly by zip code, credit tier, driving history, home characteristics, and carrier rating tables. Rates fluctuate frequently. Always consult a licensed agent for precise quotes."
+  },
+  "auto": {
+    "national": {
+      "averageAnnualPremium": 2550,
+      "medianAnnualPremium": 2200,
+      "minimumCoverageCost": { "low": 600, "high": 1100 },
+      "fullCoverageCost": { "low": 2000, "high": 3500 },
+      "averageMonthly": { "minimum": 55, "full": 212 }
+    },
+    "byState": {
+      "AL": { "averageAnnualPremium": 2200, "minimumLimits": "25/50/25", "rank": 23 },
+      "AK": { "averageAnnualPremium": 1700, "minimumLimits": "50/100/25", "rank": 43 },
+      "AZ": { "averageAnnualPremium": 2300, "minimumLimits": "25/50/15", "rank": 17 },
+      "AR": { "averageAnnualPremium": 2150, "minimumLimits": "25/50/25", "rank": 21 },
+      "CA": {
+        "averageAnnualPremium": 2800,
+        "minimumLimits": "30/60/15",
+        "rank": 9,
+        "notes": "Limits increased Jan 1, 2025 (SB 1107). Prop 103 regulates rating factors. Wildfire/urban risks drive costs.",
+        "typicalFullCoverage": { "liability": "100/300/100", "compDeductible": 500, "collDeductible": 500 }
+      },
+      "CO": { "averageAnnualPremium": 2700, "minimumLimits": "25/50/15", "rank": 11 },
+      "CT": { "averageAnnualPremium": 2200, "minimumLimits": "25/50/25", "rank": 19 },
+      "DE": { "averageAnnualPremium": 2300, "minimumLimits": "25/50/10", "rank": 18 },
+      "FL": {
+        "averageAnnualPremium": 3600,
+        "minimumLimits": "10/20/10 PIP required",
+        "rank": 2,
+        "notes": "High uninsured rates, litigation, and hurricane risk. Reforms helping moderate increases."
+      },
+      "GA": { "averageAnnualPremium": 2450, "minimumLimits": "25/50/25", "rank": 12 },
+      "HI": { "averageAnnualPremium": 1550, "minimumLimits": "20/40/10 PIP required", "rank": 47 },
+      "ID": { "averageAnnualPremium": 1450, "minimumLimits": "25/50/15", "rank": 50 },
+      "IL": { "averageAnnualPremium": 2000, "minimumLimits": "25/50/20", "rank": 28 },
+      "IN": { "averageAnnualPremium": 1700, "minimumLimits": "25/50/25", "rank": 34 },
+      "IA": { "averageAnnualPremium": 1600, "minimumLimits": "20/40/15", "rank": 41 },
+      "KS": { "averageAnnualPremium": 2100, "minimumLimits": "25/50/25 PIP required", "rank": 24 },
+      "KY": { "averageAnnualPremium": 2450, "minimumLimits": "25/50/25 PIP required", "rank": 13 },
+      "LA": {
+        "averageAnnualPremium": 3800,
+        "minimumLimits": "15/30/25",
+        "rank": 1,
+        "notes": "Highest rates due to litigation, weather, and claims severity."
+      },
+      "ME": { "averageAnnualPremium": 1250, "minimumLimits": "50/100/25", "rank": 51 },
+      "MD": { "averageAnnualPremium": 2400, "minimumLimits": "30/60/15", "rank": 14 },
+      "MA": { "averageAnnualPremium": 1750, "minimumLimits": "20/40/5 PIP required", "rank": 32 },
+      "MI": {
+        "averageAnnualPremium": 3000,
+        "minimumLimits": "50/100/10 PIP required",
+        "rank": 3,
+        "notes": "High PIP medical costs persist."
+      },
+      "MN": { "averageAnnualPremium": 1850, "minimumLimits": "30/60/10 PIP required", "rank": 27 },
+      "MS": { "averageAnnualPremium": 2050, "minimumLimits": "25/50/25", "rank": 25 },
+      "MO": { "averageAnnualPremium": 2250, "minimumLimits": "25/50/25", "rank": 20 },
+      "MT": { "averageAnnualPremium": 1850, "minimumLimits": "25/50/20", "rank": 29 },
+      "NE": { "averageAnnualPremium": 1750, "minimumLimits": "25/50/25", "rank": 35 },
+      "NV": {
+        "averageAnnualPremium": 3300,
+        "minimumLimits": "25/50/20",
+        "rank": 4,
+        "notes": "Continued rapid increases."
+      },
+      "NH": { "averageAnnualPremium": 1450, "minimumLimits": "25/50/25", "rank": 49 },
+      "NJ": {
+        "averageAnnualPremium": 2550,
+        "minimumLimits": "25/50/25",
+        "rank": 10,
+        "notes": "Dense traffic and urban risks."
+      },
+      "NM": { "averageAnnualPremium": 2050, "minimumLimits": "25/50/10", "rank": 26 },
+      "NY": {
+        "averageAnnualPremium": 3500,
+        "minimumLimits": "25/50/10 PIP required",
+        "rank": 5,
+        "notes": "NYC metro drives state average high."
+      },
+      "NC": { "averageAnnualPremium": 1550, "minimumLimits": "30/60/25", "rank": 42, "notes": "Limits increasing to 50/100/50 July 2025 for new/renewing policies." },
+      "ND": { "averageAnnualPremium": 1650, "minimumLimits": "25/50/25 PIP required", "rank": 38 },
+      "OH": { "averageAnnualPremium": 1500, "minimumLimits": "25/50/25", "rank": 44 },
+      "OK": { "averageAnnualPremium": 2350, "minimumLimits": "25/50/25", "rank": 15 },
+      "OR": { "averageAnnualPremium": 1850, "minimumLimits": "25/50/20 PIP required", "rank": 30 },
+      "PA": { "averageAnnualPremium": 2150, "minimumLimits": "15/30/5", "rank": 22 },
+      "RI": { "averageAnnualPremium": 2350, "minimumLimits": "25/50/25", "rank": 16 },
+      "SC": { "averageAnnualPremium": 2250, "minimumLimits": "25/50/25", "rank": 19 },
+      "SD": { "averageAnnualPremium": 1750, "minimumLimits": "25/50/25", "rank": 36 },
+      "TN": { "averageAnnualPremium": 1850, "minimumLimits": "25/50/15", "rank": 31 },
+      "TX": {
+        "averageAnnualPremium": 2650,
+        "minimumLimits": "30/60/25",
+        "rank": 8,
+        "notes": "Weather claims in urban/hail-prone areas."
+      },
+      "UT": {
+        "averageAnnualPremium": 1750,
+        "minimumLimits": "30/65/25 PIP required",
+        "rank": 37,
+        "notes": "Limits increased Jan 1, 2025."
+      },
+      "VT": { "averageAnnualPremium": 1350, "minimumLimits": "25/50/10", "rank": 50 },
+      "VA": { "averageAnnualPremium": 1650, "minimumLimits": "30/60/20", "rank": 39 },
+      "WA": { "averageAnnualPremium": 1900, "minimumLimits": "25/50/10", "rank": 33 },
+      "WV": { "averageAnnualPremium": 1750, "minimumLimits": "25/50/25", "rank": 40 },
+      "WI": { "averageAnnualPremium": 1550, "minimumLimits": "25/50/10", "rank": 45 },
+      "WY": { "averageAnnualPremium": 1650, "minimumLimits": "25/50/20", "rank": 46 },
+      "DC": { "averageAnnualPremium": 2150, "minimumLimits": "25/50/10", "rank": 21 }
+    },
+    "byDriverProfile": {
+      "teen_16_19": {
+        "multiplier": 3.1,
+        "averageAnnualPremium": 6500,
+        "note": "Extremely high risk. Adding to parent policy is usually cheaper than separate policy."
+      },
+      "youngAdult_20_25": {
+        "multiplier": 1.9,
+        "averageAnnualPremium": 4300,
+        "note": "Rates typically drop significantly after turning 25."
+      },
+      "adult_26_65": {
+        "multiplier": 1.0,
+        "averageAnnualPremium": 2550,
+        "note": "Base rate category."
+      },
+      "senior_65_plus": {
+        "multiplier": 1.2,
+        "averageAnnualPremium": 2800,
+        "note": "Rates tick up due to accident frequency/severity risks."
+      }
+    },
+    "byDrivingRecord": {
+      "clean": { "adjustment": 0, "note": "Standard pricing" },
+      "oneTicket": { "adjustment": 0.22, "note": "Expect 20-25% increase" },
+      "oneAccident": { "adjustment": 0.45, "note": "Expect 40-50% increase (surcharge usually lasts 3-5 years)" },
+      "dui": { "adjustment": 1.10, "note": "Rates often double (100%+ increase). Requires SR-22/FR-44." }
+    },
+    "byVehicleType": {
+      "sedan": { "adjustment": 0, "examples": ["Honda Accord", "Toyota Camry"] },
+      "suv": { "adjustment": 0.05, "examples": ["Toyota RAV4", "Honda CR-V"] },
+      "truck": { "adjustment": 0.10, "examples": ["Ford F-150", "Chevy Silverado"] },
+      "sports": { "adjustment": 0.35, "examples": ["Mustang", "Camaro"] },
+      "luxury": { "adjustment": 0.40, "examples": ["BMW", "Mercedes"] },
+      "electric": { "adjustment": 0.22, "examples": ["Tesla", "Rivian"], "note": "Higher repair complexity increases collision premiums." }
+    }
+  },
+  "home": {
+    "national": {
+      "averageAnnualPremium": 2450,
+      "medianAnnualPremium": 2100,
+      "averageDwellingCoverage": 350000,
+      "typicalDeductible": 1500,
+      "averageMonthly": 204
+    },
+    "byState": {
+      "AL": { "averageAnnualPremium": 2900, "rank": 10, "risks": ["tornadoes", "hurricanes"] },
+      "AK": { "averageAnnualPremium": 1400, "rank": 45 },
+      "AZ": { "averageAnnualPremium": 2100, "rank": 22, "risks": ["wildfire"] },
+      "AR": { "averageAnnualPremium": 3200, "rank": 7, "risks": ["tornadoes", "hail"] },
+      "CA": {
+        "averageAnnualPremium": 2000,
+        "rank": 28,
+        "notes": "Premiums rising due to wildfire risk. FAIR plan usage increasing. EQ coverage separate.",
+        "risks": ["wildfires", "earthquakes"]
+      },
+      "CO": {
+        "averageAnnualPremium": 3900,
+        "rank": 4,
+        "notes": "High increases from hail/wildfire. Carrier restrictions common.",
+        "risks": ["hail", "wildfires", "winter storms"]
+      },
+      "CT": { "averageAnnualPremium": 2000, "rank": 24 },
+      "DE": { "averageAnnualPremium": 1200, "rank": 49 },
+      "FL": {
+        "averageAnnualPremium": 6200,
+        "rank": 1,
+        "notes": "Ongoing market challenges. Citizens largest insurer; reforms aiding stabilization.",
+        "risks": ["hurricanes", "flooding", "litigation"]
+      },
+      "GA": { "averageAnnualPremium": 2400, "rank": 18 },
+      "HI": { "averageAnnualPremium": 1600, "rank": 42 },
+      "ID": { "averageAnnualPremium": 1500, "rank": 44 },
+      "IL": { "averageAnnualPremium": 2100, "rank": 27 },
+      "IN": { "averageAnnualPremium": 1900, "rank": 34 },
+      "IA": { "averageAnnualPremium": 2200, "rank": 23 },
+      "KS": { "averageAnnualPremium": 4100, "rank": 3, "risks": ["tornadoes", "hail"] },
+      "KY": { "averageAnnualPremium": 2500, "rank": 16 },
+      "LA": {
+        "averageAnnualPremium": 4500,
+        "rank": 2,
+        "notes": "Severe hurricane risk and low carrier availability.",
+        "risks": ["hurricanes", "flooding"]
+      },
+      "ME": { "averageAnnualPremium": 1400, "rank": 46 },
+      "MD": { "averageAnnualPremium": 1700, "rank": 36 },
+      "MA": { "averageAnnualPremium": 2000, "rank": 25 },
+      "MI": { "averageAnnualPremium": 1900, "rank": 32 },
+      "MN": { "averageAnnualPremium": 2500, "rank": 15, "risks": ["hail", "winter"] },
+      "MS": { "averageAnnualPremium": 2800, "rank": 12 },
+      "MO": { "averageAnnualPremium": 2700, "rank": 14 },
+      "MT": { "averageAnnualPremium": 2600, "rank": 13 },
+      "NE": { "averageAnnualPremium": 4000, "rank": 5, "risks": ["hail", "tornadoes"] },
+      "NV": { "averageAnnualPremium": 1600, "rank": 40 },
+      "NH": { "averageAnnualPremium": 1400, "rank": 47 },
+      "NJ": { "averageAnnualPremium": 1700, "rank": 38 },
+      "NM": { "averageAnnualPremium": 2100, "rank": 21 },
+      "NY": { "averageAnnualPremium": 2000, "rank": 26 },
+      "NC": { "averageAnnualPremium": 2100, "rank": 29, "notes": "Coastal wind pools often required." },
+      "ND": { "averageAnnualPremium": 2700, "rank": 11 },
+      "OH": { "averageAnnualPremium": 1500, "rank": 43 },
+      "OK": { "averageAnnualPremium": 4400, "rank": 6, "risks": ["tornadoes", "hail"] },
+      "OR": { "averageAnnualPremium": 1400, "rank": 48 },
+      "PA": { "averageAnnualPremium": 1500, "rank": 44 },
+      "RI": { "averageAnnualPremium": 2200, "rank": 20 },
+      "SC": { "averageAnnualPremium": 2300, "rank": 17 },
+      "SD": { "averageAnnualPremium": 2900, "rank": 8 },
+      "TN": { "averageAnnualPremium": 2200, "rank": 19 },
+      "TX": {
+        "averageAnnualPremium": 3200,
+        "rank": 9,
+        "notes": "Rising rates; wind/hail deductibles common.",
+        "risks": ["hurricanes", "hail", "tornadoes"]
+      },
+      "UT": { "averageAnnualPremium": 1300, "rank": 50 },
+      "VT": { "averageAnnualPremium": 1200, "rank": 51 },
+      "VA": { "averageAnnualPremium": 1700, "rank": 37 },
+      "WA": { "averageAnnualPremium": 1600, "rank": 39 },
+      "WV": { "averageAnnualPremium": 1800, "rank": 33 },
+      "WI": { "averageAnnualPremium": 1400, "rank": 47 },
+      "WY": { "averageAnnualPremium": 1900, "rank": 31 },
+      "DC": { "averageAnnualPremium": 1800, "rank": 35 }
+    },
+    "byHomeValue": {
+      "under250k": {
+        "typicalPremium": { "low": 1000, "high": 1700 },
+        "note": "Often seen in rural areas or older stock."
+      },
+      "250k_500k": {
+        "typicalPremium": { "low": 1700, "high": 3000 },
+        "note": "Standard suburban home range."
+      },
+      "500k_750k": {
+        "typicalPremium": { "low": 3000, "high": 4800 },
+        "note": "Higher replacement costs."
+      },
+      "over1m": {
+        "typicalPremium": { "low": 5500, "high": 13000 },
+        "note": "High Value Home market. Custom features drive up replacement cost."
+      }
+    }
+  },
+  "renters": {
+    "national": {
+      "averageAnnualPremium": 220,
+      "averageMonthly": 18,
+      "typicalCoverage": {
+        "personalProperty": 30000,
+        "liability": 100000,
+        "lossOfUse": 9000
+      }
+    }
+  },
+  "umbrella": {
+    "description": "Excess liability coverage.",
+    "pricing": {
+      "1M": { "annualPremium": { "low": 200, "high": 350 } },
+      "2M": { "annualPremium": { "low": 325, "high": 550 } },
+      "3M": { "annualPremium": { "low": 425, "high": 700 } }
+    },
+    "requirements": {
+      "auto": "Usually 250/500/100",
+      "home": "$300,000 Liability"
+    }
+  },
+  "discounts": {
+    "common": [
+      { "name": "Bundling (Auto+Home)", "impact": "High (15-25%)" },
+      { "name": "Telematics/Usage-Based", "impact": "Medium (10-15%)" },
+      { "name": "Good Student", "impact": "Medium (10%)" },
+      { "name": "Paperless/Pay-in-Full", "impact": "Low (5-8%)" },
+      { "name": "New Roof (Home)", "impact": "High (15-20% in wind states)" }
+    ]
+  }
+}

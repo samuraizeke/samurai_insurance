@@ -1,6 +1,8 @@
 // backend/agents/sam.ts
 import { VertexAI, FunctionDeclarationsTool, Part, Content } from '@google-cloud/vertexai';
 import dotenv from 'dotenv';
+import * as fs from 'fs';
+import * as path from 'path';
 import { handleUriChat } from './uri';
 import { handleRaiReview } from './rai';
 import {
@@ -24,6 +26,212 @@ import {
 dotenv.config();
 
 // ============================================================================
+// INSURANCE AVERAGES DATA (Loaded from JSON for deterministic estimates)
+// ============================================================================
+
+interface InsuranceAveragesData {
+    meta: {
+        version: string;
+        lastUpdated: string;
+        disclaimer: string;
+        sources: string[];
+    };
+    auto: {
+        national: {
+            averageAnnualPremium: number;
+            medianAnnualPremium: number;
+            minimumCoverageCost: { low: number; high: number };
+            fullCoverageCost: { low: number; high: number };
+            averageMonthly: { minimum: number; full: number };
+        };
+        byState: Record<string, {
+            averageAnnualPremium: number;
+            minimumLimits: string;
+            rank: number;
+            notes?: string;
+            typicalFullCoverage?: { liability: string; compDeductible: number; collDeductible: number };
+        }>;
+        byDriverProfile: Record<string, {
+            multiplier: number;
+            averageAnnualPremium: number;
+            note: string;
+        }>;
+        byDrivingRecord: Record<string, { adjustment: number; note: string }>;
+        byVehicleType: Record<string, { adjustment: number; examples: string[]; note?: string }>;
+    };
+    home: {
+        national: {
+            averageAnnualPremium: number;
+            medianAnnualPremium: number;
+            averageDwellingCoverage: number;
+            typicalDeductible: number;
+            averageMonthly: number;
+        };
+        byState: Record<string, {
+            averageAnnualPremium: number;
+            rank: number;
+            risks?: string[];
+            notes?: string;
+        }>;
+        byHomeValue: Record<string, {
+            typicalPremium: { low: number; high: number };
+            note: string;
+        }>;
+    };
+    renters: {
+        national: {
+            averageAnnualPremium: number;
+            averageMonthly: number;
+            typicalCoverage: {
+                personalProperty: number;
+                liability: number;
+                lossOfUse: number;
+            };
+        };
+    };
+    umbrella: {
+        description: string;
+        pricing: Record<string, { annualPremium: { low: number; high: number } }>;
+        requirements: { auto: string; home: string };
+    };
+    discounts: {
+        common: Array<{ name: string; impact: string }>;
+    };
+}
+
+// Cached averages data (loaded once at startup)
+let _insuranceAverages: InsuranceAveragesData | null = null;
+
+/**
+ * Load insurance averages data from JSON file (deterministic, no hallucination risk)
+ */
+function loadAveragesData(): InsuranceAveragesData {
+    if (_insuranceAverages) {
+        return _insuranceAverages;
+    }
+
+    try {
+        const dataPath = path.join(__dirname, '..', 'data', 'insurance-averages.json');
+        const rawData = fs.readFileSync(dataPath, 'utf-8');
+        _insuranceAverages = JSON.parse(rawData) as InsuranceAveragesData;
+        console.log(`✅ Loaded insurance averages data v${_insuranceAverages.meta.version} (${_insuranceAverages.meta.lastUpdated})`);
+        return _insuranceAverages;
+    } catch (error) {
+        console.error('❌ Failed to load insurance averages data:', error);
+        throw new Error('Insurance averages data not available');
+    }
+}
+
+/**
+ * Get relevant averages for a specific query context
+ */
+function getEstimateContext(policyType: 'auto' | 'home' | 'renters' | 'umbrella', state?: string): string {
+    const data = loadAveragesData();
+    let context = '';
+
+    if (policyType === 'auto') {
+        const national = data.auto.national;
+        context += `National Auto Averages: $${national.averageAnnualPremium}/year (full coverage $${national.fullCoverageCost.low}-$${national.fullCoverageCost.high}/year)\n`;
+
+        if (state && data.auto.byState[state]) {
+            const stateData = data.auto.byState[state];
+            context += `${state} Auto Average: $${stateData.averageAnnualPremium}/year (ranks #${stateData.rank} nationally)\n`;
+            context += `${state} Minimum Limits: ${stateData.minimumLimits}\n`;
+            if (stateData.notes) context += `${state} Notes: ${stateData.notes}\n`;
+        }
+
+        context += '\nDriver Profile Adjustments:\n';
+        for (const [profile, info] of Object.entries(data.auto.byDriverProfile)) {
+            context += `- ${profile}: ~$${info.averageAnnualPremium}/year (${info.note})\n`;
+        }
+    } else if (policyType === 'home') {
+        const national = data.home.national;
+        context += `National Home Averages: $${national.averageAnnualPremium}/year (~$${national.averageMonthly}/month)\n`;
+
+        if (state && data.home.byState[state]) {
+            const stateData = data.home.byState[state];
+            context += `${state} Home Average: $${stateData.averageAnnualPremium}/year (ranks #${stateData.rank} nationally)\n`;
+            if (stateData.risks) context += `${state} Risks: ${stateData.risks.join(', ')}\n`;
+            if (stateData.notes) context += `${state} Notes: ${stateData.notes}\n`;
+        }
+
+        context += '\nBy Home Value:\n';
+        for (const [range, info] of Object.entries(data.home.byHomeValue)) {
+            context += `- ${range}: $${info.typicalPremium.low}-$${info.typicalPremium.high}/year\n`;
+        }
+    } else if (policyType === 'renters') {
+        const national = data.renters.national;
+        context += `National Renters Average: $${national.averageAnnualPremium}/year (~$${national.averageMonthly}/month)\n`;
+        context += `Typical Coverage: $${national.typicalCoverage.personalProperty} personal property, $${national.typicalCoverage.liability} liability\n`;
+    } else if (policyType === 'umbrella') {
+        context += `Umbrella Insurance: ${data.umbrella.description}\n`;
+        for (const [limit, info] of Object.entries(data.umbrella.pricing)) {
+            context += `- ${limit}: $${info.annualPremium.low}-$${info.annualPremium.high}/year\n`;
+        }
+        context += `Requirements: Auto ${data.umbrella.requirements.auto}, Home ${data.umbrella.requirements.home}\n`;
+    }
+
+    return context;
+}
+
+// Mandatory disclaimer for all quick estimates (LIABILITY PROTECTION)
+const ESTIMATE_DISCLAIMER = `
+
+---
+IMPORTANT: This is a rough estimate based on industry averages, NOT a quote or offer of coverage. Your actual premium will vary based on your specific circumstances, driving history, credit, claims history, and the carrier's underwriting. Please contact a licensed agent for an accurate, personalized quote.`;
+
+// ============================================================================
+// JOURNEY STATE & INTENT DETECTION
+// ============================================================================
+
+interface UserIntent {
+    intent: 'browsing' | 'buying' | 'confused' | 'educational';
+    confidence: number;
+    signals: string[];
+    recommendation: 'offer_fork' | 'proceed_precise' | 'proceed_estimate' | 'proceed_educational';
+}
+
+interface JourneyState {
+    journeyChoice?: 'quick_estimate' | 'precise_quote' | null;
+    estimateProfile?: {
+        state?: string;
+        policyType?: 'auto' | 'home' | 'renters' | 'umbrella';
+        ageRange?: string;
+    };
+    askedForFork?: boolean;
+}
+
+// Parse journey state from conversation history
+function parseJourneyState(history: any[]): JourneyState {
+    const state: JourneyState = {};
+
+    for (const msg of history) {
+        if (msg.role === 'user') {
+            // Check for journey choice markers injected by frontend
+            if (msg.content.includes('[JOURNEY_CHOICE:quick_estimate]')) {
+                state.journeyChoice = 'quick_estimate';
+            } else if (msg.content.includes('[JOURNEY_CHOICE:precise_quote]')) {
+                state.journeyChoice = 'precise_quote';
+            }
+
+            // Extract state from messages
+            const stateMatch = msg.content.match(/\b(AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY|DC)\b/i);
+            if (stateMatch) {
+                state.estimateProfile = state.estimateProfile || {};
+                state.estimateProfile.state = stateMatch[1].toUpperCase();
+            }
+        }
+
+        // Check if we already asked for fork
+        if (msg.role === 'assistant' && msg.content.includes('[JOURNEY_FORK]')) {
+            state.askedForFork = true;
+        }
+    }
+
+    return state;
+}
+
+// ============================================================================
 // SAM CORE SYSTEM PROMPT
 // ============================================================================
 // This is the authoritative source for Sam's personality, tone, and behavior.
@@ -34,6 +242,20 @@ const SAM_CORE_PROMPT = `You are Sam, a friendly, empathetic, and professional i
 **Core Knowledge**:
 - Use the "AI KB Core Concepts.pdf" for foundational insurance principles, legal doctrines (e.g., indemnity, insurable interest), policy details (PAP for auto, HO-3 for home), state-specific rules (e.g., cancellation notices, prompt pay statutes, mandatory endorsements like earthquake in CA), and scenarios (e.g., rideshare gaps, mold limits).
 - Use the "Coverage Recommendation Guide.pdf" for structuring interactions: Gather info for TIE calculation, use analogies (e.g., liability as a "forcefield", umbrella as a "raincoat", ACV vs. RCV as "used TV" vs. "new TV"), handle objections with the 5 A's (Acknowledge, Appreciate, Ask, Adapt, Act), and present in "Protection Audit" format (Current Risk vs. Recommended vs. Real Impact).
+
+**Journey Awareness - Detect Intent & Adapt**:
+- Recognize when users are BROWSING (exploring, comparing, curious) vs BUYING (ready to purchase, specific needs).
+- Browsing signals: "just curious", "thinking about", "ballpark", "roughly", "typical", "average", questions about "how much" without personal details.
+- Buying signals: "I need", "ready to buy", "switch today", "my current policy", mentions specific assets/vehicles.
+- When providing ballpark estimates, be clear they are rough figures based on averages.
+- Never force document uploads or detailed personal info for ballpark estimates.
+- Lead with VALUE first - give useful information BEFORE asking for details.
+
+**Data Handling (CRITICAL)**:
+- For PRICE ESTIMATES: Use only the verified averages data provided to you - NEVER invent or guess numbers.
+- For EXPLANATIONS (why prices vary, what factors affect rates, how insurance works): Draw from your knowledge base.
+- When the user asks "How much does X cost?" - use averages data.
+- When the user asks "Why is X so expensive?" or "What affects the price?" - use knowledge base for explanation.
 
 **Interaction Guidelines**:
 - Be conversational and warm: Use simple language, define terms (e.g., "ACV means Actual Cash Value—it's replacement cost minus depreciation"), and confirm understanding (e.g., "Does that make sense?"). IMPORTANT: Only greet the user once at the start of a new conversation - do NOT say "Hi there" or similar greetings in subsequent responses within the same chat session.
@@ -313,6 +535,312 @@ Respond asking them to upload their ${formattedNeeded} policy:`;
     return response + "\n\n[UPLOAD_POLICY]";
 }
 
+// ============================================================================
+// JOURNEY FLOW: Intent Detection & Quick Estimate Path
+// ============================================================================
+
+/**
+ * Detect user intent to determine optimal routing path
+ * Returns confidence score for implicit routing (>0.9 = skip fork question)
+ */
+async function detectUserIntent(userQuery: string, history: any[]): Promise<UserIntent> {
+    const lowerQuery = userQuery.toLowerCase();
+
+    // Fast-path detection for clear estimate requests (high confidence = skip fork)
+    const estimateSignals = [
+        'ballpark', 'rough estimate', 'roughly', 'approximately', 'about how much',
+        'general idea', 'just curious', 'quick idea', 'quick estimate', 'typical',
+        'average cost', 'average price', 'what do people pay', 'what does it usually cost'
+    ];
+
+    const preciseSignals = [
+        'exact quote', 'accurate quote', 'precise quote', 'real quote',
+        'my specific', 'for my car', 'for my house', 'my policy', 'my coverage',
+        'ready to buy', 'want to purchase', 'switch today', 'sign up'
+    ];
+
+    const educationalSignals = [
+        'what is', 'what are', 'how does', 'explain', 'difference between',
+        'why do', 'why is', 'tell me about', 'understand'
+    ];
+
+    // Count signal matches
+    const estimateMatches = estimateSignals.filter(s => lowerQuery.includes(s));
+    const preciseMatches = preciseSignals.filter(s => lowerQuery.includes(s));
+    const educationalMatches = educationalSignals.filter(s => lowerQuery.includes(s));
+
+    // High-confidence estimate intent (>0.9) - skip the fork question
+    if (estimateMatches.length >= 2 ||
+        lowerQuery.includes('just give me a ballpark') ||
+        lowerQuery.includes('quick ballpark') ||
+        lowerQuery.includes('rough idea')) {
+        return {
+            intent: 'browsing',
+            confidence: 0.95,
+            signals: estimateMatches,
+            recommendation: 'proceed_estimate'
+        };
+    }
+
+    // High-confidence precise intent
+    if (preciseMatches.length >= 2 || lowerQuery.includes('ready to buy')) {
+        return {
+            intent: 'buying',
+            confidence: 0.95,
+            signals: preciseMatches,
+            recommendation: 'proceed_precise'
+        };
+    }
+
+    // Clear educational intent
+    if (educationalMatches.length >= 1 && estimateMatches.length === 0 && preciseMatches.length === 0) {
+        return {
+            intent: 'educational',
+            confidence: 0.85,
+            signals: educationalMatches,
+            recommendation: 'proceed_educational'
+        };
+    }
+
+    // Ambiguous - use AI to determine
+    const historyContext = history.slice(-4).map(m => `${m.role}: ${m.content}`).join('\n');
+
+    const prompt = `Analyze this user message to determine their intent. Consider the conversation context.
+
+**Intent Categories:**
+1. BROWSING - Exploring, comparing, curious, wants ballpark estimates, not ready to commit
+2. BUYING - Ready to purchase, wants precise quote, willing to provide details
+3. CONFUSED - Hesitant, mixed signals, unsure what they need
+4. EDUCATIONAL - Learning about insurance concepts (not asking about pricing)
+
+Recent conversation:
+${historyContext}
+
+Current message: "${userQuery}"
+
+Respond with ONLY valid JSON (no markdown):
+{"intent": "BROWSING|BUYING|CONFUSED|EDUCATIONAL", "confidence": 0.0-1.0, "signals": ["signal1"], "recommendation": "offer_fork|proceed_precise|proceed_estimate|proceed_educational"}`;
+
+    try {
+        const result = await model.generateContent({
+            contents: [{ role: 'user', parts: [{ text: prompt }] }],
+            generationConfig: {
+                temperature: 0.1,
+                maxOutputTokens: 256,
+            },
+        });
+
+        const responseText = result.response.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        // Extract JSON from response (handle potential markdown wrapping)
+        const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+            const parsed = JSON.parse(jsonMatch[0]);
+            return {
+                intent: parsed.intent?.toLowerCase() || 'confused',
+                confidence: parsed.confidence || 0.5,
+                signals: parsed.signals || [],
+                recommendation: parsed.recommendation || 'offer_fork'
+            };
+        }
+    } catch (error) {
+        console.error('❌ Intent detection failed:', error);
+    }
+
+    // Default to offering fork when uncertain
+    return {
+        intent: 'confused',
+        confidence: 0.5,
+        signals: [],
+        recommendation: 'offer_fork'
+    };
+}
+
+/**
+ * Determine if we should offer the journey fork (Quick Estimate vs Precise Quote)
+ * Implements implicit routing: high confidence (>0.9) skips the question
+ */
+async function shouldOfferJourneyFork(
+    userQuery: string,
+    history: any[],
+    journeyState: JourneyState
+): Promise<{ shouldOffer: boolean; intent: UserIntent }> {
+    // Already made a choice - don't ask again
+    if (journeyState.journeyChoice) {
+        console.log(`📍 Journey already chosen: ${journeyState.journeyChoice}`);
+        return {
+            shouldOffer: false,
+            intent: {
+                intent: journeyState.journeyChoice === 'quick_estimate' ? 'browsing' : 'buying',
+                confidence: 1.0,
+                signals: ['explicit_choice'],
+                recommendation: journeyState.journeyChoice === 'quick_estimate' ? 'proceed_estimate' : 'proceed_precise'
+            }
+        };
+    }
+
+    // Already asked for fork in this conversation - don't ask again
+    if (journeyState.askedForFork) {
+        console.log(`📍 Fork already offered, proceeding with estimate path by default`);
+        return {
+            shouldOffer: false,
+            intent: {
+                intent: 'browsing',
+                confidence: 0.7,
+                signals: ['fork_already_asked'],
+                recommendation: 'proceed_estimate'
+            }
+        };
+    }
+
+    // Detect intent
+    const intent = await detectUserIntent(userQuery, history);
+    console.log(`🔍 Detected intent: ${intent.intent} (confidence: ${intent.confidence})`);
+    console.log(`   Signals: ${intent.signals.join(', ') || 'none'}`);
+    console.log(`   Recommendation: ${intent.recommendation}`);
+
+    // High confidence (>0.9) = implicit routing, skip the fork question
+    if (intent.confidence > 0.9) {
+        console.log(`✅ High confidence (${intent.confidence}) - implicit routing to ${intent.recommendation}`);
+        return { shouldOffer: false, intent };
+    }
+
+    // Educational intent - no fork needed
+    if (intent.intent === 'educational') {
+        return { shouldOffer: false, intent };
+    }
+
+    // Medium confidence or confused - offer the fork
+    return { shouldOffer: true, intent };
+}
+
+/**
+ * Present the journey choice to the user (Quick Estimate vs Precise Quote)
+ */
+async function presentJourneyChoice(userQuery: string, detectedPolicyType: PolicyType | null): Promise<string> {
+    const policyContext = detectedPolicyType ? ` for ${detectedPolicyType} insurance` : '';
+
+    const prompt = `You are Sam, a friendly insurance advisor.
+${OUTPUT_GUARDRAILS}
+
+The user asked about insurance pricing${policyContext}. You want to help them, but first need to know their preference.
+
+Generate a warm, non-pushy message (2-3 sentences max) that:
+1. Briefly acknowledges their question
+2. Offers two clear options:
+   - "Quick Estimate" - ballpark based on typical rates for their area (no detailed info needed)
+   - "Precise Quote" - personalized analysis (will need some details)
+3. Makes it clear either choice is perfectly fine
+
+Do NOT include any URLs. Do NOT ask for any details yet.
+
+User asked: "${userQuery}"`;
+
+    const result = await model.generateContent({
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 256,
+        },
+    });
+
+    logGenerationResult(result, 'presentJourneyChoice');
+    let response = result.response.candidates?.[0]?.content?.parts?.[0]?.text ||
+        `I'd be happy to help with that! Would you like a quick ballpark estimate based on typical rates, or a more precise quote tailored to your specific situation?`;
+
+    // Remove any URLs and clean up
+    response = response.replace(/https?:\/\/[^\s]+/g, '').trim();
+
+    // Add journey fork marker for frontend
+    return cleanResponse(response) + "\n\n[JOURNEY_FORK]";
+}
+
+/**
+ * Handle quick estimate requests using averages data (no PII required)
+ * CRITICAL: Always appends mandatory disclaimer for liability protection
+ */
+async function handleQuickEstimate(
+    userQuery: string,
+    history: any[],
+    journeyState: JourneyState
+): Promise<string> {
+    console.log(`📊 Handling quick estimate request...`);
+
+    // Determine policy type from query
+    const policyType = detectNeededPolicyType(userQuery) || 'auto';
+    const userState = journeyState.estimateProfile?.state;
+
+    // Get deterministic averages data (from JSON, not hallucinated)
+    const estimateContext = getEstimateContext(policyType as 'auto' | 'home' | 'renters' | 'umbrella', userState);
+    const data = loadAveragesData();
+
+    const prompt = `${SAM_CORE_PROMPT}
+${OUTPUT_GUARDRAILS}
+
+**MODE: QUICK ESTIMATE (Ballpark Only)**
+You are providing a ROUGH ESTIMATE based on industry averages. This is NOT a precise quote.
+
+**CRITICAL RULES:**
+1. Use ONLY the numbers from the AVERAGES DATA below - do NOT invent or modify numbers
+2. Present figures as RANGES, not exact amounts
+3. Frame everything as "typical", "average", "most people pay around..."
+4. Mention 2-3 factors that could push their rate higher or lower
+5. Do NOT ask for: VIN, SSN, exact address, exact mileage, policy numbers
+6. You MAY ask: state (if unknown), general age range, vehicle type, rough home value
+
+**AVERAGES DATA (Use these exact figures):**
+${estimateContext}
+
+**Common Discounts (mention if relevant):**
+${data.discounts.common.map(d => `- ${d.name}: ${d.impact}`).join('\n')}
+
+${userState ? `User's State: ${userState}` : 'State: Unknown (ask if needed for better estimate)'}
+Policy Type: ${policyType}
+
+${history.length > 0 ? `Recent conversation:\n${history.slice(-4).map(msg => `${msg.role}: ${msg.content}`).join('\n')}\n\n` : ''}
+
+User question: "${userQuery}"
+
+Provide a helpful ballpark estimate. End by offering to dig deeper if they want a more precise quote.`;
+
+    const result = await model.generateContent({
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 1024,
+        },
+    });
+
+    const wasTruncated = logGenerationResult(result, 'handleQuickEstimate');
+    let response = result.response.candidates?.[0]?.content?.parts?.[0]?.text ||
+        "I can give you a rough estimate. Based on national averages, most drivers pay around $2,000-$2,800 per year for full coverage auto insurance.";
+
+    if (wasTruncated) {
+        response = handleTruncatedResponse(response);
+    }
+
+    // MANDATORY: Append disclaimer for liability protection
+    response = cleanResponse(response) + ESTIMATE_DISCLAIMER;
+
+    return response;
+}
+
+/**
+ * Check if a query is asking for explanation of pricing (route to KB)
+ * vs asking for the price itself (use JSON data)
+ */
+function isAskingWhyNotHowMuch(query: string): boolean {
+    const whyPatterns = [
+        /why\s+(is|are|does|do)/i,
+        /what\s+makes/i,
+        /how\s+come/i,
+        /what\s+factors/i,
+        /what\s+affects/i,
+        /explain\s+(the|why)/i,
+        /reason\s+for/i
+    ];
+    return whyPatterns.some(p => p.test(query));
+}
+
 export async function handleSamChat(userQuery: string, history: any[], userId?: string) {
     try {
         console.log(`\n💬 Sam received message: "${userQuery}"`);
@@ -357,8 +885,8 @@ export async function handleSamChat(userQuery: string, history: any[], userId?: 
                 );
             } else {
                 console.log("❌ No policy found on file");
-                // User thinks they have a policy but we can't find it
-                return "I don't see any policy documents on file yet. Could you upload your insurance card, declarations page, or policy PDF so I can help you?";
+                // User thinks they have a policy but we can't find it - include upload marker for consistency
+                return "I don't see any policy documents on file yet. Could you upload your insurance card, declarations page, or policy PDF so I can help you?\n\n[UPLOAD_POLICY]";
             }
         }
 
@@ -376,6 +904,61 @@ export async function handleSamChat(userQuery: string, history: any[], userId?: 
                 return await presentFinalAnalysis(userQuery, raiApprovedAnswer, history);
             }
             return await handleDirectly(userQuery, history);
+        }
+
+        // ========================================
+        // JOURNEY FLOW: Quick Estimate vs Precise Quote
+        // ========================================
+        // Parse journey state from conversation history
+        const journeyState = parseJourneyState(history);
+
+        // Check if this is a pricing-related query that could use the journey fork
+        const isPricingQuery = /\b(cost|price|premium|quote|how much|pay|afford|expensive|cheap|rate|rates)\b/i.test(lowerQuery);
+        const isWhyQuestion = isAskingWhyNotHowMuch(userQuery);
+
+        // If asking "why" about pricing, route to KB for explanation (not estimates)
+        if (isWhyQuestion) {
+            console.log("💡 Sam: User asking 'why' question - routing to KB for explanation");
+            const uriResult = await handleUriChat(userQuery, history);
+            if (typeof uriResult === 'string') return uriResult;
+            const raiApprovedAnswer = await handleRaiReview(userQuery, uriResult.answer, uriResult.context);
+            return await presentFinalAnalysis(userQuery, raiApprovedAnswer, history);
+        }
+
+        // For pricing queries, check if we should use the journey flow
+        if (isPricingQuery && !userReferencingExistingPolicy(userQuery)) {
+            console.log("💰 Sam: Pricing query detected - checking journey flow...");
+
+            // Check if we should offer the fork or route directly
+            const { shouldOffer, intent } = await shouldOfferJourneyFork(userQuery, history, journeyState);
+
+            if (shouldOffer) {
+                // Offer the choice between Quick Estimate and Precise Quote
+                console.log("🔀 Sam: Offering journey fork (Quick Estimate vs Precise Quote)");
+                const policyType = detectNeededPolicyType(userQuery);
+                return await presentJourneyChoice(userQuery, policyType);
+            }
+
+            // Route based on detected intent or explicit choice
+            if (intent.recommendation === 'proceed_estimate' || journeyState.journeyChoice === 'quick_estimate') {
+                console.log("📊 Sam: Routing to Quick Estimate path");
+                return await handleQuickEstimate(userQuery, history, journeyState);
+            }
+
+            // proceed_precise falls through to existing policy upload flow
+            if (intent.recommendation === 'proceed_precise' || journeyState.journeyChoice === 'precise_quote') {
+                console.log("📋 Sam: Routing to Precise Quote path (policy upload flow)");
+                // Continue to the existing policy upload check below
+            }
+
+            // Educational queries go to Uri
+            if (intent.recommendation === 'proceed_educational') {
+                console.log("📚 Sam: Routing to educational path (Uri)");
+                const uriResult = await handleUriChat(userQuery, history);
+                if (typeof uriResult === 'string') return uriResult;
+                const raiApprovedAnswer = await handleRaiReview(userQuery, uriResult.answer, uriResult.context);
+                return await presentFinalAnalysis(userQuery, raiApprovedAnswer, history);
+            }
         }
 
         // Check if user needs to reference their policy

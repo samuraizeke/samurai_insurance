@@ -158,6 +158,38 @@ export default function ChatWidget() {
     const hasUploadMarker = (content: string) => content.includes('[UPLOAD_POLICY]');
     const removeUploadMarker = (content: string) => content.replace('[UPLOAD_POLICY]', '').trim();
 
+    // Check if message contains journey fork marker (Quick Estimate vs Precise Quote choice)
+    const hasJourneyForkMarker = (content: string) => content.includes('[JOURNEY_FORK]');
+    const removeJourneyForkMarker = (content: string) => content.replace('[JOURNEY_FORK]', '').trim();
+
+    // Track pending journey choice for programmatic submit
+    const pendingJourneyChoice = useRef<string | null>(null);
+
+    // Handle journey choice button clicks
+    const handleJourneyChoice = (choice: 'quick_estimate' | 'precise_quote') => {
+        const choiceMessage = choice === 'quick_estimate'
+            ? '[JOURNEY_CHOICE:quick_estimate] I\'d like a quick estimate based on averages.'
+            : '[JOURNEY_CHOICE:precise_quote] I\'d like a precise quote with my specific details.';
+
+        // Set the prompt and mark for programmatic submit
+        pendingJourneyChoice.current = choiceMessage;
+        setPrompt(choiceMessage);
+    };
+
+    // Effect to submit when journey choice is set
+    useEffect(() => {
+        if (pendingJourneyChoice.current && prompt === pendingJourneyChoice.current && !isLoading) {
+            pendingJourneyChoice.current = null;
+            // Trigger submit on next tick to ensure state is updated
+            setTimeout(() => {
+                const form = document.querySelector('form[data-chat-form]') as HTMLFormElement;
+                if (form) {
+                    form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+                }
+            }, 0);
+        }
+    }, [prompt, isLoading]);
+
     // Initialize session and load history for logged-in users
     useEffect(() => {
         const initializeSession = async () => {
@@ -714,7 +746,12 @@ export default function ChatWidget() {
                     )}
                     {messages.map((message) => {
                         const showUploadButton = hasUploadMarker(message.content);
-                        const displayContent = showUploadButton ? removeUploadMarker(message.content) : message.content;
+                        const showJourneyFork = hasJourneyForkMarker(message.content);
+
+                        // Remove markers from display content
+                        let displayContent = message.content;
+                        if (showUploadButton) displayContent = removeUploadMarker(displayContent);
+                        if (showJourneyFork) displayContent = removeJourneyForkMarker(displayContent);
 
                         // Check if message ID is a database ID (numeric string) for feedback
                         const isPersistedMessage = /^\d+$/.test(message.id);
@@ -812,6 +849,26 @@ export default function ChatWidget() {
                                             Upload Policy Document
                                         </Button>
                                     )}
+                                    {/* Journey fork buttons - Quick Estimate vs Precise Quote */}
+                                    {showJourneyFork && (
+                                        <div className="mt-3 flex flex-col sm:flex-row gap-2">
+                                            <Button
+                                                onClick={() => handleJourneyChoice('quick_estimate')}
+                                                disabled={isLoading}
+                                                className="bg-[#de5e48] hover:bg-[#de5e48]/90 font-bold text-white font-(family-name:--font-work-sans) rounded-full"
+                                            >
+                                                Quick Estimate
+                                            </Button>
+                                            <Button
+                                                onClick={() => handleJourneyChoice('precise_quote')}
+                                                disabled={isLoading}
+                                                variant="outline"
+                                                className="border-[#333333] text-[#333333] hover:bg-[#333333]/5 font-bold font-(family-name:--font-work-sans) rounded-full"
+                                            >
+                                                Precise Quote
+                                            </Button>
+                                        </div>
+                                    )}
                                     {/* Feedback buttons for assistant messages - only for persisted messages */}
                                     {message.role === "assistant" && isPersistedMessage && (
                                         <MessageFeedback
@@ -879,6 +936,7 @@ export default function ChatWidget() {
                 messages.length > 0 && "mt-auto"
             )}>
                 <form
+                    data-chat-form
                     className="overflow-visible rounded-2xl border border-[#333333]/10 p-3 transition-colors duration-200 focus-within:border-[#de5e48]/30 bg-[hsl(0_0%_98%)] shadow-sm"
                     onDragLeave={handleDragLeave}
                     onDragOver={handleDragOver}
