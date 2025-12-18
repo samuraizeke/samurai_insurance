@@ -4,6 +4,7 @@ import ChatWidget from '@/app/components/ChatWidget';
 import { SidebarInset, SidebarProvider, SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { DashboardSidebar } from "@/components/sidebar-02/app-sidebar";
 import { ChatProvider, useChatContext } from "@/app/context/ChatContext";
+import { ProductTour } from "@/app/components/onboarding";
 import { Button } from "@/components/ui/button";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus } from "@fortawesome/free-solid-svg-icons";
@@ -19,7 +20,7 @@ function MobileHeader() {
     return (
         <header className="md:hidden shrink-0 bg-[#f7f6f3] mobile-header-safe">
             <div className="flex items-center justify-between h-14 px-4">
-                <SidebarTrigger className="h-7 w-7 bg-[#333333] hover:bg-[#333333]/90 text-[#f7f6f3] hover:text-[#f7f6f3] rounded-full [&_svg]:size-4" />
+                <SidebarTrigger className="h-7 w-7 bg-[#333333] hover:bg-[#333333]/90 text-[#f7f6f3] hover:text-[#f7f6f3] rounded-full [&_svg]:size-4" data-tour="sidebar-trigger" />
                 <Image
                     src="/wordmark-only-logo.png"
                     alt="Samurai Insurance"
@@ -59,6 +60,8 @@ export default function ChatPage() {
                         </main>
                     </SidebarInset>
                 </div>
+                {/* Product tour - renders nothing visible, manages driver.js */}
+                <ProductTour />
             </SidebarProvider>
         </ChatProvider>
     );

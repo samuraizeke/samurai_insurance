@@ -26,6 +26,7 @@ export function FeedbackButton({ collapsed = false, sessionId }: FeedbackButtonP
           <SidebarMenuButton
             tooltip="Send Feedback"
             onClick={() => setModalOpen(true)}
+            data-tour="feedback-button"
             className={cn(
               "flex items-center rounded-lg px-2 transition-colors text-muted-foreground hover:bg-[#333333]/5 hover:text-foreground cursor-pointer",
               collapsed && "justify-center"

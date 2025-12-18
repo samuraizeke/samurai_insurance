@@ -63,6 +63,7 @@ import {
   loadUserDocumentsToCache
 } from './services/document-upload';
 import { generateSessionSummary, regenerateSummary } from './services/session-summary';
+import { deleteUserAccount, getInternalUserId } from './services/account-deletion';
 import feedbackRoutes from './routes/feedback';
 
 const app = express();
@@ -968,6 +969,66 @@ app.get('/api/users/:userId/chat-sessions', requireAuth, async (req, res) => {
   } catch (error) {
     logger.error('Error fetching user sessions', error);
     res.status(500).json({ error: 'Failed to fetch sessions. Please try again.' });
+  }
+});
+
+// ============================================
+// ACCOUNT DELETION ENDPOINT (Authenticated)
+// ============================================
+app.delete('/api/account', generalLimiter, requireAuth, async (req, res) => {
+  try {
+    const authUserId = req.user!.id;
+    const userEmail = req.user!.email;
+
+    // Get client IP for audit logging
+    const ipAddress = req.headers['x-forwarded-for']?.toString().split(',')[0] ||
+                      req.socket.remoteAddress ||
+                      undefined;
+
+    logger.info('Account deletion requested', { authUserId });
+
+    // Look up internal user ID
+    const internalUserId = await getInternalUserId(authUserId);
+
+    if (!internalUserId) {
+      logger.error('User not found in database for deletion', { authUserId });
+      return res.status(404).json({ error: 'User account not found' });
+    }
+
+    // Perform the deletion
+    const result = await deleteUserAccount(authUserId, internalUserId, userEmail, ipAddress);
+
+    if (result.success) {
+      logger.info('Account deletion completed successfully', {
+        authUserId,
+        duration: result.duration,
+        deletedRecords: result.deletedRecords
+      });
+
+      res.json({
+        success: true,
+        message: 'Your account has been permanently deleted',
+        deletedRecords: result.deletedRecords
+      });
+    } else {
+      logger.error('Account deletion failed', {
+        authUserId,
+        errors: result.errors
+      });
+
+      res.status(500).json({
+        success: false,
+        error: 'Failed to delete account. Please try again or contact support.',
+        // In development, include more details
+        ...(process.env.NODE_ENV === 'development' && { details: result.errors })
+      });
+    }
+
+  } catch (error) {
+    logger.error('Critical error in account deletion endpoint', error);
+    res.status(500).json({
+      error: 'An unexpected error occurred. Please try again.'
+    });
   }
 });
 

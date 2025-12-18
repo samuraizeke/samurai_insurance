@@ -26,6 +26,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import Link from "next/link";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 function MobileHeader() {
   const { openMobile } = useSidebar();
@@ -307,7 +312,7 @@ export default function ProfilePage() {
 
                       <Button
                         type="submit"
-                        className="h-11 bg-[#333333] hover:bg-[#333333]/90 text-[#f7f6f3] font-bold font-(family-name:--font-work-sans) rounded-lg"
+                        className="h-11 bg-[#333333] hover:bg-[#333333]/90 text-[#f7f6f3] font-bold font-(family-name:--font-work-sans) rounded-full"
                         disabled={isSaving || !fullName}
                       >
                         {isSaving ? (
@@ -334,7 +339,7 @@ export default function ProfilePage() {
                       </div>
                       <Button
                         asChild
-                        className="gap-2 bg-[#333333] hover:bg-[#333333]/90 text-[#f7f6f3] font-(family-name:--font-work-sans) rounded-lg"
+                        className="gap-2 bg-[#333333] hover:bg-[#333333]/90 text-[#f7f6f3] font-(family-name:--font-work-sans) rounded-full"
                       >
                         <Link href="/chat">
                           <FontAwesomeIcon icon={faPlus} className="size-4" />
@@ -368,7 +373,7 @@ export default function ProfilePage() {
                             className="flex items-center justify-between p-4 rounded-lg bg-[#f7f6f3] border border-[#333333]/5"
                           >
                             <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 bg-[#333333] rounded-lg flex items-center justify-center">
+                              <div className="w-10 h-10 bg-[#333333] rounded-full flex items-center justify-center">
                                 <FontAwesomeIcon
                                   icon={policyTypeIcons[policy.policyType]}
                                   className="size-5 text-[#f7f6f3]"
@@ -387,24 +392,32 @@ export default function ProfilePage() {
                               </div>
                             </div>
                             <div className="flex items-center gap-2">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => openRenameDialog(policy)}
-                                className="h-8 w-8 hover:bg-[#333333]/10"
-                                title="Rename carrier"
-                              >
-                                <FontAwesomeIcon icon={faPen} className="size-4 text-[#333333]" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => openDeleteDialog(policy)}
-                                className="h-8 w-8 hover:bg-red-50 text-destructive"
-                                title="Delete policy"
-                              >
-                                <FontAwesomeIcon icon={faTrash} className="size-4" />
-                              </Button>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => openRenameDialog(policy)}
+                                    className="h-8 w-8 hover:bg-[#333333]/10"
+                                  >
+                                    <FontAwesomeIcon icon={faPen} className="size-4 text-[#333333]" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent className="font-(family-name:--font-work-sans)">Rename carrier</TooltipContent>
+                              </Tooltip>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => openDeleteDialog(policy)}
+                                    className="h-8 w-8 text-red-600 hover:bg-red-50 hover:text-red-600"
+                                  >
+                                    <FontAwesomeIcon icon={faTrash} className="size-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent className="font-(family-name:--font-work-sans)">Delete policy</TooltipContent>
+                              </Tooltip>
                             </div>
                           </div>
                         ))}
@@ -431,7 +444,7 @@ export default function ProfilePage() {
               <Button
                 variant="outline"
                 onClick={() => setDeleteDialogOpen(false)}
-                className="font-(family-name:--font-work-sans) border-[#333333]/10 rounded-lg"
+                className="font-(family-name:--font-work-sans) border-[#333333]/10 rounded-full"
               >
                 Cancel
               </Button>
@@ -439,7 +452,7 @@ export default function ProfilePage() {
                 variant="destructive"
                 onClick={handleDeletePolicy}
                 disabled={isDeleting}
-                className="gap-2 font-(family-name:--font-work-sans) rounded-lg bg-red-600 hover:bg-red-700 text-white"
+                className="gap-2 font-(family-name:--font-work-sans) rounded-full bg-red-600 hover:bg-red-700 text-white"
               >
                 {isDeleting ? (
                   <>
@@ -484,14 +497,14 @@ export default function ProfilePage() {
               <Button
                 variant="outline"
                 onClick={() => setRenameDialogOpen(false)}
-                className="font-(family-name:--font-work-sans) border-[#333333]/10 rounded-lg"
+                className="font-(family-name:--font-work-sans) border-[#333333]/10 rounded-full"
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleRenamePolicy}
                 disabled={isRenaming || !newCarrierName.trim()}
-                className="gap-2 bg-[#333333] hover:bg-[#333333]/90 text-[#f7f6f3] font-(family-name:--font-work-sans) rounded-lg"
+                className="gap-2 bg-[#333333] hover:bg-[#333333]/90 text-[#f7f6f3] font-(family-name:--font-work-sans) rounded-full"
               >
                 {isRenaming ? (
                   <>

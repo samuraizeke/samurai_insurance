@@ -47,6 +47,7 @@ export function UserMenu() {
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               size="lg"
+              data-tour="profile-menu"
               className="hover:bg-[#333333]/5 data-[state=open]:bg-[#333333]/10 data-[state=open]:text-foreground transition-colors"
             >
               <Avatar className="h-8 w-8">

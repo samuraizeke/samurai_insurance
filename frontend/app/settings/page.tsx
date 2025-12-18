@@ -6,8 +6,9 @@ import { ChatProvider } from "@/app/context/ChatContext";
 import { useAuth } from "@/lib/auth-context";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
-import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Loader2, AlertTriangle } from "lucide-react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -21,6 +22,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { deleteAccount } from "@/lib/api";
 
 function MobileHeader() {
   const { openMobile } = useSidebar();
@@ -51,18 +53,22 @@ export default function SettingsPage() {
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteStep, setDeleteStep] = useState<1 | 2>(1);
+  const [confirmText, setConfirmText] = useState("");
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  if (isLoading) {
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.push("/login");
+    }
+  }, [user, isLoading, router]);
+
+  if (isLoading || !user) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-[#f7f6f3]">
         <Loader2 className="h-8 w-8 animate-spin text-[#333333]" />
       </div>
     );
-  }
-
-  if (!user) {
-    router.push("/login");
-    return null;
   }
 
   const handleSignOut = async () => {
@@ -74,24 +80,44 @@ export default function SettingsPage() {
     }
   };
 
-  const handleDeleteAccount = async () => {
-    setIsDeleting(true);
-    try {
-      const response = await fetch("/api/account/delete", {
-        method: "DELETE",
-      });
+  const handleDeleteDialogClose = (open: boolean) => {
+    if (!open) {
+      // Reset state when closing
+      setDeleteStep(1);
+      setConfirmText("");
+      setDeleteError(null);
+    }
+    setDeleteDialogOpen(open);
+  };
 
-      if (response.ok) {
+  const handleContinueToDelete = () => {
+    setDeleteStep(2);
+    setDeleteError(null);
+  };
+
+  const handleDeleteAccount = async () => {
+    if (confirmText !== "DELETE") return;
+
+    setIsDeleting(true);
+    setDeleteError(null);
+
+    try {
+      const result = await deleteAccount();
+
+      if (result.success) {
+        // Account deleted successfully - sign out and redirect
         await signOut();
       } else {
+        setDeleteError(result.error || "Failed to delete account. Please try again.");
         setIsDeleting(false);
-        setDeleteDialogOpen(false);
       }
     } catch {
+      setDeleteError("An unexpected error occurred. Please try again.");
       setIsDeleting(false);
-      setDeleteDialogOpen(false);
     }
   };
+
+  const isConfirmValid = confirmText === "DELETE";
 
   return (
     <ChatProvider>
@@ -116,93 +142,153 @@ export default function SettingsPage() {
                       Manage your account access
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center justify-between p-4 rounded-lg bg-[#f7f6f3]">
-                      <div>
-                        <p className="font-semibold font-(family-name:--font-work-sans)">Sign out</p>
-                        <p className="text-sm text-muted-foreground font-(family-name:--font-work-sans)">
-                          Sign out of your account on this device
-                        </p>
-                      </div>
-                      <Button
-                        variant="outline"
+                  <CardContent>
+                    <div className="space-y-3">
+                      <button
                         onClick={handleSignOut}
                         disabled={isSigningOut}
-                        className="gap-2 font-(family-name:--font-work-sans) border-[#333333]/10 rounded-lg"
+                        className="w-full flex items-center gap-3 p-4 rounded-2xl bg-[#f7f6f3] border border-[#333333]/5 hover:bg-[#333333]/5 transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        {isSigningOut ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <FontAwesomeIcon icon={faRightFromBracket} className="size-4" />
-                        )}
-                        Sign out
-                      </Button>
+                        <div className="w-10 h-10 bg-[#333333] rounded-full flex items-center justify-center shrink-0">
+                          {isSigningOut ? (
+                            <Loader2 className="h-5 w-5 animate-spin text-[#f7f6f3]" />
+                          ) : (
+                            <FontAwesomeIcon icon={faRightFromBracket} className="size-5 text-[#f7f6f3]" />
+                          )}
+                        </div>
+                        <div>
+                          <p className="font-semibold font-(family-name:--font-work-sans)">Sign out</p>
+                          <p className="text-sm text-muted-foreground font-(family-name:--font-work-sans)">
+                            Sign out of your account on this device
+                          </p>
+                        </div>
+                      </button>
                     </div>
                   </CardContent>
                 </Card>
 
-                <Card className="border-destructive/20 bg-[hsl(0_0%_98%)]">
+                <Card className="border-[#333333]/10 bg-[hsl(0_0%_98%)]">
                   <CardHeader>
-                    <CardTitle className="font-heading text-destructive">Danger Zone</CardTitle>
+                    <CardTitle className="font-heading">Danger Zone</CardTitle>
                     <CardDescription className="font-(family-name:--font-work-sans)">
                       Irreversible actions for your account
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="flex items-center justify-between p-4 rounded-lg bg-destructive/5 border border-destructive/20">
-                      <div>
-                        <p className="font-semibold font-(family-name:--font-work-sans)">Delete account</p>
-                        <p className="text-sm text-muted-foreground font-(family-name:--font-work-sans)">
-                          Permanently delete your account and all data
-                        </p>
-                      </div>
-                      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                    <div className="space-y-3">
+                      <Dialog open={deleteDialogOpen} onOpenChange={handleDeleteDialogClose}>
                         <DialogTrigger asChild>
-                          <Button
-                            variant="destructive"
-                            className="gap-2 font-(family-name:--font-work-sans) rounded-lg"
+                          <button
+                            className="w-full flex items-center gap-3 p-4 rounded-2xl bg-[#f7f6f3] border border-[#333333]/5 hover:bg-red-50 transition-colors text-left"
                           >
-                            <FontAwesomeIcon icon={faTrash} className="size-4" />
-                            Delete
-                          </Button>
+                            <div className="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center shrink-0">
+                              <FontAwesomeIcon icon={faTrash} className="size-5 text-white" />
+                            </div>
+                            <div>
+                              <p className="font-semibold font-(family-name:--font-work-sans)">Delete account</p>
+                              <p className="text-sm text-muted-foreground font-(family-name:--font-work-sans)">
+                                Permanently delete your account and all data
+                              </p>
+                            </div>
+                          </button>
                         </DialogTrigger>
-                        <DialogContent className="border-[#333333]/10 bg-[hsl(0_0%_98%)]">
-                          <DialogHeader>
-                            <DialogTitle className="font-heading">Delete Account</DialogTitle>
-                            <DialogDescription className="font-(family-name:--font-work-sans)">
-                              Are you sure you want to delete your account? This action cannot be undone.
-                              All your data, including chat history and uploaded policies, will be permanently deleted.
-                            </DialogDescription>
-                          </DialogHeader>
-                          <DialogFooter className="gap-2 sm:gap-0">
-                            <Button
-                              variant="outline"
-                              onClick={() => setDeleteDialogOpen(false)}
-                              className="font-(family-name:--font-work-sans) border-[#333333]/10 rounded-lg"
-                            >
-                              Cancel
-                            </Button>
-                            <Button
-                              variant="destructive"
-                              onClick={handleDeleteAccount}
-                              disabled={isDeleting}
-                              className="gap-2 font-(family-name:--font-work-sans) rounded-lg"
-                            >
-                              {isDeleting ? (
-                                <>
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                  Deleting...
-                                </>
-                              ) : (
-                                <>
-                                  <FontAwesomeIcon icon={faTrash} className="size-4" />
-                                  Delete Account
-                                </>
-                              )}
-                            </Button>
-                          </DialogFooter>
-                        </DialogContent>
-                      </Dialog>
+                          <DialogContent className="border-[#333333]/10 bg-[hsl(0_0%_98%)]">
+                            {deleteStep === 1 ? (
+                              <>
+                                <DialogHeader>
+                                  <DialogTitle className="font-heading flex items-center gap-2">
+                                    <AlertTriangle className="h-5 w-5 text-red-600" />
+                                    Delete Account
+                                  </DialogTitle>
+                                  <DialogDescription className="font-(family-name:--font-work-sans) text-left">
+                                    This will permanently delete your account data.
+                                  </DialogDescription>
+                                </DialogHeader>
+                                <div className="font-(family-name:--font-work-sans) text-sm text-muted-foreground">
+                                  <p className="mb-2">This includes:</p>
+                                  <ul className="list-disc list-inside space-y-1">
+                                    <li>Your profile and personal information</li>
+                                    <li>All uploaded insurance policies</li>
+                                    <li>Chat history and conversations</li>
+                                    <li>All insurance quotes and claims data</li>
+                                  </ul>
+                                  <p className="mt-3 font-medium text-red-600">
+                                    This action cannot be undone.
+                                  </p>
+                                </div>
+                                <DialogFooter className="gap-2 sm:gap-0">
+                                  <Button
+                                    variant="outline"
+                                    onClick={() => handleDeleteDialogClose(false)}
+                                    className="font-(family-name:--font-work-sans) border-[#333333]/10 rounded-full"
+                                  >
+                                    Cancel
+                                  </Button>
+                                  <Button
+                                    variant="destructive"
+                                    onClick={handleContinueToDelete}
+                                    className="gap-2 font-(family-name:--font-work-sans) rounded-full bg-red-600 hover:bg-red-700 text-white"
+                                  >
+                                    Continue
+                                  </Button>
+                                </DialogFooter>
+                              </>
+                            ) : (
+                              <>
+                                <DialogHeader>
+                                  <DialogTitle className="font-heading">Confirm Deletion</DialogTitle>
+                                  <DialogDescription className="font-(family-name:--font-work-sans)">
+                                    To confirm, type <span className="font-mono font-bold text-red-600">DELETE</span> below:
+                                  </DialogDescription>
+                                </DialogHeader>
+                                <div className="py-4">
+                                  <Input
+                                    type="text"
+                                    placeholder="Type DELETE to confirm"
+                                    value={confirmText}
+                                    onChange={(e) => setConfirmText(e.target.value.toUpperCase())}
+                                    className="font-mono text-center border-[#333333]/20 focus:border-red-500 focus:ring-red-500"
+                                    autoComplete="off"
+                                    autoFocus
+                                  />
+                                  {deleteError && (
+                                    <p className="mt-2 text-sm text-red-600 font-(family-name:--font-work-sans)">
+                                      {deleteError}
+                                    </p>
+                                  )}
+                                </div>
+                                <DialogFooter className="gap-2 sm:gap-0">
+                                  <Button
+                                    variant="outline"
+                                    onClick={() => setDeleteStep(1)}
+                                    disabled={isDeleting}
+                                    className="font-(family-name:--font-work-sans) border-[#333333]/10 rounded-full"
+                                  >
+                                    Back
+                                  </Button>
+                                  <Button
+                                    variant="destructive"
+                                    onClick={handleDeleteAccount}
+                                    disabled={!isConfirmValid || isDeleting}
+                                    className="gap-2 font-(family-name:--font-work-sans) rounded-full bg-red-600 hover:bg-red-700 text-white disabled:opacity-50"
+                                  >
+                                    {isDeleting ? (
+                                      <>
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                        Deleting...
+                                      </>
+                                    ) : (
+                                      <>
+                                        <FontAwesomeIcon icon={faTrash} className="size-4" />
+                                        Delete My Account
+                                      </>
+                                    )}
+                                  </Button>
+                                </DialogFooter>
+                              </>
+                            )}
+                          </DialogContent>
+                        </Dialog>
                     </div>
                   </CardContent>
                 </Card>

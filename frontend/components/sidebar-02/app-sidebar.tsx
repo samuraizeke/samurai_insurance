@@ -41,6 +41,8 @@ import { useAuth } from "@/lib/auth-context";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { FeedbackButton } from "@/components/feedback";
+import { useOnboardingContext } from "@/app/context/OnboardingContext";
+import { faRotate } from "@fortawesome/free-solid-svg-icons";
 
 // Helper to get session preview text
 function getSessionPreview(session: { summary?: string; conversation_context?: string; first_message?: string; started_at: string }): string {
@@ -100,6 +102,8 @@ export function DashboardSidebar() {
     removeSession,
     renameSession
   } = useChatContext();
+
+  const { replayTour } = useOnboardingContext();
 
   // Rename dialog state
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
@@ -206,6 +210,7 @@ export function DashboardSidebar() {
                 (hasMessages || !isOnChatPage) ? "hover:bg-[#333333]/5 hover:text-foreground cursor-pointer" : "cursor-default",
                 isCollapsed && "justify-center"
               )}
+              data-tour="new-chat"
             >
               <span className="text-[#de5e48]">
                 <FontAwesomeIcon icon={faPlus} className="size-4" />
@@ -229,6 +234,7 @@ export function DashboardSidebar() {
                 "flex items-center rounded-lg px-2 transition-colors text-muted-foreground hover:bg-[#333333]/5 hover:text-foreground",
                 isCollapsed && "justify-center"
               )}
+              data-tour="chat-history"
             >
               <Link href="/chat/history" onClick={closeMobileSidebar}>
                 <span className="text-[#de5e48]">
@@ -246,6 +252,33 @@ export function DashboardSidebar() {
 
         {/* Feedback Button */}
         <FeedbackButton collapsed={isCollapsed} sessionId={currentSessionId} />
+
+        {/* Replay Tour Button */}
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              tooltip="Replay Tour"
+              data-tour="replay-tour"
+              onClick={() => {
+                replayTour();
+                closeMobileSidebar();
+              }}
+              className={cn(
+                "flex items-center rounded-lg px-2 transition-colors text-muted-foreground hover:bg-[#333333]/5 hover:text-foreground cursor-pointer",
+                isCollapsed && "justify-center"
+              )}
+            >
+              <span className="text-[#de5e48]">
+                <FontAwesomeIcon icon={faRotate} className="size-4" />
+              </span>
+              {!isCollapsed && (
+                <span className="ml-2 text-sm font-medium font-(family-name:--font-work-sans)">
+                  Replay Tour
+                </span>
+              )}
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
 
         {/* Recents Section */}
         {!isCollapsed && recentSessions.length > 0 && (

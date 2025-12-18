@@ -968,3 +968,271 @@ button:disabled {
     padding-bottom: 0;
   }
 }
+
+/* ========================================
+   Driver.js Product Tour Customization
+   ======================================== */
+
+/* Popover container */
+.driver-popover.samurai-tour-popover {
+  background-color: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(51, 51, 51, 0.15), 0 8px 16px rgba(51, 51, 51, 0.1);
+  border: 1px solid rgba(51, 51, 51, 0.08);
+  font-family: var(--font-work-sans), sans-serif;
+  max-width: 320px;
+}
+
+/* Popover arrow */
+.driver-popover.samurai-tour-popover .driver-popover-arrow {
+  border-color: #ffffff;
+}
+
+.driver-popover.samurai-tour-popover .driver-popover-arrow-side-left {
+  border-left-color: #ffffff;
+}
+
+.driver-popover.samurai-tour-popover .driver-popover-arrow-side-right {
+  border-right-color: #ffffff;
+}
+
+.driver-popover.samurai-tour-popover .driver-popover-arrow-side-top {
+  border-top-color: #ffffff;
+}
+
+.driver-popover.samurai-tour-popover .driver-popover-arrow-side-bottom {
+  border-bottom-color: #ffffff;
+}
+
+/* Title */
+.driver-popover.samurai-tour-popover .driver-popover-title {
+  font-family: var(--font-alte-haas), sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: #333333;
+  margin-bottom: 8px;
+}
+
+/* Description */
+.driver-popover.samurai-tour-popover .driver-popover-description {
+  font-family: var(--font-work-sans), sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #666666;
+}
+
+/* Progress indicator */
+.driver-popover.samurai-tour-popover .driver-popover-progress-text {
+  font-family: var(--font-work-sans), sans-serif;
+  font-size: 12px;
+  color: #999999;
+}
+
+/* Footer buttons container */
+.driver-popover.samurai-tour-popover .driver-popover-footer {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+  justify-content: flex-end;
+}
+
+/* Navigation buttons - base styles */
+.driver-popover.samurai-tour-popover .driver-popover-prev-btn,
+.driver-popover.samurai-tour-popover .driver-popover-next-btn {
+  font-family: var(--font-work-sans), sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 10px 20px;
+  border-radius: 10px;
+  transition: all 0.15s ease;
+  cursor: pointer;
+  line-height: 1;
+  text-shadow: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Fix for doubled text - reset any pseudo-elements */
+.driver-popover.samurai-tour-popover .driver-popover-prev-btn::before,
+.driver-popover.samurai-tour-popover .driver-popover-prev-btn::after,
+.driver-popover.samurai-tour-popover .driver-popover-next-btn::before,
+.driver-popover.samurai-tour-popover .driver-popover-next-btn::after,
+.driver-popover.samurai-tour-popover .driver-popover-close-btn::before,
+.driver-popover.samurai-tour-popover .driver-popover-close-btn::after {
+  content: none;
+  display: none;
+}
+
+/* Ensure button text is rendered once */
+.driver-popover.samurai-tour-popover .driver-popover-prev-btn span,
+.driver-popover.samurai-tour-popover .driver-popover-next-btn span,
+.driver-popover.samurai-tour-popover .driver-popover-close-btn span {
+  display: inline;
+}
+
+/* Previous/Back button - secondary style */
+.driver-popover.samurai-tour-popover .driver-popover-prev-btn {
+  background-color: #f7f6f3;
+  color: #333333;
+  border: 1px solid #e0ddd8;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.driver-popover.samurai-tour-popover .driver-popover-prev-btn:hover {
+  background-color: #eeece7;
+  border-color: #d4d0ca;
+}
+
+.driver-popover.samurai-tour-popover .driver-popover-prev-btn:active {
+  transform: scale(0.98);
+}
+
+/* Next button - primary style */
+.driver-popover.samurai-tour-popover .driver-popover-next-btn {
+  background-color: #333333;
+  color: #f7f6f3;
+  border: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.driver-popover.samurai-tour-popover .driver-popover-next-btn:hover {
+  background-color: #444444;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+}
+
+.driver-popover.samurai-tour-popover .driver-popover-next-btn:active {
+  transform: scale(0.98);
+}
+
+/* Done button - accent style (last step) */
+.driver-popover.samurai-tour-popover .driver-popover-close-btn {
+  font-family: var(--font-work-sans), sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 10px 20px;
+  border-radius: 10px;
+  background-color: #de5e48;
+  color: #ffffff;
+  border: none;
+  box-shadow: 0 2px 4px rgba(222, 94, 72, 0.25);
+  transition: all 0.15s ease;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.driver-popover.samurai-tour-popover .driver-popover-close-btn:hover {
+  background-color: #c54d3a;
+  box-shadow: 0 3px 6px rgba(222, 94, 72, 0.35);
+}
+
+.driver-popover.samurai-tour-popover .driver-popover-close-btn:active {
+  transform: scale(0.98);
+}
+
+/* X close button in corner - orange pill style */
+.driver-popover.samurai-tour-popover button[aria-label="Close"] {
+  position: absolute;
+  right: -8px;
+  top: -8px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: #de5e48;
+  border: none;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.15s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.driver-popover.samurai-tour-popover button[aria-label="Close"]:hover {
+  background: #c54d3a;
+  transform: scale(1.05);
+}
+
+.driver-popover.samurai-tour-popover button[aria-label="Close"] svg {
+  width: 14px;
+  height: 14px;
+  color: #ffffff;
+}
+
+/* Highlighted element stage */
+.driver-active-element {
+  box-shadow: 0 0 0 4px rgba(222, 94, 72, 0.3) !important;
+}
+
+/* Mobile adjustments */
+@media (max-width: 767px) {
+  .driver-popover.samurai-tour-popover {
+    max-width: 290px;
+    margin: 12px;
+    padding: 16px;
+  }
+
+  .driver-popover.samurai-tour-popover .driver-popover-title {
+    font-size: 16px;
+    margin-bottom: 6px;
+  }
+
+  .driver-popover.samurai-tour-popover .driver-popover-description {
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .driver-popover.samurai-tour-popover .driver-popover-footer {
+    flex-direction: row;
+    gap: 8px;
+    margin-top: 14px;
+    justify-content: flex-end;
+  }
+
+  /* Compact buttons for mobile */
+  .driver-popover.samurai-tour-popover .driver-popover-prev-btn,
+  .driver-popover.samurai-tour-popover .driver-popover-next-btn,
+  .driver-popover.samurai-tour-popover .driver-popover-close-btn {
+    min-height: 36px;
+    padding: 8px 14px;
+    font-size: 13px;
+    flex: none;
+    border-radius: 8px;
+  }
+
+  /* Close X button - larger touch target */
+  .driver-popover.samurai-tour-popover button[aria-label="Close"] {
+    width: 28px;
+    height: 28px;
+    right: -6px;
+    top: -6px;
+  }
+
+  .driver-popover.samurai-tour-popover .driver-popover-progress-text {
+    font-size: 11px;
+  }
+}
+
+/* Very small screens (iPhone SE, etc.) */
+@media (max-width: 375px) {
+  .driver-popover.samurai-tour-popover {
+    max-width: 260px;
+    margin: 8px;
+    padding: 14px;
+  }
+
+  .driver-popover.samurai-tour-popover .driver-popover-title {
+    font-size: 15px;
+  }
+
+  .driver-popover.samurai-tour-popover .driver-popover-description {
+    font-size: 12px;
+  }
+
+  .driver-popover.samurai-tour-popover .driver-popover-prev-btn,
+  .driver-popover.samurai-tour-popover .driver-popover-next-btn,
+  .driver-popover.samurai-tour-popover .driver-popover-close-btn {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+}

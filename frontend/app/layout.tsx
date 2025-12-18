@@ -4,6 +4,7 @@ import Script from "next/script";
 import "./globals.css";
 import { Analytics } from '@vercel/analytics/next';
 import { AuthProvider } from "@/lib/auth-context";
+import { OnboardingProvider } from "@/app/context/OnboardingContext";
 import { UpdateBanner } from "@/components/update-banner";
 import { Providers } from "./providers";
 
@@ -44,8 +45,10 @@ export default function RootLayout({
         </a>
         <Providers>
           <AuthProvider>
-            {children}
-            <UpdateBanner />
+            <OnboardingProvider>
+              {children}
+              <UpdateBanner />
+            </OnboardingProvider>
           </AuthProvider>
         </Providers>
         {process.env.NEXT_PUBLIC_VERCEL_ANALYTICS_ID ? (

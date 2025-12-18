@@ -556,6 +556,40 @@ export async function renameUserPolicy(userId: string, policyType: PolicyType, n
 }
 
 /**
+ * Delete the user's account and all associated data
+ * @returns Object with success boolean and optional error message
+ */
+export async function deleteAccount(): Promise<{ success: boolean; error?: string; deletedRecords?: Record<string, number> }> {
+    try {
+        const headers = await getAuthHeaders();
+
+        const response = await fetch(getBackendUrl('/api/account'), {
+            method: 'DELETE',
+            headers,
+        });
+
+        if (!response.ok) {
+            const contentType = response.headers.get("content-type");
+            if (contentType && contentType.includes("application/json")) {
+                try {
+                    const data = await response.json();
+                    return { success: false, error: data.error || 'Failed to delete account' };
+                } catch {
+                    return { success: false, error: `Failed to delete account (status: ${response.status})` };
+                }
+            }
+            return { success: false, error: `Failed to delete account (status: ${response.status})` };
+        }
+
+        const data = await response.json();
+        return { success: true, deletedRecords: data.deletedRecords };
+    } catch (error) {
+        console.error("Error deleting account:", error);
+        return { success: false, error: 'Failed to delete account. Please try again.' };
+    }
+}
+
+/**
  * Check if an email already exists in the system (for signup validation)
  * @param email - The email to check
  * @returns Object with exists boolean and optional error

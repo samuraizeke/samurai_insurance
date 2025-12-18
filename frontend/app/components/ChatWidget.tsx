@@ -51,6 +51,7 @@ import {
 import { useAuth } from "@/lib/auth-context";
 import { useChatContext } from "@/app/context/ChatContext";
 import { MessageFeedback } from "@/components/feedback";
+import { StarterSuggestions } from "@/app/components/onboarding";
 
 interface AttachedFile {
     id: string;
@@ -630,20 +631,31 @@ export default function ChatWidget() {
                     <p className="text-muted-foreground font-(family-name:--font-work-sans)">Loading your chat...</p>
                 </div>
             ) : messages.length === 0 && !isUploadingPolicy ? (
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-6 max-w-2xl w-full mx-auto px-4">
-                    <Image
-                        src="/sam-body-logo.png"
-                        alt=""
-                        width={56}
-                        height={56}
-                        className="object-contain shrink-0"
-                        aria-hidden="true"
+                <div className="flex flex-col items-center justify-center gap-6">
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 max-w-2xl w-full mx-auto px-4">
+                        <Image
+                            src="/sam-body-logo.png"
+                            alt=""
+                            width={56}
+                            height={56}
+                            className="object-contain shrink-0"
+                            aria-hidden="true"
+                        />
+                        <h1 className="text-pretty text-center font-heading font-semibold text-[32px] text-foreground tracking-tighter sm:text-[32px] md:text-[46px]">
+                            {getUserFirstName()
+                                ? `${getTimeBasedGreeting()}, ${getUserFirstName()}`
+                                : "How can I help you today?"}
+                        </h1>
+                    </div>
+                    <StarterSuggestions
+                        onSelectPrompt={(selectedPrompt) => {
+                            setPrompt(selectedPrompt);
+                            // Focus the textarea after setting prompt
+                            setTimeout(() => textareaRef.current?.focus(), 0);
+                        }}
+                        onTriggerUpload={() => setShowUploadModal(true)}
+                        className="mt-2"
                     />
-                    <h1 className="text-pretty text-center font-heading font-semibold text-[32px] text-foreground tracking-tighter sm:text-[32px] md:text-[46px]">
-                        {getUserFirstName()
-                            ? `${getTimeBasedGreeting()}, ${getUserFirstName()}`
-                            : "How can I help you today?"}
-                    </h1>
                 </div>
             ) : messages.length === 0 && isUploadingPolicy ? (
                 <div
@@ -942,6 +954,7 @@ export default function ChatWidget() {
                         placeholder="What can I help you with?"
                         value={prompt}
                         aria-label="Chat message"
+                        data-tour="chat-input"
                     />
 
                     <div className="flex items-center gap-1">
@@ -965,6 +978,7 @@ export default function ChatWidget() {
                                                 type="button"
                                                 variant="ghost"
                                                 aria-label="Add attachment"
+                                                data-tour="add-attachment"
                                             >
                                                 <FontAwesomeIcon icon={faPlus} className="text-[#de5e48] size-4" aria-hidden="true" />
                                             </Button>
@@ -1019,6 +1033,7 @@ export default function ChatWidget() {
                                                 type="button"
                                                 variant="ghost"
                                                 aria-label="Select policy"
+                                                data-tour="policy-selector"
                                             >
                                                 <FontAwesomeIcon icon={faFileLines} className="text-[#de5e48] size-4" aria-hidden="true" />
                                             </Button>
