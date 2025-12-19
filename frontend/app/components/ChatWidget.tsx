@@ -162,6 +162,10 @@ export default function ChatWidget() {
     const hasJourneyForkMarker = (content: string) => content.includes('[JOURNEY_FORK]');
     const removeJourneyForkMarker = (content: string) => content.replace('[JOURNEY_FORK]', '').trim();
 
+    // Remove journey choice markers from user messages (these are for backend routing, not display)
+    const removeJourneyChoiceMarker = (content: string) =>
+        content.replace(/\[JOURNEY_CHOICE:(quick_estimate|precise_quote)\]\s*/g, '').trim();
+
     // Track pending journey choice for programmatic submit
     const pendingJourneyChoice = useRef<string | null>(null);
 
@@ -752,6 +756,8 @@ export default function ChatWidget() {
                         let displayContent = message.content;
                         if (showUploadButton) displayContent = removeUploadMarker(displayContent);
                         if (showJourneyFork) displayContent = removeJourneyForkMarker(displayContent);
+                        // Remove journey choice markers from user messages (backend routing only)
+                        if (message.role === 'user') displayContent = removeJourneyChoiceMarker(displayContent);
 
                         // Check if message ID is a database ID (numeric string) for feedback
                         const isPersistedMessage = /^\d+$/.test(message.id);

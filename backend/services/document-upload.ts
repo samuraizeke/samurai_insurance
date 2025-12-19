@@ -24,7 +24,7 @@ const vertexAI = new VertexAI({
 });
 
 const model = vertexAI.getGenerativeModel({
-    model: 'gemini-2.5-flash',
+    model: 'gemini-3-flash',
 });
 
 const GCS_BUCKET_NAME = process.env.GCS_BUCKET_NAME;

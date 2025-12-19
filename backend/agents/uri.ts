@@ -26,7 +26,7 @@ const vertexAI = new VertexAI({
 });
 
 const model = vertexAI.getGenerativeModel({
-    model: 'gemini-2.5-flash',
+    model: 'gemini-3-flash',
 });
 
 export async function handleUriChat(userQuery: string, history: any[]) {

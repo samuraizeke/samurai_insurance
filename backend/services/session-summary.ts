@@ -19,7 +19,7 @@ const vertexAI = new VertexAI({
 });
 
 const model = vertexAI.getGenerativeModel({
-    model: 'gemini-2.0-flash-lite',
+    model: 'gemini-3-flash',
 });
 
 /**

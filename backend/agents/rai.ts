@@ -18,7 +18,7 @@ const vertexAI = new VertexAI({
 });
 
 const model = vertexAI.getGenerativeModel({
-  model: 'gemini-2.5-pro',
+  model: 'gemini-3-pro',
 });
 
 export async function handleRaiReview(
