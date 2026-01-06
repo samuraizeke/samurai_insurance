@@ -4,6 +4,7 @@
 **Project**: Samurai Insurance AI Agent
 **Date**: January 2026
 **Status**: Planning Phase - Awaiting Approval
+**Version**: 1.1 (Updated after QA schema review)
 
 ---
 
@@ -56,73 +57,134 @@ GET /linesOfBusiness/{line}/states/{state}/activeProducts
 
 ## 3. Database Gap Analysis
 
-### Current State
-Our Supabase database has 50+ tables but only **21% of fields** required by the PLQ API currently exist.
+> **Note**: Initial analysis was based on production `schema.sql`. After team feedback, we reviewed the **QA environment** which contains significantly more fields based on the Canopy/Zywave integration work. This section reflects the corrected analysis.
 
-### Coverage by Category
+### Current State
+Our QA Supabase database has **65 tables** with approximately **55% of fields** required by the PLQ API already existing. This is significantly better than the initial 21% estimate.
+
+### Coverage by Category (Updated)
 
 | Category | Existing | Missing | Coverage |
 |----------|----------|---------|----------|
-| Customer/User Info | 5 | 15 | 25% |
-| Driver Basic Info | 6 | 8 | 43% |
-| Driver License Details | 2 | 10 | 17% |
-| Driver Attributes | 0 | 7 | 0% |
-| Driver Discounts | 0 | 9 | 0% |
-| Vehicle Basic Info | 5 | 15 | 25% |
-| Vehicle Coverage | 4 | 8 | 33% |
-| Policy Coverages | 0 | 12 | 0% |
-| Policy Metadata | 2 | 8 | 20% |
-| **TOTAL** | **24** | **92** | **21%** |
+| Customer/User Info | 12 | 8 | 60% |
+| Driver Basic Info | 10 | 4 | 71% |
+| Driver License Details | 8 | 4 | 67% |
+| Driver Attributes | 2 | 5 | 29% |
+| Driver Discounts | 1 | 8 | 11% |
+| Vehicle Basic Info | 14 | 6 | 70% |
+| Vehicle Coverage | 6 | 6 | 50% |
+| Policy Coverages | 4 | 8 | 33% |
+| Policy Metadata | 6 | 4 | 60% |
+| **TOTAL** | **63** | **53** | **55%** |
 
-### Key Missing Data Points
+### Existing Fields (QA Schema)
 
-**Customer Data**
-- Prior insurance history (carrier, limits, coverage duration)
-- Months at current residence
-- Structured address with county
+**Users Table** ✅ Already has:
+- `prior_carrier`, `prior_insurance_months`, `continuous_insurance_months`
+- `months_at_residence`
+- `home_phone`, `work_phone`
+
+**Driver Table** ✅ Already has:
+- `relationship_to_named_insured`, `license_state`, `license_status`
+- `years_licensed`, `months_licensed`
+- `sr22_required`, `sr22a_required`
+- `good_driver`
+
+**Vehicle Table** ✅ Already has:
+- `annual_mileage`, `miles_to_work`, `odometer_reading`
+- `garaging_zip`, `garaging_state`, `garaging_street`
+- `purchase_date`, `ownership`
+- `anti_theft_device`, `safety_features`, `primary_use`
+
+**Prior Insurance** ✅ Table already exists:
+- `plq_prior_insurance` with: carrier_name, policy_number, coverage dates, months_covered
+
+**Zywave Tables** ✅ Existing integration tables:
+- `zyw_rating_requests`, `zyw_drivers`, `zyw_vehicles`
+- `zyw_policy`, `zyw_vehicle_coverages`, `zyw_discounts`, `zyw_rating_results`
+
+### Remaining Gaps
+
+**Customer Data** (Minor gaps)
+- County in address (can derive from ZIP)
+- Middle name field
 
 **Driver Data**
-- License experience (months licensed, MVR experience)
 - Employment info (industry, occupation, months employed)
-- Discount eligibility (good student, defensive driving, etc.)
-- SR-22/SR-22A requirements
+- Discount eligibility flags (good student, defensive driving, distant student, etc.)
+- Detailed violation/accident history structure
 
 **Vehicle Data**
-- Annual mileage
-- Garaging address (if different from residence)
-- Purchase type (new/used), lease status
-- Anti-theft devices, telematics enrollment
+- `assigned_driver_id` foreign key
+- Lienholder/leasing company details
+- Usage-based insurance enrollment flag
+
+**Policy Coverages**
+- Standardized coverage limit fields matching PLQ format
+- Some coverage types (PIP, Medical Payments, Rental Reimbursement)
+
+### Field Name Mapping (Canopy/Zywave → PLQ)
+
+| Our Field Name | PLQ API Field | Notes |
+|---------------|---------------|-------|
+| `annual_mileage` | `AnnualMiles` | Direct map |
+| `months_licensed` | `MonthsLicensed` | Direct map |
+| `license_status` | `LicenseStatus` | May need value mapping |
+| `prior_carrier` | `PriorCarrierName` | Direct map |
+| `prior_insurance_months` | `PriorMonthsCoverage` | Direct map |
+| `relationship_to_named_insured` | `RelationToInsured` | Value mapping needed |
+| `garaging_zip` | `GaragingAddress.ZipCode` | Nested in API |
+| `primary_use` | `Usage` | Value mapping needed |
+| `sr22_required` | `SR22Required` | Direct map (boolean) |
 
 ---
 
 ## 4. Required Database Changes
 
-### New Tables (5)
+> **Reduced Scope**: Thanks to existing Canopy/Zywave integration work, the required changes are ~50% less than initially estimated.
 
-1. **`prior_insurance`** - Customer's previous insurance history
-2. **`driver_attributes`** - Education, residency, employment details
-3. **`driver_discounts`** - Discount eligibility flags
-4. **`auto_policy_coverages`** - Policy-level coverage selections
-5. **`rater_transactions`** - API call tracking and results storage
+### New Tables (2 instead of 5)
 
-### Column Additions (~40 columns across existing tables)
+| Table | Purpose | Status |
+|-------|---------|--------|
+| ~~`prior_insurance`~~ | Previous insurance history | ✅ **Already exists** as `plq_prior_insurance` |
+| `driver_attributes` | Education, employment details | ⚠️ **Needed** |
+| `driver_discounts` | Discount eligibility flags | ⚠️ **Needed** |
+| ~~`auto_policy_coverages`~~ | Policy coverage selections | ✅ **Partially exists** in `zyw_vehicle_coverages` |
+| `rater_transactions` | API call tracking & results | ⚠️ **Needed** (or extend `zyw_rating_requests`) |
 
-**Users Table**
-- `first_name`, `middle_name`, `last_name` (split from `name`)
-- `home_phone`, `work_phone`
-- `months_at_residence`
+### Column Additions (~15 columns instead of ~40)
 
-**Driver Table**
-- `first_name`, `middle_name`, `last_name`
-- `relation_to_insured`
-- `sr22_required`, `sr22a_required`
+**Users Table** (minimal changes needed)
+- ~~`home_phone`, `work_phone`~~ ✅ Already exist
+- ~~`months_at_residence`~~ ✅ Already exists
+- `middle_name` ⚠️ Add if name parsing needed
+- `county` ⚠️ Add or derive from ZIP lookup
 
-**Vehicle Table**
-- `annual_miles`, `miles_to_work`, `odometer`
-- `assigned_driver_id` (FK)
-- `purchase_type`, `leased_vehicle`, `purchase_date`
-- `garaging_street`, `garaging_city`, `garaging_state`, `garaging_zip`
-- Anti-theft flags, usage-based/rideshare flags
+**Driver Table** (minimal changes needed)
+- ~~`relation_to_insured`~~ ✅ Already exists as `relationship_to_named_insured`
+- ~~`sr22_required`, `sr22a_required`~~ ✅ Already exist
+- `industry`, `occupation`, `months_employed` ⚠️ Add for employment info
+
+**Vehicle Table** (minimal changes needed)
+- ~~`annual_miles`, `miles_to_work`, `odometer`~~ ✅ Already exist
+- ~~`garaging_*`~~ ✅ Already exist
+- ~~`purchase_date`, `ownership`~~ ✅ Already exist
+- `assigned_driver_id` ⚠️ Add FK to driver table
+- `leased_vehicle` ⚠️ Add boolean flag
+- `ubi_enrolled`, `rideshare_use` ⚠️ Add if needed
+
+### Decision: Extend Existing vs Create New
+
+**Option A: Extend `zyw_*` tables**
+- Pros: Less migration work, data already flowing
+- Cons: Zywave-specific naming, may not fit PLQ exactly
+
+**Option B: Create parallel `plq_*` tables**
+- Pros: Clean PLQ-specific schema, clear separation
+- Cons: Data duplication, sync complexity
+
+**Recommendation**: Option A with a transformation layer in code. Use existing `zyw_*` tables and create `rater-transformer.ts` to map between schemas.
 
 ---
 
@@ -243,10 +305,10 @@ Sam: "Great news! I got quotes from 8 carriers. Here are your top options:
 | `backend/types/rater.ts` | TypeScript interfaces for PLQ API | ~200 |
 | `backend/lib/rater-validation.ts` | Zod schemas for validation | ~150 |
 | `backend/services/rater-api.ts` | HTTP client with auth & retry | ~200 |
-| `backend/services/rater-transformer.ts` | Data transformation layer | ~300 |
+| `backend/services/rater-transformer.ts` | Data transformation (Supabase ↔ PLQ) | ~250 |
 | `backend/services/rater-polling.ts` | Background polling service | ~100 |
 | `backend/routes/rating.ts` | Express route handlers | ~150 |
-| `database/migrations/004_rater_integration.sql` | Schema changes | ~150 |
+| `database/migrations/004_rater_integration.sql` | Schema changes (reduced scope) | ~75 |
 
 ### Files to Modify
 
@@ -256,20 +318,33 @@ Sam: "Great news! I got quotes from 8 carriers. Here are your top options:
 | `backend/agents/sam.ts` | Add quote flow handling (~200 lines) |
 | `.env` | Add API credentials |
 
+### Leverage Existing Code
+
+The following existing files may be useful to reference or extend:
+
+| Existing File/Table | Relevance |
+|---------------------|-----------|
+| `zyw_rating_requests` | Similar request tracking pattern |
+| `zyw_rating_results` | Result storage structure |
+| `plq_prior_insurance` | Prior insurance already modeled |
+| `zyw_*` transformer logic (if any) | Pattern for data transformation |
+
 ---
 
 ## 8. Implementation Phases
 
-### Phase 1: Foundation (Database & Types)
-- [ ] Create and apply database migration
-- [ ] Define TypeScript interfaces
+### Phase 1: Foundation (Database & Types) — Reduced Scope
+- [ ] Review existing `zyw_*` tables for reusability
+- [ ] Create minimal migration (~15 columns, 2 tables)
+- [ ] Define TypeScript interfaces for PLQ API
 - [ ] Create Zod validation schemas
-- [ ] Set up environment variables
+- [ ] Set up environment variables (API key)
 
 ### Phase 2: API Integration
-- [ ] Build PLQ API client
-- [ ] Implement data transformer (Supabase ↔ PLQ)
-- [ ] Create polling service
+- [ ] Build PLQ API client with auth headers
+- [ ] Implement data transformer (Supabase ↔ PLQ format)
+- [ ] Create field mapping layer (Canopy naming → PLQ naming)
+- [ ] Create polling service for async results
 
 ### Phase 3: Backend Routes
 - [ ] POST /api/rating/submit endpoint
@@ -280,10 +355,10 @@ Sam: "Great news! I got quotes from 8 carriers. Here are your top options:
 - [ ] Add quote intent detection
 - [ ] Implement conversational data collection
 - [ ] Build results presentation logic
-- [ ] Add "Top 5 / Show All" UI
+- [ ] Add "Top 5 / Show All" display
 
 ### Phase 5: Testing & QA
-- [ ] Unit tests for transformer
+- [ ] Unit tests for transformer (field mapping)
 - [ ] Integration tests with sandbox API
 - [ ] End-to-end flow testing
 - [ ] Error scenario testing
@@ -392,6 +467,22 @@ Sam: "Great news! I got quotes from 8 carriers. Here are your top options:
 
 ---
 
-**Document Version**: 1.0
+## 12. Revision History
+
+| Version | Date | Changes |
+|---------|------|---------|
+| 1.0 | Jan 2026 | Initial draft based on production schema.sql |
+| 1.1 | Jan 2026 | Updated gap analysis after QA schema review. Coverage corrected from 21% → 55%. Added field mapping table. Reduced scope for database changes. |
+
+---
+
+**Document Version**: 1.1
 **Author**: Claude (AI Assistant)
 **Review Status**: Pending Team Approval
+
+### Key Changes in v1.1
+- **Gap Analysis Corrected**: Initial analysis used production `schema.sql`. QA environment has significantly more fields from Canopy/Zywave integration.
+- **Coverage Improved**: 21% → 55% (63 of 116 required fields already exist)
+- **Reduced Effort**: Database migration reduced from ~40 columns to ~15 columns
+- **Existing Tables**: `plq_prior_insurance` and `zyw_*` tables can be leveraged
+- **Field Mapping Added**: Documentation of naming differences between our schema and PLQ API
